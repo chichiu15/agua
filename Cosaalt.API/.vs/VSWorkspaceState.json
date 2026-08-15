@@ -1,0 +1,17 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\Application",
+    "\\Application\\Mappers",
+    "\\Domain",
+    "\\Domain\\Entities",
+    "\\Infrastructure",
+    "\\Infrastructure\\Configurations",
+    "\\Infrastructure\\Context",
+    "\\Infrastructure\\Repositories",
+    "\\Infrastructure\\Seed",
+    "\\obj"
+  ],
+  "SelectedNode": "\\Infrastructure\\Repositories\\MockRepositories.cs",
+  "PreviewInSolutionExplorer": false
+}

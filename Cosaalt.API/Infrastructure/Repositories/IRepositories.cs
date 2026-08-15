@@ -1,0 +1,41 @@
+using Cosaalt.API.Application.DTOs;
+
+namespace Cosaalt.API.Infrastructure.Repositories;
+
+public interface IAuthRepository
+{
+    Task<LoginResponseDto?> LoginAsync(string usuario, string contrasena);
+}
+
+public interface ICatalogoRepository
+{
+    Task<IReadOnlyList<MotivoCambioDto>> ObtenerMotivosAsync();
+}
+
+public interface ISolicitudRepository
+{
+    Task<SolicitudesResponseDto> ObtenerSolicitudesAsync(string? filtro = null);
+    Task<SolicitudBandejaDto?> ObtenerPorIdAsync(string id);
+}
+
+public interface IEjecucionRepository
+{
+    Task<EjecucionCambioResponseDto> RegistrarAsync(EjecucionCambioRequestDto request);
+}
+
+public interface IUsuarioRepository
+{
+    Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync();
+}
+
+public interface IRutaRepository
+{
+    Task<RutaAsignadaResponseDto> AsignarAsync(AsignarRutaRequestDto request);
+    Task<RutasTecnicoResponseDto> ObtenerPorTecnicoAsync(int idTecnico, DateTime? fecha = null);
+    Task<RutaAsignadaResponseDto?> ObtenerPorIdAsync(int idAsignacion);
+}
+
+public interface ISincronizacionRepository
+{
+    Task<SincronizacionResponseDto> ProcesarCambiosAsync(SincronizacionRequestDto request);
+}
