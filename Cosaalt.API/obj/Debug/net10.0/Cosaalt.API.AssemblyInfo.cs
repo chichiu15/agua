@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Cosaalt.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+16180db463f4be32b6c90ce9f145427eca464da4")]
 [assembly: System.Reflection.AssemblyProductAttribute("Cosaalt.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Cosaalt.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
