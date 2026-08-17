@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "C:\\trabajos\\Cosaalt\\Cosaalt.API\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{51E5A49A-E9F8-FBE2-0489-1AC237F67011}|Cosaalt.API.csproj|c:\\trabajos\\cosaalt\\cosaalt.api\\infrastructure\\seed\\databaseseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{51E5A49A-E9F8-FBE2-0489-1AC237F67011}|Cosaalt.API.csproj|solutionrelative:infrastructure\\seed\\databaseseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{51E5A49A-E9F8-FBE2-0489-1AC237F67011}|Cosaalt.API.csproj|c:\\trabajos\\cosaalt\\cosaalt.api\\infrastructure\\configurations\\socioconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{51E5A49A-E9F8-FBE2-0489-1AC237F67011}|Cosaalt.API.csproj|solutionrelative:infrastructure\\configurations\\socioconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -18,11 +22,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
+              "Title": "DatabaseSeeder.cs",
+              "DocumentMoniker": "C:\\trabajos\\Cosaalt\\Cosaalt.API\\Infrastructure\\Seed\\DatabaseSeeder.cs",
+              "RelativeDocumentMoniker": "Infrastructure\\Seed\\DatabaseSeeder.cs",
+              "ToolTip": "C:\\trabajos\\Cosaalt\\Cosaalt.API\\Infrastructure\\Seed\\DatabaseSeeder.cs",
+              "RelativeToolTip": "Infrastructure\\Seed\\DatabaseSeeder.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAuwEMAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-15T02:50:05.419Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\trabajos\\Cosaalt\\Cosaalt.API\\appsettings.json",
               "RelativeDocumentMoniker": "appsettings.json",
@@ -30,21 +47,19 @@
               "RelativeToolTip": "appsettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-08-15T00:40:35.061Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-15T00:40:35.061Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "SocioConfiguration.cs",
               "DocumentMoniker": "C:\\trabajos\\Cosaalt\\Cosaalt.API\\Infrastructure\\Configurations\\SocioConfiguration.cs",
               "RelativeDocumentMoniker": "Infrastructure\\Configurations\\SocioConfiguration.cs",
               "ToolTip": "C:\\trabajos\\Cosaalt\\Cosaalt.API\\Infrastructure\\Configurations\\SocioConfiguration.cs",
               "RelativeToolTip": "Infrastructure\\Configurations\\SocioConfiguration.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAwAAAAXAAAAAAAAAA==",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAuwAwAAAAXAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-14T11:05:10.591Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-14T11:05:10.591Z"
             }
           ]
         }
