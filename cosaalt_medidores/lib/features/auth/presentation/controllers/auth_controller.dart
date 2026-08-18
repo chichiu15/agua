@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/repositories/mock_auth_repository.dart';
+import '../../data/repositories/api_auth_repository.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
@@ -15,7 +15,7 @@ class AuthState {
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return MockAuthRepository();
+  return ApiAuthRepository();
 });
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(
@@ -52,7 +52,8 @@ class AuthController extends Notifier<AuthState> {
       state = AuthState(user: user);
     } on AuthException catch (error) {
       state = AuthState(errorMessage: error.message);
-    } catch (_) {
+    } catch (e) {
+      print('ERROR LOGIN: $e');
       state = const AuthState(
         errorMessage: 'Ocurrió un error inesperado al iniciar sesión.',
       );
@@ -60,6 +61,10 @@ class AuthController extends Notifier<AuthState> {
   }
 
   void logout() {
+    final repository = ref.read(authRepositoryProvider);
+    if (repository is ApiAuthRepository) {
+      repository.clearSession();
+    }
     state = const AuthState();
   }
 }
