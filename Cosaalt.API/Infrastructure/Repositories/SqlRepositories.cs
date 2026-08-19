@@ -54,6 +54,13 @@ public class SqlSolicitudRepository : ISolicitudRepository
     {
         var solicitudes = new List<SolicitudBandejaDto>();
 
+        // Obtener IDs de solicitudes que ya tienen ruta asignada
+        var idsAsignados = await _context.DetallesRuta
+            .AsNoTracking()
+            .Select(d => d.TipoOrigen + "-" + d.IdOrigen)
+            .Distinct()
+            .ToListAsync();
+
         var detalles = await _context.DetallesSolicitudLectura
             .AsNoTracking()
             .Include(d => d.Solicitud)
@@ -63,8 +70,11 @@ public class SqlSolicitudRepository : ISolicitudRepository
 
         foreach (var detalle in detalles)
         {
+            var solicitudId = $"LEC-{detalle.Id}";
+            var estado = idsAsignados.Contains($"LECTURA-{detalle.Id}")
+                ? "Asignada" : "Pendiente";
             solicitudes.Add(SolicitudMapper.FromDetalleLectura(
-                detalle, detalle.Solicitud, detalle.Socio, detalle.Socio.Medidor, "Pendiente"));
+                detalle, detalle.Solicitud, detalle.Socio, detalle.Socio.Medidor, estado));
         }
 
         var reclamos = await _context.ReclamosOdeco
@@ -75,8 +85,10 @@ public class SqlSolicitudRepository : ISolicitudRepository
 
         foreach (var reclamo in reclamos)
         {
+            var estado = idsAsignados.Contains($"ODECO-{reclamo.Folio}")
+                ? "Asignada" : "Pendiente";
             solicitudes.Add(SolicitudMapper.FromReclamoOdeco(
-                reclamo, reclamo.Socio, reclamo.Socio.Medidor, "Pendiente"));
+                reclamo, reclamo.Socio, reclamo.Socio.Medidor, estado));
         }
 
         var filtradas = filtro?.ToLowerInvariant() switch
