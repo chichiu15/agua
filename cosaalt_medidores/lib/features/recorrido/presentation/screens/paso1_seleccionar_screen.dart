@@ -1,70 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../domain/entities/punto_recorrido.dart';
+import '../../domain/entities/solicitud.dart';
+import '../../presentation/controllers/solicitud_controller.dart';
 import 'armar_recorrido_scaffold.dart';
 
-class Paso1SeleccionarSolicitudesScreen extends StatefulWidget {
+class Paso1SeleccionarSolicitudesScreen extends ConsumerStatefulWidget {
   const Paso1SeleccionarSolicitudesScreen({super.key});
 
   @override
-  State<Paso1SeleccionarSolicitudesScreen> createState() =>
+  ConsumerState<Paso1SeleccionarSolicitudesScreen> createState() =>
       _Paso1SeleccionarSolicitudesScreenState();
 }
 
 class _Paso1SeleccionarSolicitudesScreenState
-    extends State<Paso1SeleccionarSolicitudesScreen> {
+    extends ConsumerState<Paso1SeleccionarSolicitudesScreen> {
   final _mapController = MapController();
 
   bool _filtroOdeco = true;
   bool _filtroLectura = true;
-  bool _filtroVencidos = false;
+  bool _filtroAsignadas = false;
 
-  final _puntos = const [
-    PuntoRecorrido(
-      id: 1,
-      direccion: 'Av. Las Américas #452, Zona Sur',
-      propietario: 'María Elena Vargas',
-      numeroMedidor: 'M-789012',
-      ubicacion: LatLng(-21.5445, -64.7285),
-      tipo: TipoSolicitud.odeco,
-    ),
-    PuntoRecorrido(
-      id: 2,
-      direccion: 'Calle Junín #890, Centro',
-      propietario: 'Carlos Mendoza Ríos',
-      numeroMedidor: 'M-456789',
-      ubicacion: LatLng(-21.5310, -64.7295),
-      tipo: TipoSolicitud.lectura,
-    ),
-    PuntoRecorrido(
-      id: 3,
-      direccion: 'Pasaje Los Olivos #23, Zona Norte',
-      propietario: 'Ana Lucía Fernández',
-      numeroMedidor: 'M-123456',
-      ubicacion: LatLng(-21.5185, -64.7340),
-      tipo: TipoSolicitud.lectura,
-    ),
-    PuntoRecorrido(
-      id: 4,
-      direccion: 'Parque Industrial Mz. 3 Lote 12',
-      propietario: 'Industrias del Altiplano S.A.',
-      numeroMedidor: 'M-998877',
-      ubicacion: LatLng(-21.5510, -64.7120),
-      tipo: TipoSolicitud.vencido,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(solicitudControllerProvider.notifier).cargarDatos());
+  }
 
-  final _seleccionados = <int>{1, 2, 3};
-
-  List<PuntoRecorrido> get _puntosFiltrados {
-    return _puntos.where((p) {
-      if (p.tipo == TipoSolicitud.odeco && !_filtroOdeco) return false;
-      if (p.tipo == TipoSolicitud.lectura && !_filtroLectura) return false;
-      if (p.tipo == TipoSolicitud.vencido && !_filtroVencidos) return false;
+  List<Solicitud> _filtrar(List<Solicitud> solicitudes) {
+    return solicitudes.where((s) {
+      if (s.tipo == TipoSolicitud.odeco && !_filtroOdeco) return false;
+      if (s.tipo == TipoSolicitud.lectura && !_filtroLectura) return false;
+      if (s.estado == 'Asignada' && !_filtroAsignadas) return false;
       return true;
     }).toList();
   }
@@ -75,25 +46,23 @@ class _Paso1SeleccionarSolicitudesScreenState
         return AppColors.odecoRed;
       case TipoSolicitud.lectura:
         return AppColors.primaryGreen;
-      case TipoSolicitud.vencido:
-        return AppColors.textSecondary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final puntosVisibles = _puntosFiltrados;
+    final solicitudState = ref.watch(solicitudControllerProvider);
+    final controller = ref.read(solicitudControllerProvider.notifier);
+    final puntosVisibles = _filtrar(solicitudState.solicitudes);
 
     return ArmarRecorridoScaffold(
       paso: 1,
       subtitulo:
           'Paso 1: Selecciona todas las solicitudes que irán en este recorrido.',
       primaryLabel:
-          '${_seleccionados.length} SELECCIONADOS / ORDENAR PUNTOS DE RECORRIDO',
-      primaryOnPressed: _seleccionados.isNotEmpty
-          ? () {
-              context.go('/asignador/recorrido/paso2');
-            }
+          '${solicitudState.seleccionadas.length} SELECCIONADOS / ORDENAR PUNTOS DE RECORRIDO',
+      primaryOnPressed: solicitudState.seleccionadas.isNotEmpty
+          ? () => context.go('/asignador/recorrido/paso2')
           : null,
       body: Column(
         children: [
@@ -119,80 +88,119 @@ class _Paso1SeleccionarSolicitudesScreenState
                 ),
                 const SizedBox(width: 8),
                 _FilterChip(
-                  label: 'VENCIDOS',
-                  icon: Icons.location_on,
+                  label: 'ASIGNADAS',
+                  icon: Icons.check_circle_outline,
                   color: AppColors.textSecondary,
-                  active: _filtroVencidos,
+                  active: _filtroAsignadas,
                   onTap: () =>
-                      setState(() => _filtroVencidos = !_filtroVencidos),
+                      setState(() => _filtroAsignadas = !_filtroAsignadas),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 10),
-          Expanded(
-            child: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: LatLng(-21.5350, -64.7260),
-                initialZoom: 13,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.cosaalt_medidores',
+          if (solicitudState.isLoading)
+            const Expanded(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (solicitudState.errorMessage != null)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      solicitudState.errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => controller.cargarDatos(),
+                      child: const Text('Reintentar'),
+                    ),
+                  ],
                 ),
-                MarkerLayer(
-                  markers: puntosVisibles.map((punto) {
-                    final seleccionado =
-                        _seleccionados.contains(punto.id);
-                    return Marker(
-                      point: punto.ubicacion,
-                      width: 36,
-                      height: 36,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            if (seleccionado) {
-                              _seleccionados.remove(punto.id);
-                            } else {
-                              _seleccionados.add(punto.id);
-                            }
-                          });
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: seleccionado
-                                ? _colorTipo(punto.tipo)
-                                : _colorTipo(punto.tipo).withValues(alpha: 0.3),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                blurRadius: 4,
+              ),
+            )
+          else
+            Expanded(
+              child: FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: LatLng(-21.5350, -64.7260),
+                  initialZoom: 13,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.example.cosaalt_medidores',
+                  ),
+                  MarkerLayer(
+                    markers: puntosVisibles.map((solicitud) {
+                      if (solicitud.latitud == null ||
+                          solicitud.longitud == null) {
+                        return Marker(
+                          point: LatLng(-21.5350, -64.7260),
+                          width: 0,
+                          height: 0,
+                          child: const SizedBox.shrink(),
+                        );
+                      }
+
+                      final asignada = solicitud.estado == 'Asignada';
+                      final seleccionado = solicitudState.seleccionadas
+                          .contains(solicitud.id);
+
+                      return Marker(
+                        point: LatLng(
+                          solicitud.latitud!,
+                          solicitud.longitud!,
+                        ),
+                        width: 36,
+                        height: 36,
+                        child: GestureDetector(
+                          onTap: asignada
+                              ? null
+                              : () => controller
+                                  .toggleSeleccion(solicitud.id),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: asignada
+                                  ? AppColors.textSecondary
+                                  : seleccionado
+                                      ? _colorTipo(solicitud.tipo)
+                                      : _colorTipo(solicitud.tipo)
+                                          .withValues(alpha: 0.3),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2,
                               ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.location_on,
-                            color: seleccionado
-                                ? Colors.white
-                                : _colorTipo(punto.tipo),
-                            size: 20,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black
+                                      .withValues(alpha: 0.3),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              asignada
+                                  ? Icons.check
+                                  : Icons.location_on,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -234,7 +242,9 @@ class _FilterChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: active ? color : color.withValues(alpha: 0.5)),
+            Icon(icon,
+                size: 16,
+                color: active ? color : color.withValues(alpha: 0.5)),
             const SizedBox(width: 4),
             Text(
               label,

@@ -1,26 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../domain/entities/tecnico.dart';
+import '../../presentation/controllers/solicitud_controller.dart';
 import 'armar_recorrido_scaffold.dart';
 
-class Paso3AsignarTecnicoScreen extends StatefulWidget {
+class Paso3AsignarTecnicoScreen extends ConsumerStatefulWidget {
   const Paso3AsignarTecnicoScreen({super.key});
 
   @override
-  State<Paso3AsignarTecnicoScreen> createState() =>
+  ConsumerState<Paso3AsignarTecnicoScreen> createState() =>
       _Paso3AsignarTecnicoScreenState();
 }
 
-class _Paso3AsignarTecnicoScreenState extends State<Paso3AsignarTecnicoScreen> {
+class _Paso3AsignarTecnicoScreenState
+    extends ConsumerState<Paso3AsignarTecnicoScreen> {
   int? _tecnicoSeleccionado;
-
-  final _tecnicos = const [
-    _Tecnico(id: 1, nombre: 'Juan Pérez García', disponible: true),
-    _Tecnico(id: 2, nombre: 'Luis Mamani Condori', disponible: true),
-    _Tecnico(id: 3, nombre: 'Carlos Rojas Mendoza', disponible: false),
-    _Tecnico(id: 4, nombre: 'Miguel Ángel Torres', disponible: true),
-  ];
 
   void _asignarme() {
     setState(() {
@@ -28,23 +25,49 @@ class _Paso3AsignarTecnicoScreenState extends State<Paso3AsignarTecnicoScreen> {
     });
   }
 
+  Future<void> _confirmarAsignacion() async {
+    if (_tecnicoSeleccionado == null) return;
+
+    final controller = ref.read(solicitudControllerProvider.notifier);
+    final exito = await controller.asignarRuta(_tecnicoSeleccionado!);
+
+    if (!mounted) return;
+
+    if (exito) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Asignación confirmada correctamente.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      context.go('/asignador');
+    } else {
+      final error = ref.read(solicitudControllerProvider).errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? 'Error al asignar ruta.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final solicitudState = ref.watch(solicitudControllerProvider);
+    final tecnicos = solicitudState.tecnicos;
+
     return ArmarRecorridoScaffold(
       paso: 3,
       subtitulo:
           'Paso 3: Seleccione el personal técnico disponible para cubrir este recorrido.',
       showBackButton: true,
       onBack: () => context.go('/asignador/recorrido/paso2'),
-      primaryLabel: 'CONFIRMAR ASIGNACIÓN',
-      primaryOnPressed: _tecnicoSeleccionado != null
-          ? () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Asignación confirmada correctamente.'),
-                ),
-              );
-            }
+      primaryLabel: solicitudState.isAsignando
+          ? 'ASIGNANDO...'
+          : 'CONFIRMAR ASIGNACIÓN',
+      primaryOnPressed: (_tecnicoSeleccionado != null && !solicitudState.isAsignando)
+          ? _confirmarAsignacion
           : null,
       body: Column(
         children: [
@@ -88,27 +111,40 @@ class _Paso3AsignarTecnicoScreenState extends State<Paso3AsignarTecnicoScreen> {
           ),
           const SizedBox(height: 10),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _tecnicos.length,
-              itemBuilder: (context, index) {
-                final tecnico = _tecnicos[index];
-                final isSelected = _tecnicoSeleccionado == tecnico.id;
-                final isAssignedSelf = _tecnicoSeleccionado == 0;
+            child: solicitudState.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : tecnicos.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No hay técnicos disponibles.',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: tecnicos.length,
+                        itemBuilder: (context, index) {
+                          final tecnico = tecnicos[index];
+                          final isSelected =
+                              _tecnicoSeleccionado == tecnico.id;
+                          final isAssignedSelf = _tecnicoSeleccionado == 0;
+                          final ocupado = tecnico.tieneRutaAsignada;
 
-                return _TecnicoCard(
-                  tecnico: tecnico,
-                  isSelected: isSelected || isAssignedSelf && tecnico.disponible,
-                  onTap: tecnico.disponible
-                      ? () {
-                          setState(() {
-                            _tecnicoSeleccionado = tecnico.id;
-                          });
-                        }
-                      : null,
-                );
-              },
-            ),
+                          return _TecnicoCard(
+                            tecnico: tecnico,
+                            isSelected: isSelected ||
+                                (isAssignedSelf && tecnico.activo && !ocupado),
+                            ocupado: ocupado,
+                            onTap: (tecnico.activo && !ocupado)
+                                ? () {
+                                    setState(() {
+                                      _tecnicoSeleccionado = tecnico.id;
+                                    });
+                                  }
+                                : null,
+                          );
+                        },
+                      ),
           ),
         ],
       ),
@@ -116,32 +152,22 @@ class _Paso3AsignarTecnicoScreenState extends State<Paso3AsignarTecnicoScreen> {
   }
 }
 
-class _Tecnico {
-  const _Tecnico({
-    required this.id,
-    required this.nombre,
-    required this.disponible,
-  });
-
-  final int id;
-  final String nombre;
-  final bool disponible;
-}
-
 class _TecnicoCard extends StatelessWidget {
   const _TecnicoCard({
     required this.tecnico,
     required this.isSelected,
+    required this.ocupado,
     this.onTap,
   });
 
-  final _Tecnico tecnico;
+  final Tecnico tecnico;
   final bool isSelected;
+  final bool ocupado;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final disponible = tecnico.disponible;
+    final disponible = tecnico.activo && !ocupado;
 
     return GestureDetector(
       onTap: onTap,
@@ -171,7 +197,7 @@ class _TecnicoCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tecnico.nombre,
+                    tecnico.nombreCompleto,
                     style: TextStyle(
                       color: disponible
                           ? AppColors.darkBlue
@@ -182,7 +208,11 @@ class _TecnicoCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    disponible ? 'Disponible' : 'Ocupado · Con ruta asignada',
+                    !tecnico.activo
+                        ? 'Inactivo'
+                        : ocupado
+                            ? 'Ocupado · Con ruta asignada'
+                            : 'Disponible',
                     style: TextStyle(
                       color: disponible
                           ? AppColors.primaryGreen

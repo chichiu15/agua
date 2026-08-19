@@ -1,45 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../domain/entities/punto_recorrido.dart';
+import '../../domain/entities/solicitud.dart';
+import '../../presentation/controllers/solicitud_controller.dart';
 import 'armar_recorrido_scaffold.dart';
 
-class Paso2ReordenarScreen extends StatefulWidget {
+class Paso2ReordenarScreen extends ConsumerStatefulWidget {
   const Paso2ReordenarScreen({super.key});
 
   @override
-  State<Paso2ReordenarScreen> createState() => _Paso2ReordenarScreenState();
+  ConsumerState<Paso2ReordenarScreen> createState() =>
+      _Paso2ReordenarScreenState();
 }
 
-class _Paso2ReordenarScreenState extends State<Paso2ReordenarScreen> {
-  final _puntos = [
-    PuntoRecorrido(
-      id: 1,
-      direccion: 'Av. Las Américas #452, Zona Sur',
-      propietario: 'María Elena Vargas',
-      numeroMedidor: 'M-789012',
-      ubicacion: const LatLng(0, 0),
-      tipo: TipoSolicitud.odeco,
-    ),
-    PuntoRecorrido(
-      id: 2,
-      direccion: 'Calle Junín #890, Centro',
-      propietario: 'Carlos Mendoza Ríos',
-      numeroMedidor: 'M-456789',
-      ubicacion: const LatLng(0, 0),
-      tipo: TipoSolicitud.lectura,
-    ),
-    PuntoRecorrido(
-      id: 3,
-      direccion: 'Pasaje Los Olivos #23, Zona Norte',
-      propietario: 'Ana Lucía Fernández',
-      numeroMedidor: 'M-123456',
-      ubicacion: const LatLng(0, 0),
-      tipo: TipoSolicitud.lectura,
-    ),
-  ];
+class _Paso2ReordenarScreenState extends ConsumerState<Paso2ReordenarScreen> {
+  late List<Solicitud> _puntos;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = ref.read(solicitudControllerProvider);
+    _puntos = state.solicitudes
+        .where((s) => state.seleccionadas.contains(s.id))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,40 +39,72 @@ class _Paso2ReordenarScreenState extends State<Paso2ReordenarScreen> {
       primaryOnPressed: () {
         context.go('/asignador/recorrido/paso3');
       },
-      body: ReorderableListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: _puntos.length,
-        onReorder: (oldIndex, newIndex) {
-          setState(() {
-            if (newIndex > oldIndex) newIndex--;
-            final item = _puntos.removeAt(oldIndex);
-            _puntos.insert(newIndex, item);
-          });
-        },
-        itemBuilder: (context, index) {
-          final punto = _puntos[index];
-          return _PuntoCard(
-            key: ValueKey(punto.id),
-            punto: punto,
-            orden: index + 1,
-          );
-        },
-      ),
+      body: _puntos.isEmpty
+          ? const Center(
+              child: Text(
+                'No hay solicitudes seleccionadas.',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            )
+          : Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16, color: AppColors.actionBlue),
+                      SizedBox(width: 6),
+                      Text(
+                        'Mantén presionado y arrastra para reordenar',
+                        style: TextStyle(
+                          color: AppColors.actionBlue,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ReorderableListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: _puntos.length,
+                    onReorder: (oldIndex, newIndex) {
+                      if (oldIndex < newIndex) newIndex -= 1;
+                      final item = _puntos.removeAt(oldIndex);
+                      _puntos.insert(newIndex, item);
+                      setState(() {});
+                    },
+                    itemBuilder: (context, index) {
+                      final solicitud = _puntos[index];
+                      return _SolicitudCard(
+                        key: ValueKey(solicitud.id),
+                        solicitud: solicitud,
+                        orden: index + 1,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
 
-class _PuntoCard extends StatelessWidget {
-  const _PuntoCard({
-    required this.punto,
+class _SolicitudCard extends StatelessWidget {
+  const _SolicitudCard({
+    required this.solicitud,
     required this.orden,
     super.key,
   });
 
-  final PuntoRecorrido punto;
+  final Solicitud solicitud;
   final int orden;
 
-  Color get _colorOrden => AppColors.actionBlue;
+  Color get _colorTipo =>
+      solicitud.tipo == TipoSolicitud.odeco
+          ? AppColors.odecoRed
+          : AppColors.primaryGreen;
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +128,7 @@ class _PuntoCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: _colorOrden,
+              color: _colorTipo,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -130,7 +148,7 @@ class _PuntoCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  punto.direccion,
+                  solicitud.direccion,
                   style: const TextStyle(
                     color: AppColors.darkBlue,
                     fontWeight: FontWeight.w700,
@@ -139,7 +157,7 @@ class _PuntoCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${punto.propietario} - ${punto.numeroMedidor}',
+                  '${solicitud.nombreCliente} - ${solicitud.numeroMedidor ?? "S/N"}',
                   style: const TextStyle(
                     color: AppColors.actionBlue,
                     fontSize: 12,
@@ -148,11 +166,7 @@ class _PuntoCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(
-            Icons.drag_indicator,
-            color: AppColors.textSecondary,
-            size: 24,
-          ),
+          const SizedBox(width: 4),
         ],
       ),
     );

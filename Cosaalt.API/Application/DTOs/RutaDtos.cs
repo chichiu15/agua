@@ -1,6 +1,6 @@
 namespace Cosaalt.API.Application.DTOs;
 
-public record TecnicoDto(int Id, string NombreCompleto, string Rol, bool Activo);
+public record TecnicoDto(int Id, string NombreCompleto, string Rol, bool Activo, bool TieneRutaAsignada);
 
 public record DetalleRutaRequestDto(
     string TipoOrigen,

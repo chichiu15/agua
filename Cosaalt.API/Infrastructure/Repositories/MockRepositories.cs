@@ -88,8 +88,10 @@ public class MockUsuarioRepository : IUsuarioRepository
 {
     private static readonly List<TecnicoDto> Tecnicos =
     [
-        new(1, "Juan Pérez García", "tecnico", true),
-        new(4, "Luis Mamani Condori", "tecnico", true)
+        new(1, "Juan Pérez García", "tecnico", true, false),
+        new(2, "Luis Mamani Condori", "tecnico", true, false),
+        new(3, "Carlos Rojas Mendoza", "tecnico", false, true),
+        new(4, "Miguel Ángel Torres", "tecnico", true, false)
     ];
 
     public Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync() =>
