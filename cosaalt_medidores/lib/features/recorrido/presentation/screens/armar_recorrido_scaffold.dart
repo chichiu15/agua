@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/dashboard_widgets.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 
-class ArmarRecorridoScaffold extends StatelessWidget {
+class ArmarRecorridoScaffold extends ConsumerWidget {
   const ArmarRecorridoScaffold({
     required this.paso,
     required this.subtitulo,
@@ -27,65 +30,38 @@ class ArmarRecorridoScaffold extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onBack;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 64,
-        titleSpacing: 12,
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/images/logo_cosaalt.png',
-              height: 42,
-              width: 42,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) {
-                return const Icon(
-                  Icons.water_drop_rounded,
-                  color: Colors.white,
-                  size: 34,
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'COSAALT',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
-                ),
-                Text(
-                  'Módulo Medidores',
-                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 10),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle_outlined, size: 30),
-            onSelected: (value) {
-              if (value == 'logout') {
-                Navigator.of(context).pop();
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem<String>(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout),
-                    SizedBox(width: 8),
-                    Text('Cerrar sesión'),
-                  ],
-                ),
-              ),
-            ],
+  void _handleBottomNavigation(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        context.go('/asignador');
+        break;
+      case 1:
+        context.go('/asignador/recorrido/paso1');
+        break;
+      case 2:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Historial se implementará en el módulo correspondiente.'),
           ),
-        ],
+        );
+        break;
+      case 3:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sincronización se implementará en el módulo correspondiente.'),
+          ),
+        );
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: CosaaltAppBar(
+        onLogout: () {
+          ref.read(authControllerProvider.notifier).logout();
+        },
       ),
       body: SafeArea(
         child: Column(
@@ -97,7 +73,7 @@ class ArmarRecorridoScaffold extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'ARMAR RECORRIDO',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.darkBlue,
                         fontWeight: FontWeight.w800,
                         fontSize: 20,
@@ -147,6 +123,10 @@ class ArmarRecorridoScaffold extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar: CosaaltBottomNav(
+        currentIndex: 1,
+        onTap: (index) => _handleBottomNavigation(context, index),
+      ),
     );
   }
 }
@@ -167,7 +147,7 @@ class _ActionButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -186,6 +166,8 @@ class _ActionButtons extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.actionBlue,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: AppColors.border,
+                disabledForegroundColor: AppColors.textSecondary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(9),

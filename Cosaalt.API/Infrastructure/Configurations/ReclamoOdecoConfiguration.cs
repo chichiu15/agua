@@ -20,9 +20,17 @@ public class ReclamoOdecoConfiguration : IEntityTypeConfiguration<ReclamoOdeco>
         builder.Property(r => r.MotivoReclamo).HasColumnName("Motivo_rec__odeco").HasMaxLength(200);
         builder.Property(r => r.FechaEstimadaRespuesta).HasColumnName("Fecha_est_resp_odeco");
         builder.Property(r => r.RespuestaAtencion).HasColumnName("Resp_atc_odeco").HasMaxLength(500);
-        builder.Property(r => r.LecturaAnteriorAnalisis).HasColumnName("Lect_ant_anali_odeco");
-        builder.Property(r => r.LecturaActualAnalisis).HasColumnName("Lect_act_anali_odeco");
-        builder.Property(r => r.ConsumoAnalisis).HasColumnName("Consumo_anali_odeco");
+        builder.Property(r => r.LecturaAnteriorAnalisis)
+    .HasColumnName("Lect_ant_anali_odeco")
+    .HasPrecision(18, 2);
+
+        builder.Property(r => r.LecturaActualAnalisis)
+            .HasColumnName("Lect_act_anali_odeco")
+            .HasPrecision(18, 2);
+
+        builder.Property(r => r.ConsumoAnalisis)
+            .HasColumnName("Consumo_anali_odeco")
+            .HasPrecision(18, 2);
         builder.Property(r => r.Grifos).HasColumnName("Grifos_odeco").HasMaxLength(100);
         builder.Property(r => r.LlavePaso).HasColumnName("Llave_paso_odeco").HasMaxLength(100);
         builder.Property(r => r.MedidorParado).HasColumnName("Medidor_parado_odeco");

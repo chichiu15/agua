@@ -5,7 +5,7 @@ abstract final class AppColors {
   static const Color primaryGreen = Color(0xFF20972F);
   static const Color secondaryGreen = Color(0xFF52B65F);
 
-  // Colores complementarios observados en el diseño
+  // Colores complementarios
   static const Color darkBlue = Color(0xFF2A3283);
   static const Color lightBlue = Color(0xFFD1EFF9);
   static const Color actionBlue = Color(0xFF37CCF7);
@@ -14,6 +14,7 @@ abstract final class AppColors {
   static const Color odecoRed = Color(0xFFFF0004);
   static const Color successGreen = Color(0xFF20972F);
   static const Color warningYellow = Color(0xFFFFFF00);
+  static const Color overdueOrange = Color(0xFFFF8A00);
 
   // Neutros
   static const Color background = Color(0xFFF5F5F5);

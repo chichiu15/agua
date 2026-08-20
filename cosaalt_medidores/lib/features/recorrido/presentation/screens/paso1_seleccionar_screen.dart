@@ -23,19 +23,32 @@ class _Paso1SeleccionarSolicitudesScreenState
 
   bool _filtroOdeco = true;
   bool _filtroLectura = true;
-  bool _filtroAsignadas = false;
+  bool _soloVencidas = false;
+  bool _mostrarAsignadas = false;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(solicitudControllerProvider.notifier).cargarDatos());
+    Future.microtask(
+      () => ref.read(solicitudControllerProvider.notifier).cargarDatos(),
+    );
   }
+
+  bool _estadoEs(Solicitud solicitud, String estado) =>
+      solicitud.estado.trim().toLowerCase() == estado.toLowerCase();
 
   List<Solicitud> _filtrar(List<Solicitud> solicitudes) {
     return solicitudes.where((s) {
       if (s.tipo == TipoSolicitud.odeco && !_filtroOdeco) return false;
       if (s.tipo == TipoSolicitud.lectura && !_filtroLectura) return false;
-      if (s.estado == 'Asignada' && !_filtroAsignadas) return false;
+      if (_soloVencidas && !s.esVencida) return false;
+
+      // Las completadas ya no deben volver a formar parte de un recorrido.
+      if (_estadoEs(s, 'Completada')) return false;
+
+      // Las asignadas sólo se muestran cuando el usuario activa el filtro.
+      if (_estadoEs(s, 'Asignada') && !_mostrarAsignadas) return false;
+
       return true;
     }).toList();
   }
@@ -45,7 +58,7 @@ class _Paso1SeleccionarSolicitudesScreenState
       case TipoSolicitud.odeco:
         return AppColors.odecoRed;
       case TipoSolicitud.lectura:
-        return AppColors.primaryGreen;
+        return AppColors.actionBlue;
     }
   }
 
@@ -68,34 +81,44 @@ class _Paso1SeleccionarSolicitudesScreenState
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _FilterChip(
-                  label: 'ODECO',
-                  icon: Icons.location_on,
-                  color: AppColors.odecoRed,
-                  active: _filtroOdeco,
-                  onTap: () => setState(() => _filtroOdeco = !_filtroOdeco),
-                ),
-                const SizedBox(width: 8),
-                _FilterChip(
-                  label: 'LECTURA',
-                  icon: Icons.location_on,
-                  color: AppColors.primaryGreen,
-                  active: _filtroLectura,
-                  onTap: () =>
-                      setState(() => _filtroLectura = !_filtroLectura),
-                ),
-                const SizedBox(width: 8),
-                _FilterChip(
-                  label: 'ASIGNADAS',
-                  icon: Icons.check_circle_outline,
-                  color: AppColors.textSecondary,
-                  active: _filtroAsignadas,
-                  onTap: () =>
-                      setState(() => _filtroAsignadas = !_filtroAsignadas),
-                ),
-              ],
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _FilterChip(
+                    label: 'ODECO',
+                    icon: Icons.location_on,
+                    color: AppColors.odecoRed,
+                    active: _filtroOdeco,
+                    onTap: () => setState(() => _filtroOdeco = !_filtroOdeco),
+                  ),
+                  _FilterChip(
+                    label: 'LECTURA',
+                    icon: Icons.location_on,
+                    color: AppColors.actionBlue,
+                    active: _filtroLectura,
+                    onTap: () =>
+                        setState(() => _filtroLectura = !_filtroLectura),
+                  ),
+                  _FilterChip(
+                    label: 'VENCIDAS',
+                    icon: Icons.schedule_rounded,
+                    color: AppColors.overdueOrange,
+                    active: _soloVencidas,
+                    onTap: () => setState(() => _soloVencidas = !_soloVencidas),
+                  ),
+                  _FilterChip(
+                    label: 'ASIGNADAS',
+                    icon: Icons.check_circle_outline,
+                    color: AppColors.textSecondary,
+                    active: _mostrarAsignadas,
+                    onTap: () =>
+                        setState(() => _mostrarAsignadas = !_mostrarAsignadas),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -106,20 +129,33 @@ class _Paso1SeleccionarSolicitudesScreenState
           else if (solicitudState.errorMessage != null)
             Expanded(
               child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      solicitudState.errorMessage!,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: () => controller.cargarDatos(),
-                      child: const Text('Reintentar'),
-                    ),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        solicitudState.errorMessage!,
+                        style: const TextStyle(color: AppColors.odecoRed),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: controller.cargarDatos,
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (puntosVisibles.where((s) => s.latitud != null && s.longitud != null).isEmpty)
+            const Expanded(
+              child: Center(
+                child: Text(
+                  'No hay solicitudes con ubicación para los filtros seleccionados.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               ),
             )
@@ -138,60 +174,59 @@ class _Paso1SeleccionarSolicitudesScreenState
                     userAgentPackageName: 'com.example.cosaalt_medidores',
                   ),
                   MarkerLayer(
-                    markers: puntosVisibles.map((solicitud) {
-                      if (solicitud.latitud == null ||
-                          solicitud.longitud == null) {
-                        return Marker(
-                          point: LatLng(-21.5350, -64.7260),
-                          width: 0,
-                          height: 0,
-                          child: const SizedBox.shrink(),
-                        );
-                      }
-
-                      final asignada = solicitud.estado == 'Asignada';
+                    markers: puntosVisibles
+                        .where((s) => s.latitud != null && s.longitud != null)
+                        .map((solicitud) {
+                      final asignada = _estadoEs(solicitud, 'Asignada');
+                      final asignable = _estadoEs(solicitud, 'Pendiente');
                       final seleccionado = solicitudState.seleccionadas
                           .contains(solicitud.id);
+                      final colorTipo = _colorTipo(solicitud.tipo);
 
                       return Marker(
                         point: LatLng(
                           solicitud.latitud!,
                           solicitud.longitud!,
                         ),
-                        width: 36,
-                        height: 36,
-                        child: GestureDetector(
-                          onTap: asignada
-                              ? null
-                              : () => controller
-                                  .toggleSeleccion(solicitud.id),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: asignada
-                                  ? AppColors.textSecondary
-                                  : seleccionado
-                                      ? _colorTipo(solicitud.tipo)
-                                      : _colorTipo(solicitud.tipo)
-                                          .withValues(alpha: 0.3),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black
-                                      .withValues(alpha: 0.3),
-                                  blurRadius: 4,
+                        width: 42,
+                        height: 42,
+                        child: Tooltip(
+                          message:
+                              '${solicitud.tipoOrigen} · ${solicitud.nombreCliente}\n${solicitud.direccion}${solicitud.esVencida ? '\nVENCIDA' : ''}',
+                          child: GestureDetector(
+                            onTap: asignable
+                                ? () => controller.toggleSeleccion(solicitud.id)
+                                : null,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: asignada
+                                    ? AppColors.textSecondary
+                                    : seleccionado
+                                        ? colorTipo
+                                        : colorTipo.withValues(alpha: 0.35),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: solicitud.esVencida
+                                      ? AppColors.overdueOrange
+                                      : Colors.white,
+                                  width: solicitud.esVencida ? 3 : 2,
                                 ),
-                              ],
-                            ),
-                            child: Icon(
-                              asignada
-                                  ? Icons.check
-                                  : Icons.location_on,
-                              color: Colors.white,
-                              size: 20,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.25),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                asignada
+                                    ? Icons.check
+                                    : solicitud.esVencida
+                                        ? Icons.priority_high_rounded
+                                        : Icons.location_on,
+                                color: Colors.white,
+                                size: 21,
+                              ),
                             ),
                           ),
                         ),
@@ -227,8 +262,8 @@ class _FilterChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
         decoration: BoxDecoration(
           color: active
               ? color.withValues(alpha: 0.15)
@@ -242,9 +277,11 @@ class _FilterChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 16,
-                color: active ? color : color.withValues(alpha: 0.5)),
+            Icon(
+              icon,
+              size: 16,
+              color: active ? color : color.withValues(alpha: 0.5),
+            ),
             const SizedBox(width: 4),
             Text(
               label,

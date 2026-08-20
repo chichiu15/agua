@@ -1,3 +1,4 @@
+import '../entities/ruta_asignada.dart';
 import '../entities/solicitud.dart';
 import '../entities/tecnico.dart';
 
@@ -24,4 +25,6 @@ abstract interface class SolicitudRepository {
   Future<SolicitudesResponse> obtenerSolicitudes({String? filtro});
   Future<List<Tecnico>> obtenerTecnicos();
   Future<void> asignarRuta(AsignarRutaParams params);
+  Future<List<RutaAsignada>> obtenerRutasTecnico(int idTecnico, {DateTime? fecha});
+  Future<RutaAsignada> obtenerRutaPorId(int idAsignacion);
 }

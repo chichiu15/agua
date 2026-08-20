@@ -13,13 +13,10 @@ public class Socio
     public string? Telefono { get; set; }
     public string? Sexo { get; set; }
 
-    // NOTA: Latitud/Longitud se movieron a Medidor, porque un socio puede
-    // tener más de un medidor a su nombre (y cada medidor tiene su propia
-    // ubicación física real). Se mantiene la relación 1:1 Socio-Medidor
-    // que ya tenías (no se amplía el alcance a 1:N en este cambio); si en
-    // el futuro un socio necesita varios medidores, ahí sí conviene migrar
-    // esta relación a colección.
-    public Medidor? Medidor { get; set; }
+    // Un socio puede haber tenido varios medidores a lo largo del tiempo.
+    // En condiciones normales solo uno debe permanecer con Estado = "Activo".
+    public ICollection<Medidor> Medidores { get; set; } = [];
+
     public ICollection<DetalleSolicitudLectura> DetallesLectura { get; set; } = [];
     public ICollection<ReclamoOdeco> ReclamosOdeco { get; set; } = [];
 }

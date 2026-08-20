@@ -66,6 +66,7 @@ if (repositoryMode.Equals("Sql", StringComparison.OrdinalIgnoreCase))
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<CosaaltDbContext>();
+    await context.Database.MigrateAsync();
     await DatabaseSeeder.SeedAsync(context);
 }
 

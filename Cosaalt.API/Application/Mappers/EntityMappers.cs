@@ -18,11 +18,17 @@ public static class SolicitudMapper
         Medidor? medidor,
         string estado)
     {
+        var esVencida = EsSolicitudVencida(
+            tipoOrigen: "LECTURA",
+            fechaSolicitud: solicitud.FechaEmision,
+            estado: estado);
+
         return new SolicitudBandejaDto(
             Id: $"LEC-{detalle.Id}",
             TipoOrigen: "LECTURA",
             Estado: estado,
             EsUrgente: false,
+            EsVencida: esVencida,
             RegistroSocio: socio.RegistroSocio,
             NombreCliente: socio.Nombre,
             Direccion: socio.Direccion,
@@ -38,8 +44,6 @@ public static class SolicitudMapper
             FechaSolicitud: solicitud.FechaEmision,
             FolioOdeco: null,
             ConclusionOdeco: null,
-            // Antes: socio.Latitud / socio.Longitud. Ahora la ubicación
-            // real es la del medidor (un socio puede tener más de uno).
             Latitud: medidor?.Latitud,
             Longitud: medidor?.Longitud);
     }
@@ -54,11 +58,17 @@ public static class SolicitudMapper
             || reclamo.PrioridadNota?.Contains("URGENTE", StringComparison.OrdinalIgnoreCase) == true
             || reclamo.PrioridadNota?.Contains("24", StringComparison.OrdinalIgnoreCase) == true;
 
+        var esVencida = EsSolicitudVencida(
+            tipoOrigen: "ODECO",
+            fechaSolicitud: reclamo.FechaReclamo,
+            estado: estado);
+
         return new SolicitudBandejaDto(
             Id: $"ODECO-{reclamo.Folio}",
             TipoOrigen: "ODECO",
             Estado: estado,
             EsUrgente: esUrgente,
+            EsVencida: esVencida,
             RegistroSocio: socio.RegistroSocio,
             NombreCliente: socio.Nombre,
             Direccion: socio.Direccion,
@@ -77,6 +87,21 @@ public static class SolicitudMapper
             Latitud: medidor?.Latitud,
             Longitud: medidor?.Longitud);
     }
+
+    private static bool EsSolicitudVencida(string tipoOrigen, DateTime fechaSolicitud, string estado)
+    {
+        if (!estado.Equals("Pendiente", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var ahora = DateTime.Now;
+
+        return tipoOrigen.ToUpperInvariant() switch
+        {
+            "ODECO" => fechaSolicitud.AddHours(24) < ahora,
+            "LECTURA" => fechaSolicitud.AddMonths(1) < ahora,
+            _ => false
+        };
+    }
 }
 
 public static class EjecucionMapper
@@ -84,8 +109,8 @@ public static class EjecucionMapper
     public static EjecucionCambio ToEntity(EjecucionCambioRequestDto dto) =>
         new()
         {
-            TipoOrigen = dto.TipoOrigen,
-            IdOrigen = dto.IdOrigen,
+            TipoOrigen = dto.TipoOrigen.Trim().ToUpperInvariant(),
+            IdOrigen = dto.IdOrigen.Trim(),
             IdUsuarioApp = dto.IdUsuarioApp,
             FechaHoraEjecucion = dto.FechaHoraEjecucion,
             NumeroMedidorRetirado = dto.NumeroMedidorRetirado,
@@ -113,13 +138,13 @@ public static class RutaMapper
     public static DetalleRuta ToEntity(DetalleRutaRequestDto dto) =>
         new()
         {
-            TipoOrigen = dto.TipoOrigen,
-            IdOrigen = dto.IdOrigen,
+            TipoOrigen = dto.TipoOrigen.Trim().ToUpperInvariant(),
+            IdOrigen = dto.IdOrigen.Trim(),
             OrdenVisita = dto.OrdenVisita,
             Estado = "Pendiente",
-            SolicitudId = dto.SolicitudId,
-            NombreCliente = dto.NombreCliente,
-            Direccion = dto.Direccion,
+            SolicitudId = dto.SolicitudId.Trim(),
+            NombreCliente = dto.NombreCliente.Trim(),
+            Direccion = dto.Direccion.Trim(),
             Latitud = dto.Latitud,
             Longitud = dto.Longitud
         };

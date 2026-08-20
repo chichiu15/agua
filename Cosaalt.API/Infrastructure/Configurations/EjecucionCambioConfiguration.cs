@@ -17,7 +17,9 @@ public class EjecucionCambioConfiguration : IEntityTypeConfiguration<EjecucionCa
         builder.Property(e => e.FechaHoraEjecucion).HasColumnName("FechaHoraEjecucion");
         builder.Property(e => e.NumeroMedidorRetirado).HasColumnName("NroMedidorRetirado").HasMaxLength(30);
         builder.Property(e => e.MarcaRetirado).HasColumnName("MarcaRetirado").HasMaxLength(50);
-        builder.Property(e => e.LecturaRetiro).HasColumnName("LecturaRetiro");
+        builder.Property(e => e.LecturaRetiro)
+    .HasColumnName("LecturaRetiro")
+    .HasPrecision(18, 2);
         builder.Property(e => e.IdMotivo).HasColumnName("IdMotivo");
         builder.Property(e => e.NumeroMedidorInstalado).HasColumnName("NroMedidorInstalado").HasMaxLength(30);
         builder.Property(e => e.MarcaInstalado).HasColumnName("MarcaInstalado").HasMaxLength(50);

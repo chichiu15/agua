@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../domain/entities/tecnico.dart';
 import '../../presentation/controllers/solicitud_controller.dart';
 import 'armar_recorrido_scaffold.dart';
@@ -17,19 +18,32 @@ class Paso3AsignarTecnicoScreen extends ConsumerStatefulWidget {
 
 class _Paso3AsignarTecnicoScreenState
     extends ConsumerState<Paso3AsignarTecnicoScreen> {
-  int? _tecnicoSeleccionado;
+  int? _usuarioDestinoSeleccionado;
+  bool _asignadoAMi = false;
 
   void _asignarme() {
+    final currentUser = ref.read(authControllerProvider).user;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay usuario autenticado.'),
+          backgroundColor: AppColors.odecoRed,
+        ),
+      );
+      return;
+    }
+
     setState(() {
-      _tecnicoSeleccionado = 0;
+      _usuarioDestinoSeleccionado = currentUser.id;
+      _asignadoAMi = true;
     });
   }
 
   Future<void> _confirmarAsignacion() async {
-    if (_tecnicoSeleccionado == null) return;
+    if (_usuarioDestinoSeleccionado == null) return;
 
     final controller = ref.read(solicitudControllerProvider.notifier);
-    final exito = await controller.asignarRuta(_tecnicoSeleccionado!);
+    final exito = await controller.asignarRuta(_usuarioDestinoSeleccionado!);
 
     if (!mounted) return;
 
@@ -37,7 +51,7 @@ class _Paso3AsignarTecnicoScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Asignación confirmada correctamente.'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.successGreen,
         ),
       );
       context.go('/asignador');
@@ -46,7 +60,7 @@ class _Paso3AsignarTecnicoScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error ?? 'Error al asignar ruta.'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.odecoRed,
         ),
       );
     }
@@ -66,9 +80,10 @@ class _Paso3AsignarTecnicoScreenState
       primaryLabel: solicitudState.isAsignando
           ? 'ASIGNANDO...'
           : 'CONFIRMAR ASIGNACIÓN',
-      primaryOnPressed: (_tecnicoSeleccionado != null && !solicitudState.isAsignando)
-          ? _confirmarAsignacion
-          : null,
+      primaryOnPressed:
+          (_usuarioDestinoSeleccionado != null && !solicitudState.isAsignando)
+              ? _confirmarAsignacion
+              : null,
       body: Column(
         children: [
           Padding(
@@ -77,13 +92,21 @@ class _Paso3AsignarTecnicoScreenState
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _asignarme,
-                icon: const Icon(Icons.person_add, size: 20),
-                label: const Text(
-                  'Asignarme a mí',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                icon: Icon(
+                  _asignadoAMi ? Icons.check_circle : Icons.person_add,
+                  size: 20,
+                ),
+                label: Text(
+                  _asignadoAMi ? 'Asignado a mí' : 'Asignarme a mí',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.actionBlue,
+                  backgroundColor: _asignadoAMi
+                      ? AppColors.primaryGreen
+                      : AppColors.actionBlue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -125,20 +148,19 @@ class _Paso3AsignarTecnicoScreenState
                         itemCount: tecnicos.length,
                         itemBuilder: (context, index) {
                           final tecnico = tecnicos[index];
-                          final isSelected =
-                              _tecnicoSeleccionado == tecnico.id;
-                          final isAssignedSelf = _tecnicoSeleccionado == 0;
+                          final isSelected = !_asignadoAMi &&
+                              _usuarioDestinoSeleccionado == tecnico.id;
                           final ocupado = tecnico.tieneRutaAsignada;
 
                           return _TecnicoCard(
                             tecnico: tecnico,
-                            isSelected: isSelected ||
-                                (isAssignedSelf && tecnico.activo && !ocupado),
+                            isSelected: isSelected,
                             ocupado: ocupado,
                             onTap: (tecnico.activo && !ocupado)
                                 ? () {
                                     setState(() {
-                                      _tecnicoSeleccionado = tecnico.id;
+                                      _usuarioDestinoSeleccionado = tecnico.id;
+                                      _asignadoAMi = false;
                                     });
                                   }
                                 : null,

@@ -3,10 +3,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../../../core/config/api_config.dart';
+import '../../../auth/data/repositories/api_auth_repository.dart';
+import '../../domain/entities/ruta_asignada.dart';
 import '../../domain/entities/solicitud.dart';
 import '../../domain/entities/tecnico.dart';
 import '../../domain/repositories/solicitud_repository.dart';
-import '../../../auth/data/repositories/api_auth_repository.dart';
 
 class ApiSolicitudRepository implements SolicitudRepository {
   ApiSolicitudRepository({ApiAuthRepository? authRepository})
@@ -29,13 +30,15 @@ class ApiSolicitudRepository implements SolicitudRepository {
     ).replace(queryParameters: filtro != null ? {'filtro': filtro} : null);
 
     final response = await http.get(uri, headers: await _headers());
-
     if (response.statusCode != 200) {
-      throw const SolicitudException('Error al obtener solicitudes.');
+      throw SolicitudException(
+        _leerMensajeError(response, fallback: 'Error al obtener solicitudes.'),
+      );
     }
 
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    return SolicitudesResponse.fromJson(data);
+    return SolicitudesResponse.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   @override
@@ -45,9 +48,10 @@ class ApiSolicitudRepository implements SolicitudRepository {
     );
 
     final response = await http.get(uri, headers: await _headers());
-
     if (response.statusCode != 200) {
-      throw const SolicitudException('Error al obtener técnicos.');
+      throw SolicitudException(
+        _leerMensajeError(response, fallback: 'Error al obtener técnicos.'),
+      );
     }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -87,7 +91,68 @@ class ApiSolicitudRepository implements SolicitudRepository {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw const SolicitudException('Error al asignar la ruta.');
+      throw SolicitudException(
+        _leerMensajeError(response, fallback: 'Error al asignar la ruta.'),
+      );
     }
+  }
+
+  @override
+  Future<List<RutaAsignada>> obtenerRutasTecnico(
+    int idTecnico, {
+    DateTime? fecha,
+  }) async {
+    final query = <String, String>{};
+    if (fecha != null) {
+      query['fecha'] =
+          '${fecha.year.toString().padLeft(4, '0')}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}';
+    }
+
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}${ApiConfig.rutasEndpoint}/tecnico/$idTecnico',
+    ).replace(queryParameters: query.isEmpty ? null : query);
+
+    final response = await http.get(uri, headers: await _headers());
+    if (response.statusCode != 200) {
+      throw SolicitudException(
+        _leerMensajeError(response, fallback: 'Error al obtener las rutas del técnico.'),
+      );
+    }
+
+    return RutasTecnicoResponse.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    ).rutas;
+  }
+
+  @override
+  Future<RutaAsignada> obtenerRutaPorId(int idAsignacion) async {
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}${ApiConfig.rutasEndpoint}/$idAsignacion',
+    );
+
+    final response = await http.get(uri, headers: await _headers());
+    if (response.statusCode != 200) {
+      throw SolicitudException(
+        _leerMensajeError(response, fallback: 'Error al obtener el detalle de la ruta.'),
+      );
+    }
+
+    return RutaAsignada.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
+  String _leerMensajeError(
+    http.Response response, {
+    required String fallback,
+  }) {
+    try {
+      final body = jsonDecode(response.body);
+      if (body is Map<String, dynamic>) {
+        final mensaje = body['mensaje'] ?? body['message'] ?? body['title'];
+        if (mensaje is String && mensaje.trim().isNotEmpty) return mensaje;
+      }
+    } catch (_) {}
+    return fallback;
   }
 }
