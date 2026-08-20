@@ -13,52 +13,24 @@ public class RutasController : ControllerBase
     public RutasController(RutaService service) => _service = service;
 
     [HttpPost("asignar")]
-    public async Task<IActionResult> Asignar(
-        [FromBody] AsignarRutaRequestDto request)
+    public async Task<IActionResult> Asignar([FromBody] AsignarRutaRequestDto request)
     {
-        try
-        {
-            var result = await _service.AsignarAsync(request);
-
-            return Created(
-                $"/api/rutas/{result.IdAsignacion}",
-                result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new
-            {
-                mensaje = ex.Message
-            });
-        }
+        var result = await _service.AsignarAsync(request);
+        return Created($"/api/rutas/{result.IdAsignacion}", result);
     }
 
     [HttpGet("tecnico/{idTecnico:int}")]
-    public async Task<IActionResult> ObtenerPorTecnico(
-        int idTecnico,
-        [FromQuery] DateTime? fecha)
+    public async Task<IActionResult> ObtenerPorTecnico(int idTecnico, [FromQuery] DateTime? fecha)
     {
-        var result =
-            await _service.ObtenerPorTecnicoAsync(
-                idTecnico,
-                fecha);
-
+        var result = await _service.ObtenerPorTecnicoAsync(idTecnico, fecha);
         return Ok(result);
     }
 
     [HttpGet("{idAsignacion:int}")]
-    public async Task<IActionResult> ObtenerPorId(
-        int idAsignacion)
+    public async Task<IActionResult> ObtenerPorId(int idAsignacion)
     {
-        var result =
-            await _service.ObtenerPorIdAsync(idAsignacion);
-
-        if (result is null)
-            return NotFound(new
-            {
-                mensaje = "Ruta no encontrada."
-            });
-
+        var result = await _service.ObtenerPorIdAsync(idAsignacion);
+        if (result is null) return NotFound();
         return Ok(result);
     }
 }

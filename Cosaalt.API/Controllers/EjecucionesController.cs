@@ -10,20 +10,12 @@ public class EjecucionesController : ControllerBase
 {
     private readonly EjecucionService _ejecucionService;
 
-    public EjecucionesController(EjecucionService ejecucionService) =>
-        _ejecucionService = ejecucionService;
+    public EjecucionesController(EjecucionService ejecucionService) => _ejecucionService = ejecucionService;
 
     [HttpPost]
     public async Task<IActionResult> Registrar([FromBody] EjecucionCambioRequestDto request)
     {
-        try
-        {
-            var result = await _ejecucionService.RegistrarAsync(request);
-            return Created($"/api/ejecuciones/{result.Id}", result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { mensaje = ex.Message });
-        }
+        var result = await _ejecucionService.RegistrarAsync(request);
+        return Created($"/api/ejecuciones/{result.Id}", result);
     }
 }
