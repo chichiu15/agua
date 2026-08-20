@@ -19,12 +19,35 @@ public class SqlUsuarioRepository : IUsuarioRepository
 
     public async Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync()
     {
-        return await _context.UsuariosApp
+        var hoy = DateTime.Today;
+
+        var tecnicos = await _context.UsuariosApp
             .AsNoTracking()
-            .Where(u => u.Rol == "tecnico" && u.Activo)
+            .Where(u => u.Rol == "tecnico")
             .OrderBy(u => u.NombreCompleto)
-            .Select(u => new TecnicoDto(u.Id, u.NombreCompleto, u.Rol, u.Activo))
             .ToListAsync();
+
+        var idsTecnicos = tecnicos.Select(t => t.Id).ToList();
+
+        var tecnicosConRuta = await _context.AsignacionesRuta
+            .AsNoTracking()
+            .Where(a => idsTecnicos.Contains(a.IdUsuarioApp)
+                && a.FechaAsignacion.Date == hoy
+                && (a.Estado == "Planificado" || a.Estado == "EnCurso"))
+            .Select(a => a.IdUsuarioApp)
+            .Distinct()
+            .ToListAsync();
+
+        var tieneRuta = tecnicosConRuta.ToHashSet();
+
+        return tecnicos
+            .Select(t => new TecnicoDto(
+                t.Id,
+                t.NombreCompleto,
+                t.Rol,
+                t.Activo,
+                tieneRuta.Contains(t.Id)))
+            .ToList();
     }
 }
 
