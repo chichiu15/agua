@@ -6,6 +6,7 @@ class Solicitud {
     required this.tipoOrigen,
     required this.estado,
     required this.esUrgente,
+    required this.esVencida,
     required this.registroSocio,
     required this.nombreCliente,
     required this.direccion,
@@ -29,6 +30,7 @@ class Solicitud {
   final String tipoOrigen;
   final String estado;
   final bool esUrgente;
+  final bool esVencida;
   final int registroSocio;
   final String nombreCliente;
   final String direccion;
@@ -48,14 +50,17 @@ class Solicitud {
   final double? longitud;
 
   TipoSolicitud get tipo =>
-      tipoOrigen == 'ODECO' ? TipoSolicitud.odeco : TipoSolicitud.lectura;
+      tipoOrigen.toUpperCase() == 'ODECO'
+          ? TipoSolicitud.odeco
+          : TipoSolicitud.lectura;
 
   factory Solicitud.fromJson(Map<String, dynamic> json) {
     return Solicitud(
       id: json['id'] as String,
       tipoOrigen: json['tipoOrigen'] as String,
       estado: json['estado'] as String,
-      esUrgente: json['esUrgente'] as bool,
+      esUrgente: json['esUrgente'] as bool? ?? false,
+      esVencida: json['esVencida'] as bool? ?? false,
       registroSocio: json['registroSocio'] as int,
       nombreCliente: json['nombreCliente'] as String,
       direccion: json['direccion'] as String,
@@ -108,7 +113,9 @@ class SolicitudesResponse {
 
   factory SolicitudesResponse.fromJson(Map<String, dynamic> json) {
     return SolicitudesResponse(
-      resumen: DashboardResumen.fromJson(json['resumen'] as Map<String, dynamic>),
+      resumen: DashboardResumen.fromJson(
+        json['resumen'] as Map<String, dynamic>,
+      ),
       solicitudes: (json['solicitudes'] as List)
           .map((s) => Solicitud.fromJson(s as Map<String, dynamic>))
           .toList(),

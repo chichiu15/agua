@@ -5,131 +5,196 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/dashboard_widgets.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../recorrido/presentation/controllers/solicitud_controller.dart';
 
-class AsignadorDashboardScreen extends ConsumerWidget {
+class AsignadorDashboardScreen extends ConsumerStatefulWidget {
   const AsignadorDashboardScreen({super.key});
+
+  @override
+  ConsumerState<AsignadorDashboardScreen> createState() =>
+      _AsignadorDashboardScreenState();
+}
+
+class _AsignadorDashboardScreenState
+    extends ConsumerState<AsignadorDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => ref.read(solicitudControllerProvider.notifier).cargarDatos(),
+    );
+  }
 
   void _comingSoon(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$feature se implementará en el siguiente sprint.'),
+        content: Text('$feature se implementará en el módulo correspondiente.'),
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final solicitudState = ref.watch(solicitudControllerProvider);
+    final resumen = solicitudState.resumen;
+
     return Scaffold(
       appBar: CosaaltAppBar(
         onLogout: () {
           ref.read(authControllerProvider.notifier).logout();
         },
       ),
-
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const Text(
-              'Solicitudes Por Hoy',
-              style: TextStyle(
-                color: AppColors.darkBlue,
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Valores MOCK solamente para Sprint 1.
-            const Row(
-              children: [
-                SummaryMetricCard(
-                  value: '12',
-                  label: 'ODECO',
-                  valueColor: AppColors.odecoRed,
+        child: RefreshIndicator(
+          onRefresh: () =>
+              ref.read(solicitudControllerProvider.notifier).cargarDatos(),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
+              const Text(
+                'Solicitudes Por Hoy',
+                style: TextStyle(
+                  color: AppColors.darkBlue,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
                 ),
-                SizedBox(width: 10),
-                SummaryMetricCard(value: '35', label: 'Lectura'),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.lightBlue,
-                borderRadius: BorderRadius.circular(10),
               ),
-              child: const Column(
+              const SizedBox(height: 12),
+              Row(
                 children: [
-                  Text(
-                    '34',
-                    style: TextStyle(
-                      color: AppColors.primaryGreen,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 31,
-                      height: 1,
-                    ),
+                  SummaryMetricCard(
+                    value: solicitudState.isLoading && resumen == null
+                        ? '…'
+                        : '${resumen?.odecoUrgentes ?? 0}',
+                    label: 'ODECO',
+                    valueColor: AppColors.odecoRed,
                   ),
-                  SizedBox(height: 7),
-                  Text(
-                    'COMPLETADAS HOY',
-                    style: TextStyle(
-                      color: AppColors.primaryGreen,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
+                  const SizedBox(width: 10),
+                  SummaryMetricCard(
+                    value: solicitudState.isLoading && resumen == null
+                        ? '…'
+                        : '${resumen?.lecturasDelMes ?? 0}',
+                    label: 'Lectura',
                   ),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 22),
-
-            const Text(
-              'Atajos Rápidos',
-              style: TextStyle(
-                color: AppColors.darkBlue,
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.lightBlue,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      solicitudState.isLoading && resumen == null
+                          ? '…'
+                          : '${resumen?.completadasHoy ?? 0}',
+                      style: const TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 31,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    const Text(
+                      'COMPLETADAS HOY',
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            const SizedBox(height: 10),
-
-            QuickActionTile(
-              icon: Icons.group_add_outlined,
-              label: 'Asignar Ruta a Trabajadores',
-              onTap: () => context.go('/asignador/recorrido/paso1'),
-            ),
-
-            const SizedBox(height: 8),
-
-            QuickActionTile(
-              icon: Icons.people_alt_outlined,
-              label: 'Ver Asignaciones a Trabajadores',
-              onTap: () => _comingSoon(context, 'Asignaciones'),
-            ),
-
-            const SizedBox(height: 8),
-
-            QuickActionTile(
-              icon: Icons.route_outlined,
-              label: 'Ver Mi Recorrido de Trabajo',
-              onTap: () => _comingSoon(context, 'Mi recorrido'),
-            ),
-          ],
+              if (solicitudState.errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.odecoRed.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.odecoRed.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    solicitudState.errorMessage!,
+                    style: const TextStyle(color: AppColors.odecoRed),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  SummaryMetricCard(
+                    value: solicitudState.isLoading
+                        ? '…'
+                        : '${solicitudState.tecnicos.where((t) => t.activo).length}',
+                    label: 'Técnicos activos',
+                    valueColor: AppColors.darkBlue,
+                  ),
+                  const SizedBox(width: 10),
+                  SummaryMetricCard(
+                    value: solicitudState.isLoading
+                        ? '…'
+                        : '${solicitudState.tecnicos.where((t) => t.activo && t.tieneRutaAsignada).length}',
+                    label: 'En campo',
+                    valueColor: AppColors.primaryGreen,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 22),
+              const Text(
+                'Atajos Rápidos',
+                style: TextStyle(
+                  color: AppColors.darkBlue,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 10),
+              QuickActionTile(
+                icon: Icons.group_add_outlined,
+                label: 'Asignar Ruta a Trabajadores',
+                onTap: () => context.go('/asignador/recorrido/paso1'),
+              ),
+              const SizedBox(height: 8),
+              QuickActionTile(
+                icon: Icons.people_alt_outlined,
+                label: 'Ver Asignaciones a Trabajadores',
+                onTap: () => context.go('/asignador/monitoreo'),
+              ),
+              const SizedBox(height: 8),
+              QuickActionTile(
+                icon: Icons.route_outlined,
+                label: 'Ver Mi Recorrido de Trabajo',
+                onTap: () => _comingSoon(context, 'Mi recorrido'),
+              ),
+            ],
+          ),
         ),
       ),
-
       bottomNavigationBar: CosaaltBottomNav(
         currentIndex: 0,
         onTap: (index) {
-          if (index == 0) return;
-
-          _comingSoon(context, 'Esta sección');
+          switch (index) {
+            case 0:
+              return;
+            case 1:
+              context.go('/asignador/recorrido/paso1');
+              return;
+            case 2:
+              _comingSoon(context, 'Historial');
+              return;
+            case 3:
+              _comingSoon(context, 'Sincronización');
+              return;
+          }
         },
       ),
     );

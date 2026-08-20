@@ -1,99 +1,184 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/domain/entities/app_user.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/ejecucion_cambio/presentation/screens/cambio_medidor_screen.dart';
 import '../../features/home/presentation/screens/asignador_dashboard_screen.dart';
 import '../../features/home/presentation/screens/tecnico_dashboard_screen.dart';
+import '../../features/monitoreo/presentation/screens/detalle_monitoreo_ruta_screen.dart';
+import '../../features/monitoreo/presentation/screens/monitoreo_tecnicos_screen.dart';
 import '../../features/recorrido/presentation/screens/paso1_seleccionar_screen.dart';
 import '../../features/recorrido/presentation/screens/paso2_reordenar_screen.dart';
 import '../../features/recorrido/presentation/screens/paso3_asignar_tecnico_screen.dart';
 
 abstract final class AppRoutes {
   static const String login = '/login';
+
   static const String asignadorHome = '/asignador';
   static const String tecnicoHome = '/tecnico';
+
+  static const String cambioMedidor = '/trabajo/cambio/:solicitudId';
+
+  static const String monitoreo = '/asignador/monitoreo';
+  static const String monitoreoRuta = '/asignador/monitoreo/ruta/:id';
+
   static const String recorridoPaso1 = '/asignador/recorrido/paso1';
   static const String recorridoPaso2 = '/asignador/recorrido/paso2';
   static const String recorridoPaso3 = '/asignador/recorrido/paso3';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final currentUser = ref.watch(
-    authControllerProvider.select((state) => state.user),
-  );
-
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: AppRoutes.login,
+
     redirect: (context, state) {
-      final isLoginRoute = state.matchedLocation == AppRoutes.login;
+      final currentUser = ref.read(authControllerProvider).user;
 
-      // No hay usuario autenticado.
+      final location = state.matchedLocation;
+      final isLoginRoute = location == AppRoutes.login;
+
+      // ============================================================
+      // USUARIO NO AUTENTICADO
+      // ============================================================
+
       if (currentUser == null) {
-        if (isLoginRoute) {
-          return null;
-        }
-
-        return AppRoutes.login;
+        return isLoginRoute ? null : AppRoutes.login;
       }
 
-      // Ya inició sesión y todavía está en Login.
+      // ============================================================
+      // USUARIO AUTENTICADO QUE SIGUE EN LOGIN
+      // ============================================================
+
       if (isLoginRoute) {
-        switch (currentUser.role) {
-          case UserRole.asignador:
-            return AppRoutes.asignadorHome;
-
-          case UserRole.tecnico:
-            return AppRoutes.tecnicoHome;
-        }
+        return switch (currentUser.role) {
+          UserRole.asignador => AppRoutes.asignadorHome,
+          UserRole.tecnico => AppRoutes.tecnicoHome,
+        };
       }
 
-      // Evita que un técnico entre al módulo del asignador.
-      if (state.matchedLocation.startsWith(AppRoutes.asignadorHome) &&
+      // ============================================================
+      // PROTECCIÓN DE RUTAS DEL ASIGNADOR
+      // ============================================================
+
+      if (location.startsWith(AppRoutes.asignadorHome) &&
           currentUser.role != UserRole.asignador) {
         return AppRoutes.tecnicoHome;
       }
 
-      // Evita que un asignador entre al módulo del técnico.
-      if (state.matchedLocation.startsWith(AppRoutes.tecnicoHome) &&
+      // ============================================================
+      // PROTECCIÓN DE RUTAS DEL TÉCNICO
+      // ============================================================
+
+      if (location.startsWith(AppRoutes.tecnicoHome) &&
           currentUser.role != UserRole.tecnico) {
         return AppRoutes.asignadorHome;
       }
 
       return null;
     },
+
     routes: [
+      // ============================================================
+      // LOGIN
+      // ============================================================
+
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) {
           return const LoginScreen();
         },
       ),
+
+      // ============================================================
+      // DASHBOARD ASIGNADOR
+      // ============================================================
+
       GoRoute(
         path: AppRoutes.asignadorHome,
         builder: (context, state) {
           return const AsignadorDashboardScreen();
         },
       ),
+
+      // ============================================================
+      // DASHBOARD TÉCNICO
+      // ============================================================
+
       GoRoute(
         path: AppRoutes.tecnicoHome,
         builder: (context, state) {
           return const TecnicoDashboardScreen();
         },
       ),
+
+      // ============================================================
+      // CAMBIO DE MEDIDOR
+      // ============================================================
+
+      GoRoute(
+        path: AppRoutes.cambioMedidor,
+        builder: (context, state) {
+          final solicitudId = state.pathParameters['solicitudId'];
+
+          if (solicitudId == null || solicitudId.trim().isEmpty) {
+            return const TecnicoDashboardScreen();
+          }
+
+          return CambioMedidorScreen(
+            solicitudId: solicitudId.trim(),
+          );
+        },
+      ),
+
+      // ============================================================
+      // MONITOREO
+      // ============================================================
+
+      GoRoute(
+        path: AppRoutes.monitoreo,
+        builder: (context, state) {
+          return const MonitoreoTecnicosScreen();
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutes.monitoreoRuta,
+        builder: (context, state) {
+          final id = int.tryParse(
+            state.pathParameters['id'] ?? '',
+          );
+
+          if (id == null) {
+            return const AsignadorDashboardScreen();
+          }
+
+          return DetalleMonitoreoRutaScreen(
+            idAsignacion: id,
+          );
+        },
+      ),
+
+      // ============================================================
+      // RECORRIDOS
+      // ============================================================
+
       GoRoute(
         path: AppRoutes.recorridoPaso1,
         builder: (context, state) {
           return const Paso1SeleccionarSolicitudesScreen();
         },
       ),
+
       GoRoute(
         path: AppRoutes.recorridoPaso2,
         builder: (context, state) {
           return const Paso2ReordenarScreen();
         },
       ),
+
       GoRoute(
         path: AppRoutes.recorridoPaso3,
         builder: (context, state) {
@@ -102,4 +187,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  // ==============================================================
+  // CAMBIOS DE AUTENTICACIÓN
+  //
+  // IMPORTANTE:
+  //
+  // No refrescamos GoRouter en el mismo instante en que Riverpod
+  // está notificando el cambio de estado.
+  //
+  // LoginScreen también observa authControllerProvider y se marca
+  // para reconstrucción. Si GoRouter modifica el Navigator durante
+  // ese mismo ciclo pueden aparecer:
+  //
+  //   _dependents.isEmpty
+  //   Tried to build dirty widget in the wrong build scope
+  //   Duplicate GlobalKeys detected in widget tree
+  //
+  // Por eso esperamos al siguiente frame.
+  // ==============================================================
+
+  ref.listen<AppUser?>(
+    authControllerProvider.select(
+      (state) => state.user,
+    ),
+    (previous, next) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        router.refresh();
+      });
+    },
+  );
+
+  ref.onDispose(router.dispose);
+
+  return router;
 });

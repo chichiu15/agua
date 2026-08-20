@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/dashboard_widgets.dart';
@@ -11,9 +12,73 @@ class TecnicoDashboardScreen extends ConsumerWidget {
   void _comingSoon(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$feature se implementará en el siguiente sprint.'),
+        content: Text(
+          '$feature se implementará con el módulo de Ruta del Día.',
+        ),
       ),
     );
+  }
+
+  Future<void> _abrirFormularioPrueba(BuildContext context) async {
+    String solicitudId = 'LEC-1001';
+
+    final id = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Probar Cambio de Medidor'),
+          content: TextFormField(
+            initialValue: solicitudId,
+            autofocus: true,
+            textCapitalization: TextCapitalization.characters,
+            decoration: const InputDecoration(
+              labelText: 'ID de solicitud',
+              hintText: 'LEC-1001 u ODECO-2001',
+            ),
+            onChanged: (value) {
+              solicitudId = value;
+            },
+            onFieldSubmitted: (value) {
+              final idLimpio = value.trim();
+
+              if (idLimpio.isNotEmpty) {
+                Navigator.of(dialogContext).pop(idLimpio);
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final idLimpio = solicitudId.trim();
+
+                if (idLimpio.isEmpty) {
+                  return;
+                }
+
+                Navigator.of(dialogContext).pop(idLimpio);
+              },
+              child: const Text('Abrir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (id == null || id.trim().isEmpty) {
+      return;
+    }
+
+    context.go('/trabajo/cambio/${id.trim()}');
   }
 
   @override
@@ -24,7 +89,6 @@ class TecnicoDashboardScreen extends ConsumerWidget {
           ref.read(authControllerProvider.notifier).logout();
         },
       ),
-
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -37,26 +101,29 @@ class TecnicoDashboardScreen extends ConsumerWidget {
                 fontSize: 16,
               ),
             ),
-
             const SizedBox(height: 12),
 
-            // Valores MOCK solamente para Sprint 1.
             const Row(
               children: [
                 SummaryMetricCard(
-                  value: '1',
+                  value: '—',
                   label: 'ODECO',
                   valueColor: AppColors.odecoRed,
                 ),
                 SizedBox(width: 10),
-                SummaryMetricCard(value: '3', label: 'Lectura'),
+                SummaryMetricCard(
+                  value: '—',
+                  label: 'Lectura',
+                ),
               ],
             ),
 
             const SizedBox(height: 10),
 
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(
+                vertical: 14,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.lightBlue,
                 borderRadius: BorderRadius.circular(10),
@@ -64,7 +131,7 @@ class TecnicoDashboardScreen extends ConsumerWidget {
               child: const Column(
                 children: [
                   Text(
-                    '0',
+                    '—',
                     style: TextStyle(
                       color: AppColors.primaryGreen,
                       fontWeight: FontWeight.w800,
@@ -101,18 +168,37 @@ class TecnicoDashboardScreen extends ConsumerWidget {
             QuickActionTile(
               icon: Icons.route_outlined,
               label: 'Ver Mi Recorrido de Trabajo',
-              onTap: () => _comingSoon(context, 'Ruta del día'),
+              onTap: () {
+                _comingSoon(
+                  context,
+                  'Ruta del día',
+                );
+              },
+            ),
+
+            const SizedBox(height: 8),
+
+            QuickActionTile(
+              icon: Icons.build_circle_outlined,
+              label: 'DESARROLLO · Probar Cambio de Medidor',
+              onTap: () {
+                _abrirFormularioPrueba(context);
+              },
             ),
           ],
         ),
       ),
-
       bottomNavigationBar: CosaaltBottomNav(
         currentIndex: 0,
         onTap: (index) {
-          if (index == 0) return;
+          if (index == 0) {
+            return;
+          }
 
-          _comingSoon(context, 'Esta sección');
+          _comingSoon(
+            context,
+            'Esta sección',
+          );
         },
       ),
     );
