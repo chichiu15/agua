@@ -6,7 +6,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 class EvidenciaLocalService {
-  EvidenciaLocalService({ImagePicker? picker}) : _picker = picker ?? ImagePicker();
+  EvidenciaLocalService({ImagePicker? picker})
+    : _picker = picker ?? ImagePicker();
 
   final ImagePicker _picker;
 
@@ -20,10 +21,7 @@ class EvidenciaLocalService {
         ? ImageSource.camera
         : ImageSource.gallery;
 
-    final picked = await _picker.pickImage(
-      source: source,
-      imageQuality: 95,
-    );
+    final picked = await _picker.pickImage(source: source, imageQuality: 95);
 
     if (picked == null) return null;
 

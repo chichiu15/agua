@@ -49,10 +49,9 @@ class Solicitud {
   final double? latitud;
   final double? longitud;
 
-  TipoSolicitud get tipo =>
-      tipoOrigen.toUpperCase() == 'ODECO'
-          ? TipoSolicitud.odeco
-          : TipoSolicitud.lectura;
+  TipoSolicitud get tipo => tipoOrigen.toUpperCase() == 'ODECO'
+      ? TipoSolicitud.odeco
+      : TipoSolicitud.lectura;
 
   factory Solicitud.fromJson(Map<String, dynamic> json) {
     return Solicitud(
@@ -103,10 +102,7 @@ class DashboardResumen {
 }
 
 class SolicitudesResponse {
-  const SolicitudesResponse({
-    required this.resumen,
-    required this.solicitudes,
-  });
+  const SolicitudesResponse({required this.resumen, required this.solicitudes});
 
   final DashboardResumen resumen;
   final List<Solicitud> solicitudes;

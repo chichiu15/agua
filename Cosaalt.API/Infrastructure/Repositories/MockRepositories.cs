@@ -82,6 +82,63 @@ public class MockEjecucionRepository : IEjecucionRepository
         var id = Interlocked.Increment(ref _nextId);
         return Task.FromResult(new EjecucionCambioResponseDto(id, "Ejecución registrada.", true));
     }
+
+    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? registroSocio = null)
+    {
+        var historial = new List<EjecucionHistorialDto>
+        {
+            new(
+                IdEjecucion: 5001,
+                TipoOrigen: "ODECO",
+                IdOrigen: "2001",
+                SolicitudId: "ODECO-2001",
+                FechaHoraEjecucion: DateTime.Today.AddHours(-2),
+                RegistroSocio: 42,
+                NombreCliente: "Juan Pérez García",
+                Direccion: "Av. Las Palmeras N° 120, Zona Sud",
+                NumeroMedidorRetirado: "14079823",
+                MarcaRetirado: "Elster",
+                LecturaRetiro: 8124.5m,
+                NumeroMedidorInstalado: "14208771",
+                MarcaInstalado: "Itrón",
+                Observaciones: "Estado: Instalado",
+                NombreTecnico: "Luis Mamani Condori",
+                MotivoDescripcion: "Empañado",
+                Evidencias:
+                [
+                    new EvidenciaHistorialDto("MedidorRetirado", "/uploads/2001/retirado.jpg"),
+                    new EvidenciaHistorialDto("MedidorNuevo", "/uploads/2001/nuevo.jpg")
+                ]),
+            new(
+                IdEjecucion: 5002,
+                TipoOrigen: "LECTURA",
+                IdOrigen: "1001",
+                SolicitudId: "LEC-1001",
+                FechaHoraEjecucion: DateTime.Today.AddHours(-1),
+                RegistroSocio: 17,
+                NombreCliente: "María Condori Vaca",
+                Direccion: "Calle Cochabamba N° 456",
+                NumeroMedidorRetirado: "90541236",
+                MarcaRetirado: "Actaris",
+                LecturaRetiro: 4210m,
+                NumeroMedidorInstalado: "91887720",
+                MarcaInstalado: "Elster",
+                Observaciones: "Estado: Nuevo",
+                NombreTecnico: "Carlos Rojas Mendoza",
+                MotivoDescripcion: "Destrozado",
+                Evidencias:
+                [
+                    new EvidenciaHistorialDto("MedidorRetirado", "/uploads/1001/retirado.jpg")
+                ])
+        };
+
+        if (registroSocio is int registro)
+        {
+            historial = historial.Where(h => h.RegistroSocio == registro).ToList();
+        }
+
+        return Task.FromResult<IReadOnlyList<EjecucionHistorialDto>>(historial);
+    }
 }
 
 public class MockUsuarioRepository : IUsuarioRepository
@@ -123,7 +180,9 @@ public class MockRutaRepository : IRutaRepository
             Direccion: d.Direccion,
             Latitud: d.Latitud,
             Longitud: d.Longitud,
-            EsUrgente: d.TipoOrigen == "ODECO")).ToList();
+            EsUrgente: d.TipoOrigen == "ODECO",
+            RegistroSocio: 100 + i,
+            NumeroMedidor: $"1420{i:0000}")).ToList();
 
         var ruta = new RutaAsignadaResponseDto(
             IdAsignacion: id,

@@ -8,7 +8,7 @@ public class MotivoCambioMedidorConfiguration : IEntityTypeConfiguration<MotivoC
 {
     public void Configure(EntityTypeBuilder<MotivoCambioMedidor> builder)
     {
-        builder.ToTable("MotivoCambioMedidor");
+        builder.ToTable("MotivoCambioMedidor", "medidores");
         builder.HasKey(m => m.Id);
         builder.Property(m => m.Id).HasColumnName("Id_motivo");
         builder.Property(m => m.Descripcion).HasColumnName("Descripcion").HasMaxLength(100);

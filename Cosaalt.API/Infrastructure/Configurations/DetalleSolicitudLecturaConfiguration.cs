@@ -8,7 +8,7 @@ public class DetalleSolicitudLecturaConfiguration : IEntityTypeConfiguration<Det
 {
     public void Configure(EntityTypeBuilder<DetalleSolicitudLectura> builder)
     {
-        builder.ToTable("DetalleSolicitudLectura");
+        builder.ToTable("DetalleSolicitudLectura", "medidores");
         builder.HasKey(d => d.Id);
         builder.Property(d => d.Id).HasColumnName("Id_detalle").ValueGeneratedNever();
         builder.Property(d => d.NumeroHoja).HasColumnName("Nro_hoja_detalle").HasMaxLength(30);

@@ -57,6 +57,7 @@ builder.Services.AddScoped<EjecucionService>();
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<RutaService>();
 builder.Services.AddScoped<SincronizacionService>();
+builder.Services.AddScoped<SolicitudVirtualService>();
 
 var app = builder.Build();
 
@@ -66,6 +67,7 @@ if (repositoryMode.Equals("Sql", StringComparison.OrdinalIgnoreCase))
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<CosaaltDbContext>();
+    await context.EnsureSchemasAsync();
     await DatabaseSeeder.SeedAsync(context);
 }
 

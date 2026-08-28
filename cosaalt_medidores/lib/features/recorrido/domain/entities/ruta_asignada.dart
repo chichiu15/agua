@@ -10,6 +10,8 @@ class DetalleRutaAsignada {
     this.latitud,
     this.longitud,
     required this.esUrgente,
+    this.registroSocio,
+    this.numeroMedidor,
   });
 
   final int id;
@@ -22,6 +24,8 @@ class DetalleRutaAsignada {
   final double? latitud;
   final double? longitud;
   final bool esUrgente;
+  final int? registroSocio;
+  final String? numeroMedidor;
 
   bool get completada => estado.toLowerCase() == 'completada';
 
@@ -37,6 +41,8 @@ class DetalleRutaAsignada {
       latitud: (json['latitud'] as num?)?.toDouble(),
       longitud: (json['longitud'] as num?)?.toDouble(),
       esUrgente: json['esUrgente'] as bool? ?? false,
+      registroSocio: json['registroSocio'] as int?,
+      numeroMedidor: json['numeroMedidor'] as String?,
     );
   }
 }
@@ -72,10 +78,13 @@ class RutaAsignada {
       fechaAsignacion: DateTime.parse(json['fechaAsignacion'] as String),
       estado: json['estado'] as String,
       totalParadas: json['totalParadas'] as int,
-      detalles: (json['detalles'] as List? ?? const [])
-          .map((d) => DetalleRutaAsignada.fromJson(d as Map<String, dynamic>))
-          .toList()
-        ..sort((a, b) => a.ordenVisita.compareTo(b.ordenVisita)),
+      detalles:
+          (json['detalles'] as List? ?? const [])
+              .map(
+                (d) => DetalleRutaAsignada.fromJson(d as Map<String, dynamic>),
+              )
+              .toList()
+            ..sort((a, b) => a.ordenVisita.compareTo(b.ordenVisita)),
     );
   }
 }

@@ -8,7 +8,7 @@ public class DetalleRutaConfiguration : IEntityTypeConfiguration<DetalleRuta>
 {
     public void Configure(EntityTypeBuilder<DetalleRuta> builder)
     {
-        builder.ToTable("DetalleRuta");
+        builder.ToTable("DetalleRuta", "medidores");
         builder.HasKey(d => d.Id);
         builder.Property(d => d.Id).HasColumnName("IdDetalle");
         builder.Property(d => d.IdAsignacion).HasColumnName("IdAsignacion");

@@ -13,7 +13,7 @@ import '../../domain/repositories/ejecucion_repository.dart';
 
 class EjecucionRepositoryImpl implements EjecucionRepository {
   EjecucionRepositoryImpl({ApiAuthRepository? authRepository})
-      : _authRepository = authRepository ?? ApiAuthRepository();
+    : _authRepository = authRepository ?? ApiAuthRepository();
 
   final ApiAuthRepository _authRepository;
 
@@ -45,9 +45,7 @@ class EjecucionRepositoryImpl implements EjecucionRepository {
 
   @override
   Future<List<MotivoCambio>> obtenerMotivos() async {
-    final uri = Uri.parse(
-      '${ApiConfig.baseUrl}${ApiConfig.motivosEndpoint}',
-    );
+    final uri = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.motivosEndpoint}');
 
     final response = await http.get(uri, headers: await _headers());
     if (response.statusCode != 200) {

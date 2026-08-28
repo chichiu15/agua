@@ -28,7 +28,9 @@ public record DetalleRutaResponseDto(
     string Direccion,
     double? Latitud,
     double? Longitud,
-    bool EsUrgente);
+    bool EsUrgente,
+    int? RegistroSocio,
+    string? NumeroMedidor);
 
 public record RutaAsignadaResponseDto(
     int IdAsignacion,

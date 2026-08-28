@@ -8,7 +8,7 @@ public class EjecucionCambioConfiguration : IEntityTypeConfiguration<EjecucionCa
 {
     public void Configure(EntityTypeBuilder<EjecucionCambio> builder)
     {
-        builder.ToTable("EjecucionCambio");
+        builder.ToTable("EjecucionCambio", "medidores");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("IdEjecucion");
         builder.Property(e => e.TipoOrigen).HasColumnName("TipoOrigen").HasMaxLength(20);

@@ -124,8 +124,20 @@ public static class RutaMapper
             Longitud = dto.Longitud
         };
 
-    public static DetalleRutaResponseDto ToResponse(DetalleRuta entity) =>
-        new(
+    public static DetalleRutaResponseDto ToResponse(
+        DetalleRuta entity,
+        IReadOnlyDictionary<string, (int? RegistroSocio, string? NumeroMedidor)>? resolucion = null)
+    {
+        int? registro = null;
+        string? medidor = null;
+
+        if (resolucion?.TryGetValue($"{entity.TipoOrigen}-{entity.IdOrigen}", out var r) == true)
+        {
+            registro = r.RegistroSocio;
+            medidor = r.NumeroMedidor;
+        }
+
+        return new DetalleRutaResponseDto(
             Id: entity.Id,
             SolicitudId: entity.SolicitudId,
             TipoOrigen: entity.TipoOrigen,
@@ -135,9 +147,15 @@ public static class RutaMapper
             Direccion: entity.Direccion,
             Latitud: entity.Latitud,
             Longitud: entity.Longitud,
-            EsUrgente: entity.TipoOrigen == "ODECO");
+            EsUrgente: entity.TipoOrigen == "ODECO",
+            RegistroSocio: registro,
+            NumeroMedidor: medidor);
+    }
 
-    public static RutaAsignadaResponseDto ToResponse(AsignacionRuta entity, string nombreTecnico) =>
+    public static RutaAsignadaResponseDto ToResponse(
+        AsignacionRuta entity,
+        string nombreTecnico,
+        IReadOnlyDictionary<string, (int? RegistroSocio, string? NumeroMedidor)>? resolucion = null) =>
         new(
             IdAsignacion: entity.Id,
             IdUsuarioTecnico: entity.IdUsuarioApp,
@@ -145,5 +163,8 @@ public static class RutaMapper
             FechaAsignacion: entity.FechaAsignacion,
             Estado: entity.Estado,
             TotalParadas: entity.Detalles.Count,
-            Detalles: entity.Detalles.OrderBy(d => d.OrdenVisita).Select(ToResponse).ToList());
+            Detalles: entity.Detalles
+                .OrderBy(d => d.OrdenVisita)
+                .Select(d => ToResponse(d, resolucion))
+                .ToList());
 }

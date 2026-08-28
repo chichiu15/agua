@@ -30,8 +30,8 @@ class MonitoreoState {
 
 final monitoreoControllerProvider =
     NotifierProvider<MonitoreoController, MonitoreoState>(
-  MonitoreoController.new,
-);
+      MonitoreoController.new,
+    );
 
 class MonitoreoController extends Notifier<MonitoreoState> {
   @override
@@ -71,10 +71,7 @@ class MonitoreoController extends Notifier<MonitoreoState> {
 
       state = state.copyWith(rutas: rutas, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
 }

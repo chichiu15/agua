@@ -7,5 +7,7 @@ abstract final class ApiConfig {
   static const String rutasEndpoint = '/api/rutas';
   static const String motivosEndpoint = '/api/catalogos/motivos';
   static const String ejecucionesEndpoint = '/api/ejecuciones';
+  static const String historialEndpoint = '/api/ejecuciones/historial';
   static const String evidenciasEndpoint = '/api/evidencias';
+  static const String sincronizacionEndpoint = '/api/sincronizacion/procesar-cambios';
 }

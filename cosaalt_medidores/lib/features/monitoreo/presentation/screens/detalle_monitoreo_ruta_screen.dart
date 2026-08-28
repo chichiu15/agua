@@ -9,10 +9,7 @@ import '../../../recorrido/domain/entities/ruta_asignada.dart';
 import '../../../recorrido/presentation/controllers/solicitud_controller.dart';
 
 class DetalleMonitoreoRutaScreen extends ConsumerWidget {
-  const DetalleMonitoreoRutaScreen({
-    required this.idAsignacion,
-    super.key,
-  });
+  const DetalleMonitoreoRutaScreen({required this.idAsignacion, super.key});
 
   final int idAsignacion;
 
@@ -144,10 +141,7 @@ class DetalleMonitoreoRutaScreen extends ConsumerWidget {
       ),
       bottomNavigationBar: CosaaltBottomNav(
         currentIndex: 0,
-        onTap: (index) {
-          if (index == 0) context.go('/asignador');
-          if (index == 1) context.go('/asignador/recorrido/paso1');
-        },
+        onTap: (index) => context.go('/asignador?tab=$index'),
       ),
     );
   }
@@ -207,7 +201,10 @@ class _DetalleCard extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: tipoColor.withValues(alpha: .10),
                         borderRadius: BorderRadius.circular(20),

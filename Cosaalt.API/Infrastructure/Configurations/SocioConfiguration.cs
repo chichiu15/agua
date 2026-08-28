@@ -8,7 +8,7 @@ public class SocioConfiguration : IEntityTypeConfiguration<Socio>
 {
     public void Configure(EntityTypeBuilder<Socio> builder)
     {
-        builder.ToTable("Socio");
+        builder.ToTable("Socio", "medidores");
         builder.HasKey(s => s.RegistroSocio);
         builder.Property(s => s.RegistroSocio).HasColumnName("Reg_soc").ValueGeneratedNever();
         builder.Property(s => s.CodigoCatastral).HasColumnName("Catastral_soc");

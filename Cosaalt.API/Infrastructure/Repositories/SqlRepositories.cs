@@ -1,5 +1,6 @@
 using Cosaalt.API.Application.DTOs;
 using Cosaalt.API.Application.Mappers;
+using Cosaalt.API.Domain.Entities;
 using Cosaalt.API.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -127,5 +128,121 @@ public class SqlEjecucionRepository : IEjecucionRepository
         _context.EjecucionesCambio.Add(entity);
         await _context.SaveChangesAsync();
         return EjecucionMapper.ToResponse(entity);
+    }
+
+    public async Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? registroSocio = null)
+    {
+        var ejecuciones = await _context.EjecucionesCambio
+            .AsNoTracking()
+            .Include(e => e.Usuario)
+            .Include(e => e.Motivo)
+            .Include(e => e.Evidencias)
+            .OrderByDescending(e => e.FechaHoraEjecucion)
+            .Take(100)
+            .ToListAsync();
+
+        var foliosOdeco = ejecuciones
+            .Where(e => e.TipoOrigen == "ODECO")
+            .Select(e => int.TryParse(e.IdOrigen, out var folio) ? folio : 0)
+            .Where(folio => folio > 0)
+            .Distinct()
+            .ToList();
+
+        var idsLectura = ejecuciones
+            .Where(e => e.TipoOrigen == "LECTURA")
+            .Select(e => int.TryParse(e.IdOrigen, out var id) ? id : 0)
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        var sociosOdeco = foliosOdeco.Count == 0
+            ? new Dictionary<int, Socio>()
+            : await ResolverSociosOdecoAsync(foliosOdeco);
+
+        var sociosLectura = idsLectura.Count == 0
+            ? new Dictionary<int, Socio>()
+            : await _context.DetallesSolicitudLectura
+                .AsNoTracking()
+                .Where(d => idsLectura.Contains(d.Id))
+                .Select(d => new { d.Id, d.Socio })
+                .ToListAsync()
+                .ContinueWith(t => t.Result.ToDictionary(x => x.Id, x => x.Socio));
+
+        var historial = ejecuciones.Select(e =>
+        {
+            Socio? socio = e.TipoOrigen == "ODECO"
+                ? (int.TryParse(e.IdOrigen, out var folio)
+                    ? sociosOdeco.GetValueOrDefault(folio)
+                    : null)
+                : (int.TryParse(e.IdOrigen, out var id)
+                    ? sociosLectura.GetValueOrDefault(id)
+                    : null);
+
+            return new EjecucionHistorialDto(
+                IdEjecucion: e.Id,
+                TipoOrigen: e.TipoOrigen,
+                IdOrigen: e.IdOrigen,
+                SolicitudId: $"{e.TipoOrigen}-{e.IdOrigen}",
+                FechaHoraEjecucion: e.FechaHoraEjecucion,
+                RegistroSocio: socio?.RegistroSocio,
+                NombreCliente: socio?.Nombre,
+                Direccion: socio?.Direccion,
+                NumeroMedidorRetirado: e.NumeroMedidorRetirado,
+                MarcaRetirado: e.MarcaRetirado,
+                LecturaRetiro: e.LecturaRetiro,
+                NumeroMedidorInstalado: e.NumeroMedidorInstalado,
+                MarcaInstalado: e.MarcaInstalado,
+                Observaciones: e.ObservacionesInstalacion,
+                NombreTecnico: e.Usuario?.NombreCompleto,
+                MotivoDescripcion: e.Motivo?.Descripcion,
+                Evidencias: e.Evidencias
+                    .Select(ev => new EvidenciaHistorialDto(ev.TipoFoto, ev.RutaArchivo))
+                    .ToList());
+        }).ToList();
+
+        if (registroSocio is int registro)
+        {
+            historial = historial.Where(h => h.RegistroSocio == registro).ToList();
+        }
+
+        return historial;
+    }
+
+    /// <summary>
+    /// Resuelve el Socio (de medidores.Socio) de cada reclamo ODECO, cruzando
+    /// dbo.Reclamos por CodRec -> Conexi�n.NomSoc con medidores.Socio.Nombre.
+    /// Es la misma fuente que genera las solicitudes (SolicitudVirtualService),
+    /// no medidores.ReclamosODECO.
+    /// </summary>
+    private async Task<Dictionary<int, Socio>> ResolverSociosOdecoAsync(List<int> folios)
+    {
+        var reclamos = await _context.Reclamos
+            .AsNoTracking()
+            .Include(r => r.Conexion)
+            .Where(r => folios.Contains(r.CodRec))
+            .ToListAsync();
+
+        var nombres = reclamos
+            .Select(r => r.Conexion?.NomSoc?.Trim())
+            .Where(n => !string.IsNullOrEmpty(n))
+            .Distinct()
+            .ToList();
+
+        var socios = nombres.Count == 0
+            ? new List<Socio>()
+            : await _context.Socios
+                .AsNoTracking()
+                .Where(s => nombres.Contains(s.Nombre.Trim()))
+                .ToListAsync();
+
+        var socioPorNombre = socios
+            .ToDictionary(s => s.Nombre.Trim(), StringComparer.OrdinalIgnoreCase);
+
+        return reclamos
+            .Where(r => r.Conexion?.NomSoc != null
+                && socioPorNombre.ContainsKey(r.Conexion.NomSoc.Trim()))
+            .ToDictionary(
+                r => r.CodRec,
+                r => socioPorNombre[r.Conexion!.NomSoc!.Trim()]);
     }
 }

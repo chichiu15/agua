@@ -8,7 +8,7 @@ public class MedidorConfiguration : IEntityTypeConfiguration<Medidor>
 {
     public void Configure(EntityTypeBuilder<Medidor> builder)
     {
-        builder.ToTable("Medidor");
+        builder.ToTable("Medidor", "medidores");
         builder.HasKey(m => m.NumeroMedidor);
         builder.Property(m => m.NumeroMedidor).HasColumnName("Nro_medidor").HasMaxLength(30);
         builder.Property(m => m.Marca).HasColumnName("Marca_medidor").HasMaxLength(50);

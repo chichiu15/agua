@@ -82,8 +82,8 @@ class _Paso3AsignarTecnicoScreenState
           : 'CONFIRMAR ASIGNACIÓN',
       primaryOnPressed:
           (_usuarioDestinoSeleccionado != null && !solicitudState.isAsignando)
-              ? _confirmarAsignacion
-              : null,
+          ? _confirmarAsignacion
+          : null,
       body: Column(
         children: [
           Padding(
@@ -137,36 +137,37 @@ class _Paso3AsignarTecnicoScreenState
             child: solicitudState.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : tecnicos.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No hay técnicos disponibles.',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: tecnicos.length,
-                        itemBuilder: (context, index) {
-                          final tecnico = tecnicos[index];
-                          final isSelected = !_asignadoAMi &&
-                              _usuarioDestinoSeleccionado == tecnico.id;
-                          final ocupado = tecnico.tieneRutaAsignada;
+                ? const Center(
+                    child: Text(
+                      'No hay técnicos disponibles.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: tecnicos.length,
+                    itemBuilder: (context, index) {
+                      final tecnico = tecnicos[index];
+                      final isSelected =
+                          !_asignadoAMi &&
+                          _usuarioDestinoSeleccionado == tecnico.id;
+                      final ocupado = tecnico.tieneRutaAsignada;
 
-                          return _TecnicoCard(
-                            tecnico: tecnico,
-                            isSelected: isSelected,
-                            ocupado: ocupado,
-                            onTap: (tecnico.activo && !ocupado)
-                                ? () {
-                                    setState(() {
-                                      _usuarioDestinoSeleccionado = tecnico.id;
-                                      _asignadoAMi = false;
-                                    });
-                                  }
-                                : null,
-                          );
-                        },
-                      ),
+                      return _TecnicoCard(
+                        tecnico: tecnico,
+                        isSelected: isSelected,
+                        ocupado: ocupado,
+                        onTap: (tecnico.activo && !ocupado)
+                            ? () {
+                                setState(() {
+                                  _usuarioDestinoSeleccionado = tecnico.id;
+                                  _asignadoAMi = false;
+                                });
+                              }
+                            : null,
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -200,15 +201,15 @@ class _TecnicoCard extends StatelessWidget {
           color: isSelected
               ? AppColors.lightBlue
               : disponible
-                  ? const Color(0xFFEEF5FF)
-                  : const Color(0xFFF5F5F5),
+              ? const Color(0xFFEEF5FF)
+              : const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
                 ? AppColors.actionBlue
                 : disponible
-                    ? AppColors.lightBlue
-                    : AppColors.border,
+                ? AppColors.lightBlue
+                : AppColors.border,
             width: 1.5,
           ),
         ),
@@ -233,8 +234,8 @@ class _TecnicoCard extends StatelessWidget {
                     !tecnico.activo
                         ? 'Inactivo'
                         : ocupado
-                            ? 'Ocupado · Con ruta asignada'
-                            : 'Disponible',
+                        ? 'Ocupado · Con ruta asignada'
+                        : 'Disponible',
                     style: TextStyle(
                       color: disponible
                           ? AppColors.primaryGreen
@@ -250,8 +251,8 @@ class _TecnicoCard extends StatelessWidget {
               color: isSelected
                   ? AppColors.actionBlue
                   : disponible
-                      ? AppColors.actionBlue.withValues(alpha: 0.4)
-                      : AppColors.textSecondary.withValues(alpha: 0.3),
+                  ? AppColors.actionBlue.withValues(alpha: 0.4)
+                  : AppColors.textSecondary.withValues(alpha: 0.3),
               size: 28,
             ),
           ],

@@ -8,7 +8,7 @@ public class ReclamoOdecoConfiguration : IEntityTypeConfiguration<ReclamoOdeco>
 {
     public void Configure(EntityTypeBuilder<ReclamoOdeco> builder)
     {
-        builder.ToTable("ReclamoODECO");
+        builder.ToTable("ReclamoODECO", "medidores");
         builder.HasKey(r => r.Folio);
         builder.Property(r => r.Folio).HasColumnName("Folio_odeco").ValueGeneratedNever();
         builder.Property(r => r.FechaReclamo).HasColumnName("Fecha_rec_odeco");

@@ -5,9 +5,9 @@ class MotivoCambio {
   final String descripcion;
 
   factory MotivoCambio.fromJson(Map<String, dynamic> json) => MotivoCambio(
-        id: json['id'] as int,
-        descripcion: json['descripcion'] as String,
-      );
+    id: json['id'] as int,
+    descripcion: json['descripcion'] as String,
+  );
 }
 
 class CambioMedidorDraft {
@@ -66,28 +66,28 @@ class CambioMedidorDraft {
   }
 
   Map<String, dynamic> toJson() => {
-        'localId': localId,
-        'solicitudId': solicitudId,
-        'tipoOrigen': tipoOrigen,
-        'idOrigen': idOrigen,
-        'idUsuarioApp': idUsuarioApp,
-        'fechaHoraEjecucion': fechaHoraEjecucion.toIso8601String(),
-        'registroSocio': registroSocio,
-        'nombreSocio': nombreSocio,
-        'direccion': direccion,
-        'numeroMedidorRetirado': numeroMedidorRetirado,
-        'marcaRetirado': marcaRetirado,
-        'lecturaRetiro': lecturaRetiro,
-        'idMotivo': idMotivo,
-        'numeroMedidorInstalado': numeroMedidorInstalado,
-        'marcaInstalado': marcaInstalado,
-        'estadoMedidorInstalado': estadoMedidorInstalado,
-        'observaciones': observaciones,
-        'observacionesApi': observacionesApi,
-        'fotoMedidorRetirado': fotoMedidorRetirado,
-        'fotoMedidorNuevo': fotoMedidorNuevo,
-        'latitud': latitud,
-        'longitud': longitud,
-        'sincronizado': false,
-      };
+    'localId': localId,
+    'solicitudId': solicitudId,
+    'tipoOrigen': tipoOrigen,
+    'idOrigen': idOrigen,
+    'idUsuarioApp': idUsuarioApp,
+    'fechaHoraEjecucion': fechaHoraEjecucion.toIso8601String(),
+    'registroSocio': registroSocio,
+    'nombreSocio': nombreSocio,
+    'direccion': direccion,
+    'numeroMedidorRetirado': numeroMedidorRetirado,
+    'marcaRetirado': marcaRetirado,
+    'lecturaRetiro': lecturaRetiro,
+    'idMotivo': idMotivo,
+    'numeroMedidorInstalado': numeroMedidorInstalado,
+    'marcaInstalado': marcaInstalado,
+    'estadoMedidorInstalado': estadoMedidorInstalado,
+    'observaciones': observaciones,
+    'observacionesApi': observacionesApi,
+    'fotoMedidorRetirado': fotoMedidorRetirado,
+    'fotoMedidorNuevo': fotoMedidorNuevo,
+    'latitud': latitud,
+    'longitud': longitud,
+    'sincronizado': false,
+  };
 }

@@ -8,11 +8,14 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/ejecucion_cambio/presentation/screens/cambio_medidor_screen.dart';
 import '../../features/home/presentation/screens/asignador_dashboard_screen.dart';
 import '../../features/home/presentation/screens/tecnico_dashboard_screen.dart';
+import '../../features/historial/presentation/screens/historial_screen.dart';
 import '../../features/monitoreo/presentation/screens/detalle_monitoreo_ruta_screen.dart';
 import '../../features/monitoreo/presentation/screens/monitoreo_tecnicos_screen.dart';
+import '../../features/recorrido/presentation/screens/detalle_recorrido_screen.dart';
 import '../../features/recorrido/presentation/screens/paso1_seleccionar_screen.dart';
 import '../../features/recorrido/presentation/screens/paso2_reordenar_screen.dart';
 import '../../features/recorrido/presentation/screens/paso3_asignar_tecnico_screen.dart';
+import '../../features/sincronizacion/presentation/screens/sincronizacion_screen.dart';
 
 abstract final class AppRoutes {
   static const String login = '/login';
@@ -25,9 +28,20 @@ abstract final class AppRoutes {
   static const String monitoreo = '/asignador/monitoreo';
   static const String monitoreoRuta = '/asignador/monitoreo/ruta/:id';
 
+  static const String historial = '/historial';
+  static const String miRecorrido = '/tecnico/mi-recorrido';
+
   static const String recorridoPaso1 = '/asignador/recorrido/paso1';
   static const String recorridoPaso2 = '/asignador/recorrido/paso2';
   static const String recorridoPaso3 = '/asignador/recorrido/paso3';
+
+  static const String sincronizar = '/sincronizar';
+}
+
+int _tabInicial(GoRouterState state) {
+  final tab = int.tryParse(state.uri.queryParameters['tab'] ?? '');
+  if (tab == null || tab < 0 || tab > 3) return 0;
+  return tab;
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -95,29 +109,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ============================================================
       // DASHBOARD ASIGNADOR
       // ============================================================
-
       GoRoute(
         path: AppRoutes.asignadorHome,
         builder: (context, state) {
-          return const AsignadorDashboardScreen();
+          return AsignadorDashboardScreen(initialTab: _tabInicial(state));
         },
       ),
 
       // ============================================================
       // DASHBOARD TÉCNICO
       // ============================================================
-
       GoRoute(
         path: AppRoutes.tecnicoHome,
         builder: (context, state) {
-          return const TecnicoDashboardScreen();
+          return TecnicoDashboardScreen(initialTab: _tabInicial(state));
         },
       ),
 
       // ============================================================
       // CAMBIO DE MEDIDOR
       // ============================================================
-
       GoRoute(
         path: AppRoutes.cambioMedidor,
         builder: (context, state) {
@@ -127,16 +138,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             return const TecnicoDashboardScreen();
           }
 
-          return CambioMedidorScreen(
-            solicitudId: solicitudId.trim(),
-          );
+          return CambioMedidorScreen(solicitudId: solicitudId.trim());
         },
       ),
 
       // ============================================================
       // MONITOREO
       // ============================================================
-
       GoRoute(
         path: AppRoutes.monitoreo,
         builder: (context, state) {
@@ -147,24 +155,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.monitoreoRuta,
         builder: (context, state) {
-          final id = int.tryParse(
-            state.pathParameters['id'] ?? '',
-          );
+          final id = int.tryParse(state.pathParameters['id'] ?? '');
 
           if (id == null) {
             return const AsignadorDashboardScreen();
           }
 
-          return DetalleMonitoreoRutaScreen(
-            idAsignacion: id,
-          );
+          return DetalleMonitoreoRutaScreen(idAsignacion: id);
+        },
+      ),
+
+      // ============================================================
+      // HISTORIAL
+      // ============================================================
+      GoRoute(
+        path: AppRoutes.historial,
+        builder: (context, state) {
+          return const HistorialScreen();
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutes.miRecorrido,
+        builder: (context, state) {
+          return const DetalleRecorridoScreen();
         },
       ),
 
       // ============================================================
       // RECORRIDOS
       // ============================================================
-
       GoRoute(
         path: AppRoutes.recorridoPaso1,
         builder: (context, state) {
@@ -183,6 +203,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.recorridoPaso3,
         builder: (context, state) {
           return const Paso3AsignarTecnicoScreen();
+        },
+      ),
+
+      // ============================================================
+      // SINCRONIZACIÓN
+      // ============================================================
+      GoRoute(
+        path: AppRoutes.sincronizar,
+        builder: (context, state) {
+          return const SincronizacionScreen();
         },
       ),
     ],
@@ -207,16 +237,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   // Por eso esperamos al siguiente frame.
   // ==============================================================
 
-  ref.listen<AppUser?>(
-    authControllerProvider.select(
-      (state) => state.user,
-    ),
-    (previous, next) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        router.refresh();
-      });
-    },
-  );
+  ref.listen<AppUser?>(authControllerProvider.select((state) => state.user), (
+    previous,
+    next,
+  ) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      router.refresh();
+    });
+  });
 
   ref.onDispose(router.dispose);
 

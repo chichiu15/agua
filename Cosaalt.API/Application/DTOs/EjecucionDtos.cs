@@ -21,3 +21,26 @@ public record EjecucionCambioResponseDto(
     int Id,
     string Mensaje,
     bool Sincronizado);
+
+public record EvidenciaHistorialDto(
+    string TipoFoto,
+    string RutaArchivo);
+
+public record EjecucionHistorialDto(
+    int IdEjecucion,
+    string TipoOrigen,
+    string IdOrigen,
+    string SolicitudId,
+    DateTime FechaHoraEjecucion,
+    int? RegistroSocio,
+    string? NombreCliente,
+    string? Direccion,
+    string NumeroMedidorRetirado,
+    string? MarcaRetirado,
+    decimal LecturaRetiro,
+    string NumeroMedidorInstalado,
+    string? MarcaInstalado,
+    string? Observaciones,
+    string? NombreTecnico,
+    string? MotivoDescripcion,
+    IReadOnlyList<EvidenciaHistorialDto> Evidencias);

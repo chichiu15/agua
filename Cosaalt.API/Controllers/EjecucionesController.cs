@@ -18,4 +18,11 @@ public class EjecucionesController : ControllerBase
         var result = await _ejecucionService.RegistrarAsync(request);
         return Created($"/api/ejecuciones/{result.Id}", result);
     }
+
+    [HttpGet("historial")]
+    public async Task<IActionResult> Historial([FromQuery] int? registroSocio = null)
+    {
+        var result = await _ejecucionService.ObtenerHistorialAsync(registroSocio);
+        return Ok(result);
+    }
 }

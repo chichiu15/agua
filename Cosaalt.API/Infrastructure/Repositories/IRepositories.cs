@@ -21,6 +21,7 @@ public interface ISolicitudRepository
 public interface IEjecucionRepository
 {
     Task<EjecucionCambioResponseDto> RegistrarAsync(EjecucionCambioRequestDto request);
+    Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? registroSocio = null);
 }
 
 public interface IUsuarioRepository

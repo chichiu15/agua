@@ -75,7 +75,8 @@ public class SqlRutaRepository : IRutaRepository
         _context.AsignacionesRuta.Add(asignacion);
         await _context.SaveChangesAsync();
 
-        return RutaMapper.ToResponse(asignacion, nombreTecnico);
+        var resolucion = await ResolverSocioMedidorAsync(asignacion.Detalles);
+        return RutaMapper.ToResponse(asignacion, nombreTecnico, resolucion);
     }
 
     public async Task<RutasTecnicoResponseDto> ObtenerPorTecnicoAsync(int idTecnico, DateTime? fecha = null)
@@ -89,8 +90,11 @@ public class SqlRutaRepository : IRutaRepository
             .Where(a => a.IdUsuarioApp == idTecnico && a.FechaAsignacion.Date == fechaFiltro)
             .ToListAsync();
 
+        var resolucion = await ResolverSocioMedidorAsync(
+            asignaciones.SelectMany(a => a.Detalles).ToList());
+
         var resultado = asignaciones
-            .Select(a => RutaMapper.ToResponse(a, a.Usuario.NombreCompleto))
+            .Select(a => RutaMapper.ToResponse(a, a.Usuario.NombreCompleto, resolucion))
             .ToList();
 
         return new RutasTecnicoResponseDto(resultado);
@@ -104,7 +108,115 @@ public class SqlRutaRepository : IRutaRepository
             .Include(a => a.Usuario)
             .FirstOrDefaultAsync(a => a.Id == idAsignacion);
 
-        return asignacion is null ? null : RutaMapper.ToResponse(asignacion, asignacion.Usuario.NombreCompleto);
+        if (asignacion is null) return null;
+
+        var resolucion = await ResolverSocioMedidorAsync(asignacion.Detalles);
+        return RutaMapper.ToResponse(asignacion, asignacion.Usuario.NombreCompleto, resolucion);
+    }
+
+    /// <summary>
+    /// Resuelve el socio (RegistroSocio) y su medidor ACTIVO (NumeroMedidor)
+    /// para cada parada. ODECO se resuelve desde dbo.Reclamos + Conexi�n +
+    /// medidores.Socio (la misma fuente que genera las solicitudes), y LECTURA
+    /// desde DetallesSolicitudLectura. Solo lectura: no se modifican tablas de
+    /// dbo. Si una parada no tiene socio o medidor, devuelve null.
+    /// </summary>
+    private async Task<Dictionary<string, (int? RegistroSocio, string? NumeroMedidor)>> ResolverSocioMedidorAsync(
+        IEnumerable<DetalleRuta> detallesLista)
+    {
+        var detalles = detallesLista.ToList();
+        var registrosPorOrigen = new Dictionary<string, int>();
+
+        var folios = detalles
+            .Where(d => d.TipoOrigen == "ODECO")
+            .Select(d => int.TryParse(d.IdOrigen, out var f) ? f : 0)
+            .Where(f => f > 0)
+            .Distinct()
+            .ToList();
+
+        if (folios.Count > 0)
+        {
+            // Las solicitudes ODECO salen de dbo.Reclamos (SolicitudVirtualService),
+            // no de medidores.ReclamosODECO. El socio se resuelve desde la Conexi�n
+            // del reclamo por su nombre, y de ah� se toma el medidor ACTIVO.
+            var reclamos = await _context.Reclamos
+                .AsNoTracking()
+                .Include(r => r.Conexion)
+                .Where(r => folios.Contains(r.CodRec))
+                .ToListAsync();
+
+            var nombres = reclamos
+                .Select(r => r.Conexion?.NomSoc?.Trim())
+                .Where(n => !string.IsNullOrEmpty(n))
+                .Distinct()
+                .ToList();
+
+            var socios = nombres.Count == 0
+                ? new List<Socio>()
+                : await _context.Socios
+                    .AsNoTracking()
+                    .Include(s => s.Medidor)
+                    .Where(s => nombres.Contains(s.Nombre.Trim()))
+                    .ToListAsync();
+
+            var socioPorNombre = socios
+                .ToDictionary(s => s.Nombre.Trim(), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var r in reclamos)
+            {
+                var nombre = r.Conexion?.NomSoc?.Trim();
+                if (string.IsNullOrEmpty(nombre) || !socioPorNombre.TryGetValue(nombre, out var socio))
+                    continue;
+
+                registrosPorOrigen[$"ODECO-{r.CodRec}"] = socio.RegistroSocio;
+            }
+        }
+
+        var lecturas = detalles
+            .Where(d => d.TipoOrigen == "LECTURA")
+            .Select(d => int.TryParse(d.IdOrigen, out var f) ? f : 0)
+            .Where(f => f > 0)
+            .Distinct()
+            .ToList();
+
+        if (lecturas.Count > 0)
+        {
+            var detalle = await _context.DetallesSolicitudLectura
+                .AsNoTracking()
+                .Where(d => lecturas.Contains(d.Id))
+                .Select(d => new { d.Id, d.RegistroSocio })
+                .ToListAsync();
+            foreach (var d in detalle)
+                registrosPorOrigen[$"LECTURA-{d.Id}"] = d.RegistroSocio;
+        }
+
+        var registros = registrosPorOrigen.Values.Distinct().ToList();
+        var medidorPorRegistro = new Dictionary<int, string>();
+
+        if (registros.Count > 0)
+        {
+            var medidores = await _context.Medidores
+                .AsNoTracking()
+                .Where(m => registros.Contains(m.RegistroSocio)
+                    && m.Estado != null
+                    && m.Estado.ToUpper() == "ACTIVO")
+                .Select(m => new { m.RegistroSocio, m.NumeroMedidor })
+                .ToListAsync();
+            foreach (var m in medidores)
+                medidorPorRegistro[m.RegistroSocio] = m.NumeroMedidor;
+        }
+
+        var resultado = new Dictionary<string, (int? RegistroSocio, string? NumeroMedidor)>();
+        foreach (var d in detalles)
+        {
+            var key = $"{d.TipoOrigen}-{d.IdOrigen}";
+            if (resultado.ContainsKey(key)) continue;
+            resultado[key] = registrosPorOrigen.TryGetValue(key, out var reg)
+                ? ((int?)reg, medidorPorRegistro.GetValueOrDefault(reg))
+                : ((int?)null, null);
+        }
+
+        return resultado;
     }
 }
 
@@ -128,10 +240,24 @@ public class SqlSincronizacionRepository : ISincronizacionRepository
                 await _context.SaveChangesAsync();
                 idsGuardados.Add(entity.Id);
 
-                // Marca la parada correspondiente del recorrido como Completada,
-                // así el asignador ve el avance real al recargar su seguimiento.
-                var detalle = await _context.DetallesRuta.FirstOrDefaultAsync(d =>
-                    d.TipoOrigen == ejecucionDto.TipoOrigen && d.IdOrigen == ejecucionDto.IdOrigen);
+                // Marca la parada correspondiente del recorrido del d�a del
+                // t�cnico como Completada, as� el asignador ve el avance real.
+                var asignacionHoy = await _context.AsignacionesRuta
+                    .AsNoTracking()
+                    .Where(a => a.IdUsuarioApp == request.IdUsuario
+                        && a.FechaAsignacion.Date == DateTime.Today)
+                    .OrderByDescending(a => a.FechaAsignacion)
+                    .Select(a => a.Id)
+                    .FirstOrDefaultAsync();
+
+                DetalleRuta? detalle = null;
+                if (asignacionHoy != 0)
+                {
+                    detalle = await _context.DetallesRuta.FirstOrDefaultAsync(d =>
+                        d.IdAsignacion == asignacionHoy
+                        && d.TipoOrigen == ejecucionDto.TipoOrigen
+                        && d.IdOrigen == ejecucionDto.IdOrigen);
+                }
 
                 if (detalle is not null)
                 {

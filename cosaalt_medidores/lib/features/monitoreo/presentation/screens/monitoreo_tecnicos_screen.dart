@@ -36,7 +36,8 @@ class _MonitoreoTecnicosScreenState
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () => ref.read(monitoreoControllerProvider.notifier).cargar(),
+          onRefresh: () =>
+              ref.read(monitoreoControllerProvider.notifier).cargar(),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
@@ -88,10 +89,7 @@ class _MonitoreoTecnicosScreenState
       ),
       bottomNavigationBar: CosaaltBottomNav(
         currentIndex: 0,
-        onTap: (index) {
-          if (index == 0) context.go('/asignador');
-          if (index == 1) context.go('/asignador/recorrido/paso1');
-        },
+        onTap: (index) => context.go('/asignador?tab=$index'),
       ),
     );
   }
@@ -127,9 +125,8 @@ class _RutaCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => context.go(
-          '/asignador/monitoreo/ruta/${ruta.idAsignacion}',
-        ),
+        onTap: () =>
+            context.go('/asignador/monitoreo/ruta/${ruta.idAsignacion}'),
         child: Padding(
           padding: const EdgeInsets.all(15),
           child: Column(
@@ -139,7 +136,10 @@ class _RutaCard extends StatelessWidget {
                 children: [
                   const CircleAvatar(
                     backgroundColor: AppColors.lightBlue,
-                    child: Icon(Icons.engineering_outlined, color: AppColors.darkBlue),
+                    child: Icon(
+                      Icons.engineering_outlined,
+                      color: AppColors.darkBlue,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -165,7 +165,10 @@ class _RutaCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: estadoColor.withValues(alpha: .10),
                       borderRadius: BorderRadius.circular(20),
@@ -258,7 +261,11 @@ class _EmptyCard extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.route_outlined, size: 52, color: AppColors.textSecondary),
+            Icon(
+              Icons.route_outlined,
+              size: 52,
+              color: AppColors.textSecondary,
+            ),
             SizedBox(height: 12),
             Text(
               'No hay rutas asignadas para hoy.',

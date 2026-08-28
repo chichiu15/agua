@@ -123,9 +123,7 @@ class _Paso1SeleccionarSolicitudesScreenState
           ),
           const SizedBox(height: 10),
           if (solicitudState.isLoading)
-            const Expanded(
-              child: Center(child: CircularProgressIndicator()),
-            )
+            const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (solicitudState.errorMessage != null)
             Expanded(
               child: Center(
@@ -149,7 +147,9 @@ class _Paso1SeleccionarSolicitudesScreenState
                 ),
               ),
             )
-          else if (puntosVisibles.where((s) => s.latitud != null && s.longitud != null).isEmpty)
+          else if (puntosVisibles
+              .where((s) => s.latitud != null && s.longitud != null)
+              .isEmpty)
             const Expanded(
               child: Center(
                 child: Text(
@@ -177,61 +177,66 @@ class _Paso1SeleccionarSolicitudesScreenState
                     markers: puntosVisibles
                         .where((s) => s.latitud != null && s.longitud != null)
                         .map((solicitud) {
-                      final asignada = _estadoEs(solicitud, 'Asignada');
-                      final asignable = _estadoEs(solicitud, 'Pendiente');
-                      final seleccionado = solicitudState.seleccionadas
-                          .contains(solicitud.id);
-                      final colorTipo = _colorTipo(solicitud.tipo);
+                          final asignada = _estadoEs(solicitud, 'Asignada');
+                          final asignable = _estadoEs(solicitud, 'Pendiente');
+                          final seleccionado = solicitudState.seleccionadas
+                              .contains(solicitud.id);
+                          final colorTipo = _colorTipo(solicitud.tipo);
 
-                      return Marker(
-                        point: LatLng(
-                          solicitud.latitud!,
-                          solicitud.longitud!,
-                        ),
-                        width: 42,
-                        height: 42,
-                        child: Tooltip(
-                          message:
-                              '${solicitud.tipoOrigen} · ${solicitud.nombreCliente}\n${solicitud.direccion}${solicitud.esVencida ? '\nVENCIDA' : ''}',
-                          child: GestureDetector(
-                            onTap: asignable
-                                ? () => controller.toggleSeleccion(solicitud.id)
-                                : null,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: asignada
-                                    ? AppColors.textSecondary
-                                    : seleccionado
+                          return Marker(
+                            point: LatLng(
+                              solicitud.latitud!,
+                              solicitud.longitud!,
+                            ),
+                            width: 42,
+                            height: 42,
+                            child: Tooltip(
+                              message:
+                                  '${solicitud.tipoOrigen} · ${solicitud.nombreCliente}\n${solicitud.direccion}${solicitud.esVencida ? '\nVENCIDA' : ''}',
+                              child: GestureDetector(
+                                onTap: asignable
+                                    ? () => controller.toggleSeleccion(
+                                        solicitud.id,
+                                      )
+                                    : null,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: asignada
+                                        ? AppColors.textSecondary
+                                        : seleccionado
                                         ? colorTipo
                                         : colorTipo.withValues(alpha: 0.35),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: solicitud.esVencida
-                                      ? AppColors.overdueOrange
-                                      : Colors.white,
-                                  width: solicitud.esVencida ? 3 : 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.25),
-                                    blurRadius: 4,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: solicitud.esVencida
+                                          ? AppColors.overdueOrange
+                                          : Colors.white,
+                                      width: solicitud.esVencida ? 3 : 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.25,
+                                        ),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: Icon(
-                                asignada
-                                    ? Icons.check
-                                    : solicitud.esVencida
+                                  child: Icon(
+                                    asignada
+                                        ? Icons.check
+                                        : solicitud.esVencida
                                         ? Icons.priority_high_rounded
                                         : Icons.location_on,
-                                color: Colors.white,
-                                size: 21,
+                                    color: Colors.white,
+                                    size: 21,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                          );
+                        })
+                        .toList(),
                   ),
                 ],
               ),

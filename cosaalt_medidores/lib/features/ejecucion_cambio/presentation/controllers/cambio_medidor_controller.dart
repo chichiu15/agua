@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -46,8 +47,9 @@ class CambioMedidorState {
     return CambioMedidorState(
       solicitud: solicitud ?? this.solicitud,
       motivos: motivos ?? this.motivos,
-      fotoRetirado:
-          clearFotoRetirado ? null : (fotoRetirado ?? this.fotoRetirado),
+      fotoRetirado: clearFotoRetirado
+          ? null
+          : (fotoRetirado ?? this.fotoRetirado),
       fotoNuevo: clearFotoNuevo ? null : (fotoNuevo ?? this.fotoNuevo),
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
@@ -68,8 +70,8 @@ final evidenciaLocalServiceProvider = Provider<EvidenciaLocalService>((ref) {
 
 final cambioMedidorControllerProvider =
     NotifierProvider<CambioMedidorController, CambioMedidorState>(
-  CambioMedidorController.new,
-);
+      CambioMedidorController.new,
+    );
 
 class CambioMedidorController extends Notifier<CambioMedidorState> {
   @override
@@ -99,11 +101,15 @@ class CambioMedidorController extends Notifier<CambioMedidorState> {
   }
 
   Future<void> tomarFotoRetirado() async {
+    if (kIsWeb) return _mensajeSoloDispositivo();
+
     final solicitud = state.solicitud;
     if (solicitud == null) return;
 
     try {
-      final path = await ref.read(evidenciaLocalServiceProvider).capturarYComprimir(
+      final path = await ref
+          .read(evidenciaLocalServiceProvider)
+          .capturarYComprimir(
             solicitudId: solicitud.id,
             tipoFoto: 'medidor_retirado',
           );
@@ -114,11 +120,15 @@ class CambioMedidorController extends Notifier<CambioMedidorState> {
   }
 
   Future<void> tomarFotoNuevo() async {
+    if (kIsWeb) return _mensajeSoloDispositivo();
+
     final solicitud = state.solicitud;
     if (solicitud == null) return;
 
     try {
-      final path = await ref.read(evidenciaLocalServiceProvider).capturarYComprimir(
+      final path = await ref
+          .read(evidenciaLocalServiceProvider)
+          .capturarYComprimir(
             solicitudId: solicitud.id,
             tipoFoto: 'medidor_nuevo',
           );
@@ -126,6 +136,15 @@ class CambioMedidorController extends Notifier<CambioMedidorState> {
     } catch (e) {
       state = state.copyWith(errorMessage: 'No se pudo guardar la foto: $e');
     }
+  }
+
+  void _mensajeSoloDispositivo() {
+    state = state.copyWith(
+      errorMessage:
+          'Las fotos y el guardado local solo funcionan en el '
+          'emulador Android o en escritorio (Windows). Probalo con '
+          '`flutter run -d windows` o un emulador.',
+    );
   }
 
   Future<bool> guardarLocal({
@@ -139,21 +158,31 @@ class CambioMedidorController extends Notifier<CambioMedidorState> {
     final solicitud = state.solicitud;
     final user = ref.read(authControllerProvider).user;
 
+    if (kIsWeb) {
+      _mensajeSoloDispositivo();
+      return false;
+    }
+
     if (solicitud == null || user == null) {
-      state = state.copyWith(errorMessage: 'Faltan datos de sesión o solicitud.');
+      state = state.copyWith(
+        errorMessage: 'Faltan datos de sesión o solicitud.',
+      );
       return false;
     }
 
     final lectura = double.tryParse(lecturaRetiroTexto.replaceAll(',', '.'));
 
-    if (solicitud.numeroMedidor == null || solicitud.numeroMedidor!.trim().isEmpty) {
+    if (solicitud.numeroMedidor == null ||
+        solicitud.numeroMedidor!.trim().isEmpty) {
       state = state.copyWith(
         errorMessage: 'La solicitud no tiene un medidor activo asociado.',
       );
       return false;
     }
     if (lectura == null || lectura < 0) {
-      state = state.copyWith(errorMessage: 'Ingrese una lectura de retiro válida.');
+      state = state.copyWith(
+        errorMessage: 'Ingrese una lectura de retiro válida.',
+      );
       return false;
     }
     if (idMotivo == null) {
@@ -161,17 +190,22 @@ class CambioMedidorController extends Notifier<CambioMedidorState> {
       return false;
     }
     if (numeroNuevo.trim().isEmpty) {
-      state = state.copyWith(errorMessage: 'Ingrese el número del medidor instalado.');
+      state = state.copyWith(
+        errorMessage: 'Ingrese el número del medidor instalado.',
+      );
       return false;
     }
-    if (numeroNuevo.trim().toLowerCase() == solicitud.numeroMedidor!.trim().toLowerCase()) {
+    if (numeroNuevo.trim().toLowerCase() ==
+        solicitud.numeroMedidor!.trim().toLowerCase()) {
       state = state.copyWith(
         errorMessage: 'El medidor nuevo debe ser distinto al retirado.',
       );
       return false;
     }
     if (marcaNueva.trim().isEmpty) {
-      state = state.copyWith(errorMessage: 'Ingrese la marca del medidor instalado.');
+      state = state.copyWith(
+        errorMessage: 'Ingrese la marca del medidor instalado.',
+      );
       return false;
     }
     if (state.fotoRetirado == null || state.fotoNuevo == null) {
@@ -188,7 +222,8 @@ class CambioMedidorController extends Notifier<CambioMedidorState> {
     );
 
     try {
-      final idOrigen = solicitud.folioOdeco?.toString() ??
+      final idOrigen =
+          solicitud.folioOdeco?.toString() ??
           solicitud.id.replaceFirst('LEC-', '');
       final now = DateTime.now();
       final localId = '${solicitud.id}_${now.microsecondsSinceEpoch}'
@@ -211,14 +246,18 @@ class CambioMedidorController extends Notifier<CambioMedidorState> {
         numeroMedidorInstalado: numeroNuevo.trim(),
         marcaInstalado: marcaNueva.trim(),
         estadoMedidorInstalado: estadoNuevo,
-        observaciones: observaciones.trim().isEmpty ? null : observaciones.trim(),
+        observaciones: observaciones.trim().isEmpty
+            ? null
+            : observaciones.trim(),
         fotoMedidorRetirado: state.fotoRetirado!,
         fotoMedidorNuevo: state.fotoNuevo!,
         latitud: solicitud.latitud,
         longitud: solicitud.longitud,
       );
 
-      final path = await ref.read(ejecucionRepositoryProvider).guardarLocal(draft);
+      final path = await ref
+          .read(ejecucionRepositoryProvider)
+          .guardarLocal(draft);
 
       state = state.copyWith(
         isSaving: false,

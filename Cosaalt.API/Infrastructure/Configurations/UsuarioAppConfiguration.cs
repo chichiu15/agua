@@ -8,7 +8,7 @@ public class UsuarioAppConfiguration : IEntityTypeConfiguration<UsuarioApp>
 {
     public void Configure(EntityTypeBuilder<UsuarioApp> builder)
     {
-        builder.ToTable("UsuarioApp");
+        builder.ToTable("UsuarioApp", "medidores");
         builder.HasKey(u => u.Id);
         builder.Property(u => u.Id).HasColumnName("IdUsuarioApp");
         builder.Property(u => u.NombreUsuario).HasColumnName("NombreUsuario").HasMaxLength(50);

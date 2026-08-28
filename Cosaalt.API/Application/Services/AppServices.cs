@@ -47,6 +47,9 @@ public class EjecucionService
 
     public Task<EjecucionCambioResponseDto> RegistrarAsync(EjecucionCambioRequestDto request) =>
         _repository.RegistrarAsync(request);
+
+    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? registroSocio = null) =>
+        _repository.ObtenerHistorialAsync(registroSocio);
 }
 
 public class UsuarioService
