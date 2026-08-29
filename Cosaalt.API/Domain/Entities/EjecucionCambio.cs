@@ -5,6 +5,7 @@ public class EjecucionCambio
     public int Id { get; set; }
     public string TipoOrigen { get; set; } = string.Empty;
     public string IdOrigen { get; set; } = string.Empty;
+    public int CodCon { get; set; }
     public int IdUsuarioApp { get; set; }
     public DateTime FechaHoraEjecucion { get; set; }
     public string NumeroMedidorRetirado { get; set; } = string.Empty;
@@ -17,7 +18,8 @@ public class EjecucionCambio
     public string? LatLong { get; set; }
     public bool Sincronizado { get; set; }
 
-    public UsuarioApp Usuario { get; set; } = null!;
-    public MotivoCambioMedidor Motivo { get; set; } = null!;
+    public Conexion Conexion { get; set; } = null!;
+    public Usuario Usuario { get; set; } = null!;
+    public MotivoCambioMedidorDbo? Motivo { get; set; }
     public ICollection<EvidenciaFotografica> Evidencias { get; set; } = [];
 }

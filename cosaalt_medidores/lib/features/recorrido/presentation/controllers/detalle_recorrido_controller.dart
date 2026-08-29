@@ -81,7 +81,7 @@ class DetalleRecorridoController extends Notifier<DetalleRecorridoState> {
               latitud: d.latitud,
               longitud: d.longitud,
               esUrgente: d.esUrgente,
-              registroSocio: d.registroSocio,
+              codCon: d.codCon,
               numeroMedidor: d.numeroMedidor,
             );
           }

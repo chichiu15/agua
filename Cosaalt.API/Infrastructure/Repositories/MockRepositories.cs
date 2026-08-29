@@ -40,24 +40,36 @@ public class MockSolicitudRepository : ISolicitudRepository
 
 public class MockAuthRepository : IAuthRepository
 {
-    private static readonly List<UsuarioApp> Usuarios =
+    private static readonly List<Usuario> Usuarios =
     [
-        new() { Id = 1, NombreUsuario = "tecnico1", ContrasenaHash = "123456", NombreCompleto = "Juan Pérez García", Rol = "tecnico", Activo = true },
-        new() { Id = 2, NombreUsuario = "asignador1", ContrasenaHash = "123456", NombreCompleto = "Pedro Encargado López", Rol = "asignador", Activo = true },
-        new() { Id = 3, NombreUsuario = "admin", ContrasenaHash = "admin123", NombreCompleto = "Administrador COSAALT", Rol = "asignador", Activo = true },
-        new() { Id = 4, NombreUsuario = "tecnico2", ContrasenaHash = "123456", NombreCompleto = "Luis Mamani Condori", Rol = "tecnico", Activo = true }
+        new() { Id = 1, CodFunCorporativo = 1001, NombreUsuario = "tecnico1", HashPassword = "123456", Activo = true,
+                Rol = new RolApp { IdRol = 1, Nombre = "tecnico" },
+                Funcionario = new Funcionario { CodFun = 1001, CodPer = 1,
+                    Persona = new Persona { NomPer = "Juan", PriApePer = "Pérez", SegApePer = "García" } } },
+        new() { Id = 2, CodFunCorporativo = 1002, NombreUsuario = "asignador1", HashPassword = "123456", Activo = true,
+                Rol = new RolApp { IdRol = 2, Nombre = "asignador" },
+                Funcionario = new Funcionario { CodFun = 1002, CodPer = 2,
+                    Persona = new Persona { NomPer = "Pedro", PriApePer = "Encargado", SegApePer = "López" } } },
+        new() { Id = 3, CodFunCorporativo = 1003, NombreUsuario = "admin", HashPassword = "admin123", Activo = true,
+                Rol = new RolApp { IdRol = 3, Nombre = "administrador" },
+                Funcionario = new Funcionario { CodFun = 1003, CodPer = 3,
+                    Persona = new Persona { NomPer = "Administrador", PriApePer = "COSAALT" } } },
+        new() { Id = 4, CodFunCorporativo = 1004, NombreUsuario = "tecnico2", HashPassword = "123456", Activo = true,
+                Rol = new RolApp { IdRol = 1, Nombre = "tecnico" },
+                Funcionario = new Funcionario { CodFun = 1004, CodPer = 4,
+                    Persona = new Persona { NomPer = "Luis", PriApePer = "Mamani", SegApePer = "Condori" } } }
     ];
 
     public Task<LoginResponseDto?> LoginAsync(string usuario, string contrasena)
     {
         var user = Usuarios.FirstOrDefault(u =>
             u.NombreUsuario.Equals(usuario, StringComparison.OrdinalIgnoreCase) &&
-            u.ContrasenaHash == contrasena && u.Activo);
+            u.HashPassword == contrasena && u.Activo);
 
         if (user is null) return Task.FromResult<LoginResponseDto?>(null);
 
         var token = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{user.Id}:{user.NombreUsuario}:{DateTime.UtcNow.Ticks}"));
-        return Task.FromResult<LoginResponseDto?>(new LoginResponseDto(user.Id, user.NombreCompleto, user.Rol, token));
+        return Task.FromResult<LoginResponseDto?>(new LoginResponseDto(user.Id, user.NombreCompleto, user.Rol.Nombre, token));
     }
 }
 
@@ -83,7 +95,7 @@ public class MockEjecucionRepository : IEjecucionRepository
         return Task.FromResult(new EjecucionCambioResponseDto(id, "Ejecución registrada.", true));
     }
 
-    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? registroSocio = null)
+    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null)
     {
         var historial = new List<EjecucionHistorialDto>
         {
@@ -93,7 +105,7 @@ public class MockEjecucionRepository : IEjecucionRepository
                 IdOrigen: "2001",
                 SolicitudId: "ODECO-2001",
                 FechaHoraEjecucion: DateTime.Today.AddHours(-2),
-                RegistroSocio: 42,
+                CodCon: 42,
                 NombreCliente: "Juan Pérez García",
                 Direccion: "Av. Las Palmeras N° 120, Zona Sud",
                 NumeroMedidorRetirado: "14079823",
@@ -115,7 +127,7 @@ public class MockEjecucionRepository : IEjecucionRepository
                 IdOrigen: "1001",
                 SolicitudId: "LEC-1001",
                 FechaHoraEjecucion: DateTime.Today.AddHours(-1),
-                RegistroSocio: 17,
+                CodCon: 17,
                 NombreCliente: "María Condori Vaca",
                 Direccion: "Calle Cochabamba N° 456",
                 NumeroMedidorRetirado: "90541236",
@@ -132,9 +144,9 @@ public class MockEjecucionRepository : IEjecucionRepository
                 ])
         };
 
-        if (registroSocio is int registro)
+        if (codCon is int conexion)
         {
-            historial = historial.Where(h => h.RegistroSocio == registro).ToList();
+            historial = historial.Where(h => h.CodCon == conexion).ToList();
         }
 
         return Task.FromResult<IReadOnlyList<EjecucionHistorialDto>>(historial);
@@ -153,6 +165,17 @@ public class MockUsuarioRepository : IUsuarioRepository
 
     public Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync() =>
         Task.FromResult<IReadOnlyList<TecnicoDto>>(Tecnicos);
+
+    public Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosActivosAsync()
+    {
+        FuncionarioDto[] funcionarios =
+        [
+            new(125, "Jorge Vides Ortega", "JOVIOR", true),
+            new(126, "Luis Gualberto Pecas Calla", "LGPECA", true),
+            new(130, "Willan Mario Alfaro Tejerina", "WMALTE", false)
+        ];
+        return Task.FromResult<IReadOnlyList<FuncionarioDto>>(funcionarios);
+    }
 }
 
 public class MockRutaRepository : IRutaRepository
@@ -181,7 +204,7 @@ public class MockRutaRepository : IRutaRepository
             Latitud: d.Latitud,
             Longitud: d.Longitud,
             EsUrgente: d.TipoOrigen == "ODECO",
-            RegistroSocio: 100 + i,
+            CodCon: 100 + i,
             NumeroMedidor: $"1420{i:0000}")).ToList();
 
         var ruta = new RutaAsignadaResponseDto(

@@ -10,7 +10,7 @@ class DetalleRutaAsignada {
     this.latitud,
     this.longitud,
     required this.esUrgente,
-    this.registroSocio,
+    this.codCon,
     this.numeroMedidor,
   });
 
@@ -24,7 +24,7 @@ class DetalleRutaAsignada {
   final double? latitud;
   final double? longitud;
   final bool esUrgente;
-  final int? registroSocio;
+  final int? codCon;
   final String? numeroMedidor;
 
   bool get completada => estado.toLowerCase() == 'completada';
@@ -41,7 +41,7 @@ class DetalleRutaAsignada {
       latitud: (json['latitud'] as num?)?.toDouble(),
       longitud: (json['longitud'] as num?)?.toDouble(),
       esUrgente: json['esUrgente'] as bool? ?? false,
-      registroSocio: json['registroSocio'] as int?,
+      codCon: json['codCon'] as int?,
       numeroMedidor: json['numeroMedidor'] as String?,
     );
   }

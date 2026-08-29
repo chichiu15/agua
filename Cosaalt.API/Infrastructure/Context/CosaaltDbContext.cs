@@ -9,13 +9,10 @@ public class CosaaltDbContext : DbContext
     {
     }
 
-    public DbSet<Socio> Socios => Set<Socio>();
-    public DbSet<Medidor> Medidores => Set<Medidor>();
     public DbSet<SolicitudLectura> SolicitudesLectura => Set<SolicitudLectura>();
     public DbSet<DetalleSolicitudLectura> DetallesSolicitudLectura => Set<DetalleSolicitudLectura>();
-    public DbSet<ReclamoOdeco> ReclamosOdeco => Set<ReclamoOdeco>();
-    public DbSet<UsuarioApp> UsuariosApp => Set<UsuarioApp>();
-    public DbSet<MotivoCambioMedidor> MotivosCambio => Set<MotivoCambioMedidor>();
+    public DbSet<RolApp> RolesApp => Set<RolApp>();
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<EjecucionCambio> EjecucionesCambio => Set<EjecucionCambio>();
     public DbSet<AsignacionRuta> AsignacionesRuta => Set<AsignacionRuta>();
     public DbSet<DetalleRuta> DetallesRuta => Set<DetalleRuta>();
@@ -29,6 +26,10 @@ public class CosaaltDbContext : DbContext
     public DbSet<Zona> Zonas => Set<Zona>();
     public DbSet<Funcionario> Funcionarios => Set<Funcionario>();
     public DbSet<Persona> Personas => Set<Persona>();
+    public DbSet<MedidorDbo> MedidoresDbo => Set<MedidorDbo>();
+    public DbSet<CambioMedidorDbo> CambiosMedidoresDbo => Set<CambioMedidorDbo>();
+    public DbSet<MarcaDbo> MarcasDbo => Set<MarcaDbo>();
+    public DbSet<MotivoCambioMedidorDbo> MotivosCambioMedidorDbo => Set<MotivoCambioMedidorDbo>();
     public DbSet<ClaseMedidor> ClasesMedidores => Set<ClaseMedidor>();
     public DbSet<CategoriaConexion> CategoriasConexiones => Set<CategoriaConexion>();
     public DbSet<TipoConexion> TiposConexiones => Set<TipoConexion>();
@@ -37,10 +38,5 @@ public class CosaaltDbContext : DbContext
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CosaaltDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
-    }
-
-    public async Task EnsureSchemasAsync()
-    {
-        await Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'medidores') EXEC('CREATE SCHEMA medidores')");
     }
 }

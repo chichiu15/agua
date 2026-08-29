@@ -10,7 +10,7 @@ public class PredioConfiguration : IEntityTypeConfiguration<Predio>
     {
         builder.ToTable("Predios", "dbo");
         builder.HasKey(p => p.CodPre);
-        builder.Property(p => p.CodPre).HasColumnName("CodPre");
+        builder.Property(p => p.CodPre).HasColumnName("CodPre").HasConversion(NumericConversions.IntToDecimal);
         builder.Property(p => p.CodUbiPre).HasColumnName("CodUbiPre").HasMaxLength(15);
         builder.Property(p => p.NumPre).HasColumnName("NumPre").HasMaxLength(4);
         builder.Property(p => p.CodMaTr).HasColumnName("CodMaTr").HasMaxLength(25);

@@ -20,9 +20,9 @@ public class EjecucionesController : ControllerBase
     }
 
     [HttpGet("historial")]
-    public async Task<IActionResult> Historial([FromQuery] int? registroSocio = null)
+    public async Task<IActionResult> Historial([FromQuery] int? codCon = null)
     {
-        var result = await _ejecucionService.ObtenerHistorialAsync(registroSocio);
+        var result = await _ejecucionService.ObtenerHistorialAsync(codCon);
         return Ok(result);
     }
 }

@@ -5,8 +5,8 @@ namespace Cosaalt.API.Application.Mappers;
 
 public static class CatalogoMapper
 {
-    public static MotivoCambioDto ToDto(MotivoCambioMedidor motivo) =>
-        new(motivo.Id, motivo.Descripcion);
+    public static MotivoCambioDto ToDto(MotivoCambioMedidorDbo motivo) =>
+        new(motivo.CodMoCaMe, motivo.NomMoCaMe);
 }
 
 public static class SolicitudMapper
@@ -14,8 +14,8 @@ public static class SolicitudMapper
     public static SolicitudBandejaDto FromDetalleLectura(
         DetalleSolicitudLectura detalle,
         SolicitudLectura solicitud,
-        Socio socio,
-        Medidor? medidor,
+        Conexion? conexion,
+        (string? NumeroMedidor, string? MarcaMedidor) medidor,
         string estado)
     {
         return new SolicitudBandejaDto(
@@ -23,14 +23,14 @@ public static class SolicitudMapper
             TipoOrigen: "LECTURA",
             Estado: estado,
             EsUrgente: false,
-            RegistroSocio: socio.RegistroSocio,
-            NombreCliente: socio.Nombre,
-            Direccion: socio.Direccion,
-            Categoria: socio.Categoria,
-            Ruta: socio.Ruta,
-            Recorrido: socio.Recorrido,
-            NumeroMedidor: medidor?.NumeroMedidor,
-            MarcaMedidor: medidor?.Marca,
+            CodCon: conexion?.CodCon ?? 0,
+            NombreCliente: conexion?.NomSoc ?? "Sin nombre",
+            Direccion: Cosaalt.API.Infrastructure.Repositories.BandejaOdecoBuilder.BuildDireccion(conexion?.Predio),
+            Categoria: null,
+            Ruta: null,
+            Recorrido: null,
+            NumeroMedidor: medidor.NumeroMedidor,
+            MarcaMedidor: medidor.MarcaMedidor,
             LecturaAnterior: detalle.LecturaAnterior,
             LecturaActual: detalle.LecturaActual,
             Consumo: detalle.Consumo,
@@ -38,44 +38,9 @@ public static class SolicitudMapper
             FechaSolicitud: solicitud.FechaEmision,
             FolioOdeco: null,
             ConclusionOdeco: null,
-            // Antes: socio.Latitud / socio.Longitud. Ahora la ubicación
-            // real es la del medidor (un socio puede tener más de uno).
-            Latitud: medidor?.Latitud,
-            Longitud: medidor?.Longitud);
-    }
-
-    public static SolicitudBandejaDto FromReclamoOdeco(
-        ReclamoOdeco reclamo,
-        Socio socio,
-        Medidor? medidor,
-        string estado)
-    {
-        var esUrgente = reclamo.Conclusion?.Contains("CAMBIAR", StringComparison.OrdinalIgnoreCase) == true
-            || reclamo.PrioridadNota?.Contains("URGENTE", StringComparison.OrdinalIgnoreCase) == true
-            || reclamo.PrioridadNota?.Contains("24", StringComparison.OrdinalIgnoreCase) == true;
-
-        return new SolicitudBandejaDto(
-            Id: $"ODECO-{reclamo.Folio}",
-            TipoOrigen: "ODECO",
-            Estado: estado,
-            EsUrgente: esUrgente,
-            RegistroSocio: socio.RegistroSocio,
-            NombreCliente: socio.Nombre,
-            Direccion: socio.Direccion,
-            Categoria: socio.Categoria,
-            Ruta: socio.Ruta,
-            Recorrido: socio.Recorrido,
-            NumeroMedidor: medidor?.NumeroMedidor,
-            MarcaMedidor: medidor?.Marca,
-            LecturaAnterior: reclamo.LecturaAnteriorAnalisis,
-            LecturaActual: reclamo.LecturaActualAnalisis,
-            Consumo: reclamo.ConsumoAnalisis,
-            MotivoObservacion: reclamo.MotivoReclamo ?? reclamo.Comentarios,
-            FechaSolicitud: reclamo.FechaReclamo,
-            FolioOdeco: reclamo.Folio,
-            ConclusionOdeco: reclamo.Conclusion,
-            Latitud: medidor?.Latitud,
-            Longitud: medidor?.Longitud);
+            // La ubicación es la de la conexión (el medidor sale de dbo, sin coords).
+            Latitud: conexion?.CooX2Con,
+            Longitud: conexion?.CooY2Con);
     }
 }
 
@@ -126,14 +91,14 @@ public static class RutaMapper
 
     public static DetalleRutaResponseDto ToResponse(
         DetalleRuta entity,
-        IReadOnlyDictionary<string, (int? RegistroSocio, string? NumeroMedidor)>? resolucion = null)
+        IReadOnlyDictionary<string, (int? CodCon, string? NumeroMedidor)>? resolucion = null)
     {
-        int? registro = null;
+        int? codCon = null;
         string? medidor = null;
 
         if (resolucion?.TryGetValue($"{entity.TipoOrigen}-{entity.IdOrigen}", out var r) == true)
         {
-            registro = r.RegistroSocio;
+            codCon = r.CodCon;
             medidor = r.NumeroMedidor;
         }
 
@@ -148,14 +113,14 @@ public static class RutaMapper
             Latitud: entity.Latitud,
             Longitud: entity.Longitud,
             EsUrgente: entity.TipoOrigen == "ODECO",
-            RegistroSocio: registro,
+            CodCon: codCon,
             NumeroMedidor: medidor);
     }
 
     public static RutaAsignadaResponseDto ToResponse(
         AsignacionRuta entity,
         string nombreTecnico,
-        IReadOnlyDictionary<string, (int? RegistroSocio, string? NumeroMedidor)>? resolucion = null) =>
+        IReadOnlyDictionary<string, (int? CodCon, string? NumeroMedidor)>? resolucion = null) =>
         new(
             IdAsignacion: entity.Id,
             IdUsuarioTecnico: entity.IdUsuarioApp,

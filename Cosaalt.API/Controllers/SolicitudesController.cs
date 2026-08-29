@@ -13,16 +13,18 @@ public class SolicitudesController : ControllerBase
     public SolicitudesController(SolicitudVirtualService virtualService) => _virtualService = virtualService;
 
     [HttpGet]
-    public async Task<IActionResult> ObtenerSolicitudes([FromQuery] string? filtro)
+    public async Task<IActionResult> ObtenerSolicitudes(
+        [FromQuery] string? filtro,
+        [FromQuery] int? top)
     {
-        var result = await _virtualService.ObtenerSolicitudesOdecoAsync(filtro);
+        var result = await _virtualService.ObtenerSolicitudesOdecoAsync(filtro, top ?? 200);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> ObtenerPorId(string id)
     {
-        var result = await _virtualService.ObtenerSolicitudesOdecoAsync();
+        var result = await _virtualService.ObtenerSolicitudesOdecoAsync(top: BandejaOdecoBuilder.MaxTop);
         var solicitud = result.Solicitudes.FirstOrDefault(s => s.Id == id);
         if (solicitud is null)
             return NotFound(new { mensaje = "Solicitud no encontrada." });

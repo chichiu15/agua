@@ -325,10 +325,10 @@ class _TarjetaHistorial extends StatelessWidget {
                   icon: Icons.person_outline,
                   label: ejecucion.nombreTecnico!,
                 ),
-              if (ejecucion.registroSocio != null)
+              if (ejecucion.codCon != null)
                 _ChipInfo(
                   icon: Icons.badge_outlined,
-                  label: 'N° ${ejecucion.registroSocio}',
+                  label: 'N° ${ejecucion.codCon}',
                 ),
             ],
           ),

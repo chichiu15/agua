@@ -10,7 +10,7 @@ public class ConexionConfiguration : IEntityTypeConfiguration<Conexion>
     {
         builder.ToTable("Conexiones", "dbo");
         builder.HasKey(c => c.CodCon);
-        builder.Property(c => c.CodCon).HasColumnName("CodCon");
+        builder.Property(c => c.CodCon).HasColumnName("CodCon").HasConversion(NumericConversions.IntToDecimal);
         builder.Property(c => c.FecCon).HasColumnName("FecCon");
         builder.Property(c => c.ObsCon).HasColumnName("ObsCon").HasMaxLength(500);
         builder.Property(c => c.CooX2Con).HasColumnName("CooX2Con");
@@ -25,7 +25,7 @@ public class ConexionConfiguration : IEntityTypeConfiguration<Conexion>
         builder.Property(c => c.NumDoc).HasColumnName("NumDoc").HasMaxLength(15);
         builder.Property(c => c.TipDoc).HasColumnName("Tip_Doc").HasMaxLength(4);
         builder.Property(c => c.RucSoc).HasColumnName("Ruc_Soc").HasMaxLength(15);
-        builder.Property(c => c.CodPre).HasColumnName("CodPre");
+        builder.Property(c => c.CodPre).HasColumnName("CodPre").HasConversion(NumericConversions.IntToDecimal);
 
         builder.HasOne(c => c.Predio)
             .WithMany(p => p.Conexiones)

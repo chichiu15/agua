@@ -5,7 +5,7 @@ public record SolicitudBandejaDto(
     string TipoOrigen,
     string Estado,
     bool EsUrgente,
-    int RegistroSocio,
+    int CodCon,
     string NombreCliente,
     string Direccion,
     string? Categoria,

@@ -48,8 +48,8 @@ public class EjecucionService
     public Task<EjecucionCambioResponseDto> RegistrarAsync(EjecucionCambioRequestDto request) =>
         _repository.RegistrarAsync(request);
 
-    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? registroSocio = null) =>
-        _repository.ObtenerHistorialAsync(registroSocio);
+    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null) =>
+        _repository.ObtenerHistorialAsync(codCon);
 }
 
 public class UsuarioService
@@ -60,6 +60,9 @@ public class UsuarioService
 
     public Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosAsync() =>
         _repository.ObtenerTecnicosActivosAsync();
+
+    public Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosAsync() =>
+        _repository.ObtenerFuncionariosActivosAsync();
 }
 
 public class RutaService

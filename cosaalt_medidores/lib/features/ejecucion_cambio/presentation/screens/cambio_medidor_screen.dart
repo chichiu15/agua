@@ -120,7 +120,7 @@ class _CambioMedidorScreenState extends ConsumerState<CambioMedidorScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Reg. ${solicitud.registroSocio} · ${solicitud.nombreCliente}',
+                    'N° ${solicitud.codCon} · ${solicitud.nombreCliente}',
                     style: const TextStyle(color: AppColors.darkBlue),
                   ),
                   const SizedBox(height: 8),

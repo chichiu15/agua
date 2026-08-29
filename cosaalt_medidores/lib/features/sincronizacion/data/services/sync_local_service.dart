@@ -63,7 +63,7 @@ class SyncLocalService {
       idOrigen: json['idOrigen'] as String,
       idUsuarioApp: json['idUsuarioApp'] as int,
       fechaHoraEjecucion: DateTime.parse(json['fechaHoraEjecucion'] as String),
-      registroSocio: json['registroSocio'] as int,
+      codCon: json['codCon'] as int,
       nombreSocio: json['nombreSocio'] as String,
       direccion: json['direccion'] as String,
       numeroMedidorRetirado: json['numeroMedidorRetirado'] as String,

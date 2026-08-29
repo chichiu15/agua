@@ -29,7 +29,7 @@ public record DetalleRutaResponseDto(
     double? Latitud,
     double? Longitud,
     bool EsUrgente,
-    int? RegistroSocio,
+    int? CodCon,
     string? NumeroMedidor);
 
 public record RutaAsignadaResponseDto(
