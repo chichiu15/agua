@@ -18,7 +18,7 @@ class EjecucionHistorial {
     required this.idOrigen,
     required this.solicitudId,
     required this.fechaHoraEjecucion,
-    required this.registroSocio,
+    required this.codCon,
     required this.nombreCliente,
     required this.direccion,
     required this.numeroMedidorRetirado,
@@ -37,7 +37,7 @@ class EjecucionHistorial {
   final String idOrigen;
   final String solicitudId;
   final DateTime fechaHoraEjecucion;
-  final int? registroSocio;
+  final int? codCon;
   final String? nombreCliente;
   final String? direccion;
   final String numeroMedidorRetirado;
@@ -59,7 +59,7 @@ class EjecucionHistorial {
         fechaHoraEjecucion: DateTime.parse(
           json['fechaHoraEjecucion'] as String,
         ),
-        registroSocio: json['registroSocio'] as int?,
+        codCon: json['codCon'] as int?,
         nombreCliente: json['nombreCliente'] as String?,
         direccion: json['direccion'] as String?,
         numeroMedidorRetirado: json['numeroMedidorRetirado'] as String? ?? '',

@@ -236,7 +236,7 @@ class CambioMedidorController extends Notifier<CambioMedidorState> {
         idOrigen: idOrigen,
         idUsuarioApp: user.id,
         fechaHoraEjecucion: now,
-        registroSocio: solicitud.registroSocio,
+        codCon: solicitud.codCon,
         nombreSocio: solicitud.nombreCliente,
         direccion: solicitud.direccion,
         numeroMedidorRetirado: solicitud.numeroMedidor!,

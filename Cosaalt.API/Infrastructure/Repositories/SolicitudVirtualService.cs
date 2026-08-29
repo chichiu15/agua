@@ -1,5 +1,6 @@
 using Cosaalt.API.Application.DTOs;
 using Cosaalt.API.Infrastructure.Context;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cosaalt.API.Infrastructure.Repositories;
@@ -10,80 +11,12 @@ public class SolicitudVirtualService
 
     public SolicitudVirtualService(CosaaltDbContext context) => _context = context;
 
-    public async Task<SolicitudesResponseDto> ObtenerSolicitudesOdecoAsync(string? filtro = null)
+    public async Task<SolicitudesResponseDto> ObtenerSolicitudesOdecoAsync(
+        string? filtro = null, int top = 200)
     {
-        var solicitudes = new List<SolicitudBandejaDto>();
+        top = Math.Clamp(top, 1, BandejaOdecoBuilder.MaxTop);
 
-        var idsAsignados = await _context.DetallesRuta
-            .AsNoTracking()
-            .Select(d => d.TipoOrigen + "-" + d.IdOrigen)
-            .Distinct()
-            .ToListAsync();
-
-        var reclamos = await _context.Reclamos
-            .AsNoTracking()
-            .Include(r => r.Conexion)
-                .ThenInclude(c => c!.Predio)
-            .Include(r => r.Recurrente)
-            .ToListAsync();
-
-        var nombres = reclamos
-            .Select(r => r.Conexion?.NomSoc?.Trim())
-            .Where(n => !string.IsNullOrEmpty(n))
-            .Distinct()
-            .ToList();
-
-        var socios = nombres.Count == 0
-            ? new List<Domain.Entities.Socio>()
-            : await _context.Socios
-                .AsNoTracking()
-                .Include(s => s.Medidor)
-                .Where(s => nombres.Contains(s.Nombre.Trim()))
-                .ToListAsync();
-
-        var socioPorNombre = socios
-            .ToDictionary(s => s.Nombre.Trim(), StringComparer.OrdinalIgnoreCase);
-
-        foreach (var r in reclamos)
-        {
-            var estado = idsAsignados.Contains($"ODECO-{r.CodRec}")
-                ? "Asignada" : "Pendiente";
-
-            var esUrgente = r.DesRec?.Contains("URGENTE", StringComparison.OrdinalIgnoreCase) == true
-                || r.PriRec == 'A';
-
-            var nombre = r.Conexion?.NomSoc?.Trim();
-            Domain.Entities.Socio? socio = null;
-            if (!string.IsNullOrEmpty(nombre))
-                socioPorNombre.TryGetValue(nombre, out socio);
-
-            var medidorActivo = socio?.Medidor?.Estado?.ToUpper() == "ACTIVO"
-                ? socio.Medidor
-                : null;
-
-            solicitudes.Add(new SolicitudBandejaDto(
-                Id: $"ODECO-{r.CodRec}",
-                TipoOrigen: "ODECO",
-                Estado: estado,
-                EsUrgente: esUrgente,
-                RegistroSocio: socio?.RegistroSocio ?? 0,
-                NombreCliente: r.Recurrente?.NomRec ?? r.Conexion?.NomSoc ?? "Sin nombre",
-                Direccion: BuildDireccion(r.Conexion?.Predio),
-                Categoria: socio?.Categoria,
-                Ruta: socio?.Ruta,
-                Recorrido: socio?.Recorrido,
-                NumeroMedidor: medidorActivo?.NumeroMedidor,
-                MarcaMedidor: medidorActivo?.Marca,
-                LecturaAnterior: null,
-                LecturaActual: null,
-                Consumo: null,
-                MotivoObservacion: r.DesRec,
-                FechaSolicitud: r.FecRec,
-                FolioOdeco: r.CodRec,
-                ConclusionOdeco: null,
-                Latitud: r.Conexion?.CooX2Con,
-                Longitud: r.Conexion?.CooY2Con));
-        }
+        var solicitudes = await BandejaOdecoBuilder.BuildAsync(_context, top);
 
         var filtradas = filtro?.ToLowerInvariant() switch
         {
@@ -93,16 +26,47 @@ public class SolicitudVirtualService
         };
 
         var resumen = new DashboardResumenDto(
-            OdecoUrgentes: solicitudes.Count(s => s.EsUrgente && s.Estado == "Pendiente"),
-            LecturasDelMes: 0,
+            OdecoUrgentes: await ContarOdecoUrgentesPendientesAsync(),
+            LecturasDelMes: await ContarLecturasDelMesAsync(),
             CompletadasHoy: 0);
 
         return new SolicitudesResponseDto(resumen, filtradas);
     }
 
-    private static string BuildDireccion(Domain.Entities.Predio? predio)
+    /// <summary>
+    /// Reclamos vigentes de la gestión actual, urgentes y AÚN NO asignados en
+    /// medidores.DetallesRuta. COUNT en el servidor sin traer filas; el anti-join
+    /// es por Folio+origen (nunca Contains sobre CodRec: evitaría el bug OPENJSON).
+    /// </summary>
+    private async Task<int> ContarOdecoUrgentesPendientesAsync()
     {
-        if (predio is null) return "Sin dirección";
-        return $"{predio.CodUbiPre} {predio.NumPre}".Trim();
+        var inicioVentana = DateTime.Today.AddYears(-1);
+
+        const string sql = """
+            SELECT COUNT(*) AS Value
+            FROM dbo.Reclamos r
+            WHERE r.EstRec = CAST(1 AS bit)
+              AND r.CodCon IS NOT NULL
+              AND r.FecRec >= @inicioVentana
+              AND (r.DesRec LIKE '%URGENTE%' OR r.PriRec = 'A')
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM medidores.DetalleRuta dr
+                    WHERE dr.TipoOrigen = 'ODECO'
+                      AND dr.IdOrigen = CAST(r.CodRec AS nvarchar(20))
+                  )
+            """;
+
+        return await _context.Database
+            .SqlQueryRaw<int>(sql, new SqlParameter("@inicioVentana", inicioVentana))
+            .SingleAsync();
+    }
+
+    private async Task<int> ContarLecturasDelMesAsync()
+    {
+        var inicioMes = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        return await _context.DetallesSolicitudLectura
+            .AsNoTracking()
+            .CountAsync(d => d.Solicitud.FechaEmision >= inicioMes);
     }
 }

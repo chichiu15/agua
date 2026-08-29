@@ -21,12 +21,13 @@ public interface ISolicitudRepository
 public interface IEjecucionRepository
 {
     Task<EjecucionCambioResponseDto> RegistrarAsync(EjecucionCambioRequestDto request);
-    Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? registroSocio = null);
+    Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null);
 }
 
 public interface IUsuarioRepository
 {
     Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync();
+    Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosActivosAsync();
 }
 
 public interface IRutaRepository

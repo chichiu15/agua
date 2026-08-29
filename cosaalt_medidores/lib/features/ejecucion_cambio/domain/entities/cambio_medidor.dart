@@ -18,7 +18,7 @@ class CambioMedidorDraft {
     required this.idOrigen,
     required this.idUsuarioApp,
     required this.fechaHoraEjecucion,
-    required this.registroSocio,
+    required this.codCon,
     required this.nombreSocio,
     required this.direccion,
     required this.numeroMedidorRetirado,
@@ -41,7 +41,7 @@ class CambioMedidorDraft {
   final String idOrigen;
   final int idUsuarioApp;
   final DateTime fechaHoraEjecucion;
-  final int registroSocio;
+  final int codCon;
   final String nombreSocio;
   final String direccion;
   final String numeroMedidorRetirado;
@@ -72,7 +72,7 @@ class CambioMedidorDraft {
     'idOrigen': idOrigen,
     'idUsuarioApp': idUsuarioApp,
     'fechaHoraEjecucion': fechaHoraEjecucion.toIso8601String(),
-    'registroSocio': registroSocio,
+    'codCon': codCon,
     'nombreSocio': nombreSocio,
     'direccion': direccion,
     'numeroMedidorRetirado': numeroMedidorRetirado,

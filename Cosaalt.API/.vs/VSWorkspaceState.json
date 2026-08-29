@@ -12,6 +12,6 @@
     "\\Infrastructure\\Seed",
     "\\obj"
   ],
-  "SelectedNode": "\\Infrastructure\\Repositories\\MockRepositories.cs",
+  "SelectedNode": "\\Infrastructure\\Seed\\DatabaseSeeder.cs",
   "PreviewInSolutionExplorer": false
 }

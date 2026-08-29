@@ -344,10 +344,10 @@ class _TarjetaParada extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (parada.registroSocio != null) ...[
+                    if (parada.codCon != null) ...[
                       const SizedBox(width: 10),
                       Text(
-                        'N° ${parada.registroSocio}',
+                        'N° ${parada.codCon}',
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,

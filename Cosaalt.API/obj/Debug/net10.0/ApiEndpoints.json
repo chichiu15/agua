@@ -68,6 +68,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "Cosaalt.API.Controllers.EjecucionesController",
+    "Method": "Historial",
+    "RelativePath": "api/ejecuciones/historial",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "codCon",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "Cosaalt.API.Controllers.EvidenciasController",
     "Method": "Upload",
     "RelativePath": "api/evidencias/upload",
@@ -174,6 +190,11 @@
         "Name": "filtro",
         "Type": "System.String",
         "IsRequired": false
+      },
+      {
+        "Name": "top",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -192,6 +213,16 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Cosaalt.API.Controllers.UsuariosController",
+    "Method": "ObtenerFuncionarios",
+    "RelativePath": "api/usuarios/funcionarios",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {

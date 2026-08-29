@@ -3891,23 +3891,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\rocio\\.nuget\\packages\\": {},
+    "C:\\Users\\Usuario\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\trabajos\\Cosaalt\\Cosaalt.API\\Cosaalt.API.csproj",
+      "projectUniqueName": "C:\\Users\\Usuario\\Documents\\UPDS\\Cosaalt RL Tarija\\COSALT-MEDIDORES\\agua\\Cosaalt.API\\Cosaalt.API.csproj",
       "projectName": "Cosaalt.API",
-      "projectPath": "C:\\trabajos\\Cosaalt\\Cosaalt.API\\Cosaalt.API.csproj",
-      "packagesPath": "C:\\Users\\rocio\\.nuget\\packages\\",
-      "outputPath": "C:\\trabajos\\Cosaalt\\Cosaalt.API\\obj\\",
+      "projectPath": "C:\\Users\\Usuario\\Documents\\UPDS\\Cosaalt RL Tarija\\COSALT-MEDIDORES\\agua\\Cosaalt.API\\Cosaalt.API.csproj",
+      "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Usuario\\Documents\\UPDS\\Cosaalt RL Tarija\\COSALT-MEDIDORES\\agua\\Cosaalt.API\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\rocio\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],

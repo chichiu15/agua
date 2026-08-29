@@ -10,7 +10,7 @@ public class PersonaConfiguration : IEntityTypeConfiguration<Persona>
     {
         builder.ToTable("Personas", "dbo");
         builder.HasKey(p => p.CodPer);
-        builder.Property(p => p.CodPer).HasColumnName("CodPer");
+        builder.Property(p => p.CodPer).HasColumnName("CodPer").HasConversion(NumericConversions.IntToDecimal);
         builder.Property(p => p.NomPer).HasColumnName("NomPer").HasMaxLength(50);
         builder.Property(p => p.PriApePer).HasColumnName("PriApePer").HasMaxLength(30);
         builder.Property(p => p.SegApePer).HasColumnName("SegApePer").HasMaxLength(30);
@@ -21,6 +21,6 @@ public class PersonaConfiguration : IEntityTypeConfiguration<Persona>
         builder.Property(p => p.FotPer).HasColumnName("FotPer").HasMaxLength(50);
         builder.Property(p => p.CorPer).HasColumnName("CorPer").HasMaxLength(60);
         builder.Property(p => p.ApeCasPer).HasColumnName("ApeCasPer").HasMaxLength(30);
-        builder.Property(p => p.CodPai).HasColumnName("CodPai");
+        builder.Property(p => p.CodPai).HasColumnName("CodPai").HasConversion(NumericConversions.NullableIntToDecimal);
     }
 }

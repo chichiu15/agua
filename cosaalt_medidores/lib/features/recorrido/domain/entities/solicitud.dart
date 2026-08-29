@@ -7,7 +7,7 @@ class Solicitud {
     required this.estado,
     required this.esUrgente,
     required this.esVencida,
-    required this.registroSocio,
+    required this.codCon,
     required this.nombreCliente,
     required this.direccion,
     this.categoria,
@@ -31,7 +31,7 @@ class Solicitud {
   final String estado;
   final bool esUrgente;
   final bool esVencida;
-  final int registroSocio;
+  final int codCon;
   final String nombreCliente;
   final String direccion;
   final String? categoria;
@@ -60,7 +60,7 @@ class Solicitud {
       estado: json['estado'] as String,
       esUrgente: json['esUrgente'] as bool? ?? false,
       esVencida: json['esVencida'] as bool? ?? false,
-      registroSocio: json['registroSocio'] as int,
+      codCon: json['codCon'] as int,
       nombreCliente: json['nombreCliente'] as String,
       direccion: json['direccion'] as String,
       categoria: json['categoria'] as String?,

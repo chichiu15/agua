@@ -32,7 +32,7 @@
               "RelativeDocumentMoniker": "Infrastructure\\Seed\\DatabaseSeeder.cs",
               "ToolTip": "C:\\trabajos\\Cosaalt\\Cosaalt.API\\Infrastructure\\Seed\\DatabaseSeeder.cs",
               "RelativeToolTip": "Infrastructure\\Seed\\DatabaseSeeder.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAAEMAAAAVAAAAAAAAAA==",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAuwEMAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-08-15T02:50:05.419Z",
               "EditorCaption": ""
@@ -59,8 +59,7 @@
               "RelativeToolTip": "Infrastructure\\Configurations\\SocioConfiguration.cs",
               "ViewState": "AgIAAAYAAAAAAAAAAAAuwAwAAAAXAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-14T11:05:10.591Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-14T11:05:10.591Z"
             }
           ]
         }

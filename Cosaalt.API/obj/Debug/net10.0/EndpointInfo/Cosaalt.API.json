@@ -109,6 +109,28 @@
         }
       }
     },
+    "/api/ejecuciones/historial": {
+      "get": {
+        "tags": [
+          "Ejecuciones"
+        ],
+        "parameters": [
+          {
+            "name": "codCon",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/evidencias/upload": {
       "post": {
         "tags": [
@@ -281,6 +303,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "top",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -313,6 +343,18 @@
       }
     },
     "/api/usuarios/tecnicos": {
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/usuarios/funcionarios": {
       "get": {
         "tags": [
           "Usuarios"

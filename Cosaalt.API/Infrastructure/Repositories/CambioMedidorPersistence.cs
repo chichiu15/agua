@@ -43,45 +43,43 @@ internal static class CambioMedidorPersistence
         if (existente is not null)
             return existente;
 
-        var usuarioValido = await context.UsuariosApp
+        var usuarioValido = await context.Usuarios
             .AsNoTracking()
             .AnyAsync(u => u.Id == request.IdUsuarioApp && u.Activo);
 
         if (!usuarioValido)
             throw new InvalidOperationException("El usuario que ejecuta el cambio no existe o está inactivo.");
 
-        var registroSocio = await ResolverRegistroSocioAsync(context, tipoOrigen, idOrigen);
+        var codCon = await ResolverCodConAsync(context, tipoOrigen, idOrigen);
 
-        var medidorActual = await context.Medidores
-            .Where(m =>
-                m.RegistroSocio == registroSocio &&
-                m.Estado != null &&
-                m.Estado.ToUpper() == "ACTIVO")
-            .OrderByDescending(m => m.FechaInstalacion)
-            .FirstOrDefaultAsync();
+        // El medidor ACTUAL (vigente) sale de dbo: CambioMedidores(EstCaMe=1)+Medidores.
+        // Solo lectura; nunca escribimos el espejo medidores.Medidor.
+        var vigente = (await MedidorVigenteResolver.ResolverAsync(context, [codCon]))
+            .GetValueOrDefault(codCon);
 
-        if (medidorActual is null)
-            throw new InvalidOperationException("El socio no tiene un medidor activo registrado.");
+        if (vigente == default || vigente.Serial is null)
+            throw new InvalidOperationException(
+                "La conexión no tiene un medidor activo registrado en COSAALT (CambioMedidores).");
 
-        if (!medidorActual.NumeroMedidor.Equals(
+        if (!vigente.Serial.Equals(
                 request.NumeroMedidorRetirado.Trim(),
                 StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
-                $"El medidor retirado no coincide con el medidor activo del socio. Activo: {medidorActual.NumeroMedidor}.");
+                $"El medidor retirado no coincide con el medidor activo de la conexión. Activo: {vigente.Serial}.");
         }
 
         var numeroNuevo = request.NumeroMedidorInstalado.Trim();
 
-        if (numeroNuevo.Equals(medidorActual.NumeroMedidor, StringComparison.OrdinalIgnoreCase))
+        if (numeroNuevo.Equals(vigente.Serial, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("El medidor instalado debe ser distinto al medidor retirado.");
 
-        var nuevoYaExiste = await context.Medidores
+        var nuevoYaExiste = await context.MedidoresDbo
             .AsNoTracking()
-            .AnyAsync(m => m.NumeroMedidor == numeroNuevo);
+            .AnyAsync(m => m.SerMed == numeroNuevo);
 
         if (nuevoYaExiste)
-            throw new InvalidOperationException("El número del medidor instalado ya existe en la base de datos.");
+            throw new InvalidOperationException("El número del medidor instalado ya existe en COSAALT (dbo.Medidores).");
 
         DetalleRuta? detalleRuta = null;
 
@@ -105,44 +103,22 @@ internal static class CambioMedidorPersistence
             ? DateTime.Now
             : request.FechaHoraEjecucion;
 
-        // El historial permanece en Medidor: el viejo se conserva como Retirado
-        // y el nuevo queda ligado al MISMO socio como Activo.
-        medidorActual.Estado = "Retirado";
-
-        // Persistimos el retiro antes de insertar el nuevo para que el índice
-        // filtrado único (un solo Activo por socio) no pueda chocar por orden
-        // de operaciones. El caller mantiene una transacción, así que si algo
-        // falla después, este cambio también se revierte.
-        await context.SaveChangesAsync();
-
-        var medidorNuevo = new Medidor
-        {
-            NumeroMedidor = numeroNuevo,
-            Marca = request.MarcaInstalado?.Trim(),
-            RegistroSocio = registroSocio,
-            FechaInstalacion = fechaEjecucion,
-            Estado = "Activo",
-            // Conservamos la ubicación física del suministro. En Sprint futuro
-            // puede sustituirse por GPS capturado en campo.
-            Latitud = medidorActual.Latitud,
-            Longitud = medidorActual.Longitud
-        };
-
-        context.Medidores.Add(medidorNuevo);
-
-        // Fuerza los datos históricos del retirado desde la BD y no desde texto editable.
+        // No se escribe ningún espejo en medidores.Medidor: el registro del cambio
+        // (retirado/instalado) queda solo en EjecucionCambio (nuestra tabla) y en
+        // dbo.CambioMedidores (que actualiza el sistema de COSAALT, no la app).
         var normalizado = request with
         {
             TipoOrigen = tipoOrigen,
             IdOrigen = idOrigen,
             FechaHoraEjecucion = fechaEjecucion,
-            NumeroMedidorRetirado = medidorActual.NumeroMedidor,
-            MarcaRetirado = medidorActual.Marca,
+            NumeroMedidorRetirado = vigente.Serial,
+            MarcaRetirado = vigente.Marca,
             NumeroMedidorInstalado = numeroNuevo,
             MarcaInstalado = request.MarcaInstalado?.Trim()
         };
 
         var ejecucion = EjecucionMapper.ToEntity(normalizado);
+        ejecucion.CodCon = codCon;
         context.EjecucionesCambio.Add(ejecucion);
 
         if (detalleRuta is not null)
@@ -165,7 +141,7 @@ internal static class CambioMedidorPersistence
         return ejecucion;
     }
 
-    private static async Task<int> ResolverRegistroSocioAsync(
+    private static async Task<int> ResolverCodConAsync(
         CosaaltDbContext context,
         string tipoOrigen,
         string idOrigen)
@@ -175,23 +151,26 @@ internal static class CambioMedidorPersistence
 
         if (tipoOrigen == "LECTURA")
         {
-            var registro = await context.DetallesSolicitudLectura
+            // La conexión que originó la lectura vive en DetalleSolicitudLectura.
+            var codCon = await context.DetallesSolicitudLectura
                 .AsNoTracking()
                 .Where(d => d.Id == idNumerico)
-                .Select(d => (int?)d.RegistroSocio)
+                .Select(d => (int?)d.CodCon)
                 .FirstOrDefaultAsync();
 
-            return registro
+            return codCon
                 ?? throw new InvalidOperationException("No se encontró la solicitud de LECTURA indicada.");
         }
 
-        var registroOdeco = await context.ReclamosOdeco
+        // ODECO: la conexión del socio sale directa de dbo.Reclamos.CodCon,
+        // sin tablas intermedias inventadas.
+        var codConOdeco = await context.Reclamos
             .AsNoTracking()
-            .Where(r => r.Folio == idNumerico)
-            .Select(r => (int?)r.RegistroSocio)
+            .Where(r => r.CodRec == idNumerico)
+            .Select(r => (int?)r.CodCon)
             .FirstOrDefaultAsync();
 
-        return registroOdeco
+        return codConOdeco
             ?? throw new InvalidOperationException("No se encontró el reclamo ODECO indicado.");
     }
 }

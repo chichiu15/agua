@@ -1,7 +1,6 @@
 using Cosaalt.API.Application.Services;
 using Cosaalt.API.Infrastructure.Context;
 using Cosaalt.API.Infrastructure.Repositories;
-using Cosaalt.API.Infrastructure.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -60,16 +59,6 @@ builder.Services.AddScoped<SincronizacionService>();
 builder.Services.AddScoped<SolicitudVirtualService>();
 
 var app = builder.Build();
-
-// Solo tiene sentido sembrar/crear esquema automáticamente cuando SÍ estamos
-// contra SQL Server real; en modo Mock no hay DbContext real que sembrar.
-if (repositoryMode.Equals("Sql", StringComparison.OrdinalIgnoreCase))
-{
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<CosaaltDbContext>();
-    await context.EnsureSchemasAsync();
-    await DatabaseSeeder.SeedAsync(context);
-}
 
 if (app.Environment.IsDevelopment())
 {

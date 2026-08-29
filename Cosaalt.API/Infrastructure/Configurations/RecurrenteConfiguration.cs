@@ -10,7 +10,7 @@ public class RecurrenteConfiguration : IEntityTypeConfiguration<Recurrente>
     {
         builder.ToTable("Recurrentes", "dbo");
         builder.HasKey(r => r.CodRec);
-        builder.Property(r => r.CodRec).HasColumnName("CodRec");
+        builder.Property(r => r.CodRec).HasColumnName("CodRec").HasConversion(NumericConversions.IntToDecimal);
         builder.Property(r => r.NomRec).HasColumnName("NomRec").HasMaxLength(120);
         builder.Property(r => r.CeIdRec).HasColumnName("CeIdRec").HasMaxLength(15);
         builder.Property(r => r.TelRec).HasColumnName("TelRec").HasMaxLength(30);

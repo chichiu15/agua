@@ -32,7 +32,7 @@ public record EjecucionHistorialDto(
     string IdOrigen,
     string SolicitudId,
     DateTime FechaHoraEjecucion,
-    int? RegistroSocio,
+    int? CodCon,
     string? NombreCliente,
     string? Direccion,
     string NumeroMedidorRetirado,
