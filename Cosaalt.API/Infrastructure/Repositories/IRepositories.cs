@@ -42,3 +42,13 @@ public interface ISincronizacionRepository
 {
     Task<SincronizacionResponseDto> ProcesarCambiosAsync(SincronizacionRequestDto request);
 }
+
+public interface IVerificacionRepository
+{
+    Task<IReadOnlyList<SolicitudVerificacionDto>> ObtenerSolicitudesAsync();
+    Task<TomarVerificacionResponseDto> TomarAsync(TomarVerificacionRequestDto request);
+    Task<IReadOnlyList<VerificacionDto>> ObtenerVerificacionesAsync(int idMecanico);
+    Task<VerificacionDto?> ObtenerVerificacionAsync(int id);
+    Task<DatosSocioMedidorDto?> ObtenerDatosSocioMedidorAsync(int idVerificacion);
+    Task<VerificacionDto?> GuardarEnsayoAsync(int idVerificacion, decimal? volumenRegistrado, decimal? error, GuardarEnsayoRequestDto request);
+}

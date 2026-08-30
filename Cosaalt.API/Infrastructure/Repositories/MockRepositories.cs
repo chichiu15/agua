@@ -271,3 +271,4 @@ public class MockSincronizacionRepository : ISincronizacionRepository
             Mensaje: $"{ids.Count} ejecuciones sincronizadas correctamente."));
     }
 }
+

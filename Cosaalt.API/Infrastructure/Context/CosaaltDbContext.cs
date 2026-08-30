@@ -33,6 +33,10 @@ public class CosaaltDbContext : DbContext
     public DbSet<ClaseMedidor> ClasesMedidores => Set<ClaseMedidor>();
     public DbSet<CategoriaConexion> CategoriasConexiones => Set<CategoriaConexion>();
     public DbSet<TipoConexion> TiposConexiones => Set<TipoConexion>();
+    public DbSet<Verificacion> Verificaciones => Set<Verificacion>();
+    public DbSet<EnsayoVerificacion> EnsayosVerificacion => Set<EnsayoVerificacion>();
+    public DbSet<ParticipanteVerificacion> ParticipantesVerificacion => Set<ParticipanteVerificacion>();
+    public DbSet<InformeVerificacion> InformesVerificacion => Set<InformeVerificacion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
