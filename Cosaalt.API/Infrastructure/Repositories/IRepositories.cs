@@ -27,6 +27,7 @@ public interface IEjecucionRepository
 public interface IUsuarioRepository
 {
     Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync();
+    Task<IReadOnlyList<UsuarioDto>> ObtenerUsuariosAsync();
     Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosActivosAsync();
 }
 

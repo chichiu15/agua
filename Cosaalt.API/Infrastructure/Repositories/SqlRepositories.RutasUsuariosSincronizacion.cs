@@ -55,6 +55,26 @@ public class SqlUsuarioRepository : IUsuarioRepository
             .ToList();
     }
 
+    public async Task<IReadOnlyList<UsuarioDto>> ObtenerUsuariosAsync()
+    {
+        var usuarios = await _context.Usuarios
+            .AsNoTracking()
+            .Include(u => u.Rol)
+            .Include(u => u.Funcionario)
+                .ThenInclude(f => f!.Persona)
+            .OrderBy(u => u.Id)
+            .ToListAsync();
+
+        return usuarios
+            .Select(u => new UsuarioDto(
+                u.Id,
+                u.NombreCompleto,
+                u.Rol.Nombre,
+                u.Activo,
+                u.CodFunCorporativo))
+            .ToList();
+    }
+
     /// <summary>
     /// Funcionarios ACTIVOS de COSAALT con su nombre completo (dbo solo lectura).
     /// Consulta dbo.Funcionarios f JOIN dbo.Personas p ON p.CodPer = f.CodPer.

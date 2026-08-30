@@ -61,6 +61,9 @@ public class UsuarioService
     public Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosAsync() =>
         _repository.ObtenerTecnicosActivosAsync();
 
+    public Task<IReadOnlyList<UsuarioDto>> ObtenerUsuariosAsync() =>
+        _repository.ObtenerUsuariosAsync();
+
     public Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosAsync() =>
         _repository.ObtenerFuncionariosActivosAsync();
 }

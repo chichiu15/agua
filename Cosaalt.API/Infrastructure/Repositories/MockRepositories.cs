@@ -166,6 +166,21 @@ public class MockUsuarioRepository : IUsuarioRepository
     public Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync() =>
         Task.FromResult<IReadOnlyList<TecnicoDto>>(Tecnicos);
 
+    public Task<IReadOnlyList<UsuarioDto>> ObtenerUsuariosAsync()
+    {
+        UsuarioDto[] usuarios =
+        [
+            new(1, "Juan Pérez García", "tecnico", true, null),
+            new(2, "Luis Mamani Condori", "tecnico", true, null),
+            new(3, "Carlos Rojas Mendoza", "tecnico", false, null),
+            new(4, "Miguel Ángel Torres", "tecnico", true, null),
+            new(5, "Ana Soliz Rueda", "asignador", true, null),
+            new(6, "Rocío Flores Medina", "administrador", true, null),
+            new(7, "Manuel Ortega Vega", "mecanico", true, null)
+        ];
+        return Task.FromResult<IReadOnlyList<UsuarioDto>>(usuarios);
+    }
+
     public Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosActivosAsync()
     {
         FuncionarioDto[] funcionarios =
