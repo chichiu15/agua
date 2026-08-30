@@ -37,6 +37,7 @@ if (repositoryMode.Equals("Sql", StringComparison.OrdinalIgnoreCase))
     builder.Services.AddScoped<IRutaRepository, SqlRutaRepository>();               // antes: Mock
     builder.Services.AddScoped<ISincronizacionRepository, SqlSincronizacionRepository>(); // antes: Mock
     builder.Services.AddScoped<IUsuarioRepository, SqlUsuarioRepository>();         // antes: Mock
+    builder.Services.AddScoped<IVerificacionRepository, SqlVerificacionRepository>();
 }
 else
 {
@@ -56,6 +57,7 @@ builder.Services.AddScoped<EjecucionService>();
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<RutaService>();
 builder.Services.AddScoped<SincronizacionService>();
+builder.Services.AddScoped<VerificacionService>();
 builder.Services.AddScoped<SolicitudVirtualService>();
 
 var app = builder.Build();

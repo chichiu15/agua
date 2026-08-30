@@ -93,3 +93,62 @@ public class SincronizacionService
     public Task<SincronizacionResponseDto> ProcesarCambiosAsync(SincronizacionRequestDto request) =>
         _repository.ProcesarCambiosAsync(request);
 }
+
+public class VerificacionService
+{
+    private readonly IVerificacionRepository _repository;
+
+    public VerificacionService(IVerificacionRepository repository) => _repository = repository;
+
+    public Task<IReadOnlyList<SolicitudVerificacionDto>> ObtenerSolicitudesAsync() =>
+        _repository.ObtenerSolicitudesAsync();
+
+    public Task<TomarVerificacionResponseDto> TomarAsync(TomarVerificacionRequestDto request) =>
+        _repository.TomarAsync(request);
+
+    public Task<IReadOnlyList<VerificacionDto>> ObtenerVerificacionesAsync(int idMecanico) =>
+        _repository.ObtenerVerificacionesAsync(idMecanico);
+
+    public Task<VerificacionDto?> ObtenerVerificacionAsync(int id) =>
+        _repository.ObtenerVerificacionAsync(id);
+
+    public Task<DatosSocioMedidorDto?> ObtenerDatosSocioMedidorAsync(int idVerificacion) =>
+        _repository.ObtenerDatosSocioMedidorAsync(idVerificacion);
+
+    public async Task<EnsayoGuardadoResponseDto> GuardarEnsayoAsync(
+        int idVerificacion,
+        GuardarEnsayoRequestDto request)
+    {
+        var volumenRegistrado = CalcularVolumen(request);
+        var error = CalcularError(request, volumenRegistrado);
+
+        var actualizada = await _repository.GuardarEnsayoAsync(
+            idVerificacion, volumenRegistrado, error, request);
+
+        return new EnsayoGuardadoResponseDto(
+            IdVerificacion: idVerificacion,
+            IdEnsayo: actualizada?.Ensayo?.Id,
+            VolumenRegistrado: volumenRegistrado,
+            Error: error,
+            Mensaje: "Ensayo guardado correctamente.");
+    }
+
+    private static decimal? CalcularVolumen(GuardarEnsayoRequestDto request)
+    {
+        if (request.LecturaInicial is null || request.LecturaFinal is null)
+            return null;
+        return request.LecturaFinal.Value - request.LecturaInicial.Value;
+    }
+
+    private static decimal? CalcularError(GuardarEnsayoRequestDto request, decimal? volumenRegistrado)
+    {
+        if (volumenRegistrado is null
+            || request.VolumenPatron is null
+            || request.VolumenPatron.Value == 0)
+            return null;
+
+        // |volumen medido - volumen patrón| / volumen patrón * 100
+        var diff = Math.Abs(volumenRegistrado.Value - request.VolumenPatron.Value);
+        return diff / request.VolumenPatron.Value * 100m;
+    }
+}

@@ -15,6 +15,7 @@ public class Usuario
 
     public ICollection<EjecucionCambio> Ejecuciones { get; set; } = [];
     public ICollection<AsignacionRuta> Asignaciones { get; set; } = [];
+    public ICollection<Verificacion> Verificaciones { get; set; } = [];
 
     // Nombre real resuelto desde dbo.Funcionarios→Persona (solo lectura);
     // si la cuenta no tiene funcionario vinculado, cae al nombre de usuario.
