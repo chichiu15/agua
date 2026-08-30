@@ -11,6 +11,13 @@ public class UsuariosController : ControllerBase
 
     public UsuariosController(UsuarioService service) => _service = service;
 
+    [HttpGet]
+    public async Task<IActionResult> ObtenerUsuarios()
+    {
+        var usuarios = await _service.ObtenerUsuariosAsync();
+        return Ok(new { usuarios });
+    }
+
     [HttpGet("tecnicos")]
     public async Task<IActionResult> ObtenerTecnicos()
     {
