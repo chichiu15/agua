@@ -46,6 +46,15 @@ public class SqlCatalogoRepository : ICatalogoRepository
             .Select(m => new MotivoCambioDto(m.CodMoCaMe, m.NomMoCaMe))
             .ToListAsync();
     }
+
+    public async Task<IReadOnlyList<MarcaMedidorDto>> ObtenerMarcasAsync()
+    {
+        return await _context.MarcasDbo
+            .AsNoTracking()
+            .OrderBy(m => m.NomMar)
+            .Select(m => new MarcaMedidorDto(m.CodMar, m.NomMar.Trim(), m.AliMar))
+            .ToListAsync();
+    }
 }
 
 public class SqlSolicitudRepository : ISolicitudRepository

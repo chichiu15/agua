@@ -13,31 +13,43 @@ builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "COSAALT API — Gestión y Cambio de Medidores",
-        Version = "Sprint 2",
-        Description = "API con rutas, sincronización, coordenadas para mapa y subida de evidencias."
+        Version = "R1-R5",
+        Description = "API de gestión de medidores, administración y verificación."
     });
 });
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
         policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
-builder.Services.AddDbContext<CosaaltDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CosaaltDb")));
-
 var repositoryMode = builder.Configuration["RepositoryMode"] ?? "Mock";
+var connectionString = builder.Configuration.GetConnectionString("CosaaltDb");
 
 if (repositoryMode.Equals("Sql", StringComparison.OrdinalIgnoreCase))
 {
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException(
+            "RepositoryMode=Sql, pero no existe ConnectionStrings:CosaaltDb. " +
+            "Configure la cadena de conexión mediante appsettings.Development.json, " +
+            "variables de entorno o dotnet user-secrets antes de iniciar en modo SQL.");
+    }
+
+    builder.Services.AddDbContext<CosaaltDbContext>(options =>
+        options.UseSqlServer(connectionString));
+
     builder.Services.AddScoped<IAuthRepository, SqlAuthRepository>();
     builder.Services.AddScoped<ICatalogoRepository, SqlCatalogoRepository>();
     builder.Services.AddScoped<ISolicitudRepository, SqlSolicitudRepository>();
     builder.Services.AddScoped<IEjecucionRepository, SqlEjecucionRepository>();
-    builder.Services.AddScoped<IRutaRepository, SqlRutaRepository>();               // antes: Mock
-    builder.Services.AddScoped<ISincronizacionRepository, SqlSincronizacionRepository>(); // antes: Mock
-    builder.Services.AddScoped<IUsuarioRepository, SqlUsuarioRepository>();         // antes: Mock
+    builder.Services.AddScoped<IRutaRepository, SqlRutaRepository>();
+    builder.Services.AddScoped<ISincronizacionRepository, SqlSincronizacionRepository>();
+    builder.Services.AddScoped<IUsuarioRepository, SqlUsuarioRepository>();
     builder.Services.AddScoped<IVerificacionRepository, SqlVerificacionRepository>();
+    builder.Services.AddScoped<IParametroNormativoRepository, SqlParametroNormativoRepository>();
+    builder.Services.AddScoped<SolicitudVirtualService>();
 }
 else
 {
@@ -48,6 +60,8 @@ else
     builder.Services.AddSingleton<IRutaRepository, MockRutaRepository>();
     builder.Services.AddSingleton<ISincronizacionRepository, MockSincronizacionRepository>();
     builder.Services.AddSingleton<IUsuarioRepository, MockUsuarioRepository>();
+    builder.Services.AddSingleton<IVerificacionRepository, MockVerificacionRepository>();
+    builder.Services.AddSingleton<IParametroNormativoRepository, MockParametroNormativoRepository>();
 }
 
 builder.Services.AddScoped<AuthService>();
@@ -58,7 +72,7 @@ builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<RutaService>();
 builder.Services.AddScoped<SincronizacionService>();
 builder.Services.AddScoped<VerificacionService>();
-builder.Services.AddScoped<SolicitudVirtualService>();
+builder.Services.AddScoped<ParametroNormativoService>();
 
 var app = builder.Build();
 
@@ -75,11 +89,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowAll");
 app.UseHttpsRedirection();
-
-// Sirve las fotos guardadas en wwwroot/uploads (ej: /uploads/1042/xxxx.jpg)
-// necesario para que EvidenciasController sea accesible después de subir.
 app.UseStaticFiles();
-
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 app.Run();

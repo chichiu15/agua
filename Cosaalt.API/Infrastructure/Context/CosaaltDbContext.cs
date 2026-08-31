@@ -37,6 +37,7 @@ public class CosaaltDbContext : DbContext
     public DbSet<EnsayoVerificacion> EnsayosVerificacion => Set<EnsayoVerificacion>();
     public DbSet<ParticipanteVerificacion> ParticipantesVerificacion => Set<ParticipanteVerificacion>();
     public DbSet<InformeVerificacion> InformesVerificacion => Set<InformeVerificacion>();
+    public DbSet<ParametroNormativo> ParametrosNormativos => Set<ParametroNormativo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

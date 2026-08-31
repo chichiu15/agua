@@ -10,6 +10,7 @@ public interface IAuthRepository
 public interface ICatalogoRepository
 {
     Task<IReadOnlyList<MotivoCambioDto>> ObtenerMotivosAsync();
+    Task<IReadOnlyList<MarcaMedidorDto>> ObtenerMarcasAsync();
 }
 
 public interface ISolicitudRepository
@@ -29,6 +30,19 @@ public interface IUsuarioRepository
     Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync();
     Task<IReadOnlyList<UsuarioDto>> ObtenerUsuariosAsync();
     Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosActivosAsync();
+    Task<IReadOnlyList<RolDto>> ObtenerRolesAsync();
+    Task<UsuarioDto> CrearAsync(CrearUsuarioRequestDto request);
+    Task<UsuarioDto?> ActualizarAsync(int id, ActualizarUsuarioRequestDto request);
+}
+
+public interface IParametroNormativoRepository
+{
+    Task<IReadOnlyList<ParametroNormativoDto>> ObtenerTodosAsync();
+    Task<ParametroNormativoDto?> ObtenerPorIdAsync(int id);
+    Task<ParametroNormativoDto?> ObtenerVigenteAsync(decimal caudal, DateTime fecha);
+    Task<ParametroNormativoDto> CrearAsync(GuardarParametroNormativoRequestDto request);
+    Task<ParametroNormativoDto?> ActualizarAsync(int id, GuardarParametroNormativoRequestDto request);
+    Task<ParametroNormativoDto?> CambiarEstadoAsync(int id, bool activo);
 }
 
 public interface IRutaRepository
