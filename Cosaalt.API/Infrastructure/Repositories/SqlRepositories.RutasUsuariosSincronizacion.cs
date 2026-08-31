@@ -7,11 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cosaalt.API.Infrastructure.Repositories;
 
-/// <summary>
-/// Implementaciones SQL que faltaban. Antes, aunque RepositoryMode="Sql",
-/// Rutas/Usuarios/Sincronización seguían usando el Mock en memoria (se
-/// perdía todo al reiniciar la API). Con esto ya quedan sobre SQL Server.
-/// </summary>
 public class SqlUsuarioRepository : IUsuarioRepository
 {
     private readonly CosaaltDbContext _context;
@@ -21,18 +16,15 @@ public class SqlUsuarioRepository : IUsuarioRepository
     public async Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync()
     {
         var hoy = DateTime.Today;
-
         var tecnicos = await _context.Usuarios
             .AsNoTracking()
             .Include(u => u.Rol)
-            .Include(u => u.Funcionario)
-                .ThenInclude(f => f!.Persona)
+            .Include(u => u.Funcionario).ThenInclude(f => f!.Persona)
             .Where(u => u.Rol.Nombre == "tecnico")
             .OrderBy(u => u.Id)
             .ToListAsync();
 
         var idsTecnicos = tecnicos.Select(t => t.Id).ToList();
-
         var tecnicosConRuta = await _context.AsignacionesRuta
             .AsNoTracking()
             .Where(a => idsTecnicos.Contains(a.IdUsuarioApp)
@@ -43,42 +35,18 @@ public class SqlUsuarioRepository : IUsuarioRepository
             .ToListAsync();
 
         var tieneRuta = tecnicosConRuta.ToHashSet();
-
         return tecnicos
             .OrderBy(t => t.NombreCompleto)
-            .Select(t => new TecnicoDto(
-                t.Id,
-                t.NombreCompleto,
-                t.Rol.Nombre,
-                t.Activo,
-                tieneRuta.Contains(t.Id)))
+            .Select(t => new TecnicoDto(t.Id, t.NombreCompleto, t.Rol.Nombre, t.Activo, tieneRuta.Contains(t.Id)))
             .ToList();
     }
 
     public async Task<IReadOnlyList<UsuarioDto>> ObtenerUsuariosAsync()
     {
-        var usuarios = await _context.Usuarios
-            .AsNoTracking()
-            .Include(u => u.Rol)
-            .Include(u => u.Funcionario)
-                .ThenInclude(f => f!.Persona)
-            .OrderBy(u => u.Id)
-            .ToListAsync();
-
-        return usuarios
-            .Select(u => new UsuarioDto(
-                u.Id,
-                u.NombreCompleto,
-                u.Rol.Nombre,
-                u.Activo,
-                u.CodFunCorporativo))
-            .ToList();
+        var usuarios = await ConsultaUsuarios().OrderBy(u => u.Id).ToListAsync();
+        return usuarios.Select(MapUsuario).ToList();
     }
 
-    /// <summary>
-    /// Funcionarios ACTIVOS de COSAALT con su nombre completo (dbo solo lectura).
-    /// Consulta dbo.Funcionarios f JOIN dbo.Personas p ON p.CodPer = f.CodPer.
-    /// </summary>
     public async Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosActivosAsync()
     {
         var funcionarios = await _context.Funcionarios
@@ -89,12 +57,106 @@ public class SqlUsuarioRepository : IUsuarioRepository
             .ToListAsync();
 
         return funcionarios
-            .Select(f => new FuncionarioDto(
-                f.CodFun,
-                f.Persona?.NombreCompleto ?? string.Empty,
-                f.AliFun,
-                f.EstFun))
+            .Select(f => new FuncionarioDto(f.CodFun, f.Persona?.NombreCompleto ?? string.Empty, f.AliFun, f.EstFun))
             .ToList();
+    }
+
+    public async Task<IReadOnlyList<RolDto>> ObtenerRolesAsync()
+    {
+        return await _context.RolesApp
+            .AsNoTracking()
+            .OrderBy(r => r.IdRol)
+            .Select(r => new RolDto(r.IdRol, r.Nombre, r.Descripcion, r.Activo))
+            .ToListAsync();
+    }
+
+    public async Task<UsuarioDto> CrearAsync(CrearUsuarioRequestDto request)
+    {
+        var nombreUsuario = request.NombreUsuario.Trim();
+        await ValidarDatosAsync(nombreUsuario, request.IdRol, request.CodFunCorporativo, null);
+
+        var entity = new Usuario
+        {
+            CodFunCorporativo = request.CodFunCorporativo,
+            NombreUsuario = nombreUsuario,
+            HashPassword = request.Contrasena,
+            IdRol = request.IdRol,
+            Activo = request.Activo,
+            FechaCreacion = DateTime.Now
+        };
+
+        _context.Usuarios.Add(entity);
+        await _context.SaveChangesAsync();
+        return (await ObtenerPorIdAsync(entity.Id))!;
+    }
+
+    public async Task<UsuarioDto?> ActualizarAsync(int id, ActualizarUsuarioRequestDto request)
+    {
+        var entity = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == id);
+        if (entity is null) return null;
+
+        var nombreUsuario = request.NombreUsuario.Trim();
+        await ValidarDatosAsync(nombreUsuario, request.IdRol, request.CodFunCorporativo, id);
+
+        entity.CodFunCorporativo = request.CodFunCorporativo;
+        entity.NombreUsuario = nombreUsuario;
+        entity.IdRol = request.IdRol;
+        entity.Activo = request.Activo;
+        if (!string.IsNullOrWhiteSpace(request.Contrasena))
+            entity.HashPassword = request.Contrasena;
+
+        await _context.SaveChangesAsync();
+        return await ObtenerPorIdAsync(id);
+    }
+
+    private IQueryable<Usuario> ConsultaUsuarios() => _context.Usuarios
+        .AsNoTracking()
+        .Include(u => u.Rol)
+        .Include(u => u.Funcionario).ThenInclude(f => f!.Persona);
+
+    private async Task<UsuarioDto?> ObtenerPorIdAsync(int id)
+    {
+        var entity = await ConsultaUsuarios().FirstOrDefaultAsync(u => u.Id == id);
+        return entity is null ? null : MapUsuario(entity);
+    }
+
+    private static UsuarioDto MapUsuario(Usuario u) => new(
+        u.Id,
+        u.NombreCompleto,
+        u.NombreUsuario,
+        u.Rol.Nombre,
+        u.IdRol,
+        u.Activo,
+        u.CodFunCorporativo,
+        u.FechaCreacion);
+
+    private async Task ValidarDatosAsync(string nombreUsuario, int idRol, int? codFun, int? idActual)
+    {
+        if (string.IsNullOrWhiteSpace(nombreUsuario))
+            throw new ArgumentException("El nombre de usuario es obligatorio.");
+
+        var duplicado = await _context.Usuarios.AnyAsync(u =>
+            u.NombreUsuario.ToLower() == nombreUsuario.ToLower() &&
+            (!idActual.HasValue || u.Id != idActual.Value));
+        if (duplicado)
+            throw new InvalidOperationException("Ya existe un usuario con ese nombre de usuario.");
+
+        var rolValido = await _context.RolesApp.AnyAsync(r => r.IdRol == idRol && r.Activo);
+        if (!rolValido)
+            throw new ArgumentException("El rol indicado no existe o esta inactivo.");
+
+        if (codFun.HasValue)
+        {
+            var funcionarioExiste = await _context.Funcionarios.AsNoTracking().AnyAsync(f => f.CodFun == codFun.Value);
+            if (!funcionarioExiste)
+                throw new ArgumentException("El funcionario corporativo indicado no existe.");
+
+            var funcionarioUsado = await _context.Usuarios.AnyAsync(u =>
+                u.CodFunCorporativo == codFun.Value &&
+                (!idActual.HasValue || u.Id != idActual.Value));
+            if (funcionarioUsado)
+                throw new InvalidOperationException("Ese funcionario ya esta vinculado a otra cuenta de la aplicacion.");
+        }
     }
 }
 

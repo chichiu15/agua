@@ -1,16 +1,22 @@
 enum UserRole {
   asignador,
-  tecnico;
+  tecnico,
+  administrador,
+  mecanico;
 
   static UserRole fromString(String value) {
     switch (value.trim().toLowerCase()) {
       case 'asignador':
         return UserRole.asignador;
-
       case 'tecnico':
-      case 'técnico':
+      case 't\u00e9cnico':
         return UserRole.tecnico;
-
+      case 'administrador':
+      case 'admin':
+        return UserRole.administrador;
+      case 'mecanico':
+      case 'mec\u00e1nico':
+        return UserRole.mecanico;
       default:
         throw FormatException('Rol de usuario desconocido: $value');
     }

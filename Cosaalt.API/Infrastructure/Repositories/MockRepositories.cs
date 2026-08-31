@@ -57,7 +57,9 @@ public class MockAuthRepository : IAuthRepository
         new() { Id = 4, CodFunCorporativo = 1004, NombreUsuario = "tecnico2", HashPassword = "123456", Activo = true,
                 Rol = new RolApp { IdRol = 1, Nombre = "tecnico" },
                 Funcionario = new Funcionario { CodFun = 1004, CodPer = 4,
-                    Persona = new Persona { NomPer = "Luis", PriApePer = "Mamani", SegApePer = "Condori" } } }
+                    Persona = new Persona { NomPer = "Luis", PriApePer = "Mamani", SegApePer = "Condori" } } },
+        new() { Id = 5, CodFunCorporativo = null, NombreUsuario = "mecanico1", HashPassword = "123456", Activo = true,
+                Rol = new RolApp { IdRol = 4, Nombre = "mecanico" } }
     ];
 
     public Task<LoginResponseDto?> LoginAsync(string usuario, string contrasena)
@@ -77,12 +79,19 @@ public class MockCatalogoRepository : ICatalogoRepository
 {
     private static readonly List<MotivoCambioDto> Motivos =
     [
-        new(1,"Empañado"), new(2,"Destrozado"), new(3,"Roto"), new(4,"Descalibrado"),
-        new(5,"Antiguo"), new(6,"Parado"), new(7,"Otro")
+        new(1, "Reparacion"), new(2, "Mantenimiento"), new(3, "Fuga")
+    ];
+
+    private static readonly List<MarcaMedidorDto> Marcas =
+    [
+        new(1, "SAG", "SAG"), new(2, "Elster", "ELS"), new(3, "LAO", "LAO"), new(4, "Itron", "ITR")
     ];
 
     public Task<IReadOnlyList<MotivoCambioDto>> ObtenerMotivosAsync() =>
         Task.FromResult<IReadOnlyList<MotivoCambioDto>>(Motivos);
+
+    public Task<IReadOnlyList<MarcaMedidorDto>> ObtenerMarcasAsync() =>
+        Task.FromResult<IReadOnlyList<MarcaMedidorDto>>(Marcas);
 }
 
 public class MockEjecucionRepository : IEjecucionRepository
@@ -155,41 +164,141 @@ public class MockEjecucionRepository : IEjecucionRepository
 
 public class MockUsuarioRepository : IUsuarioRepository
 {
-    private static readonly List<TecnicoDto> Tecnicos =
+    private static int _nextId = 7;
+
+    private static readonly List<RolDto> Roles =
     [
-        new(1, "Juan Pérez García", "tecnico", true, false),
-        new(2, "Luis Mamani Condori", "tecnico", true, false),
-        new(3, "Carlos Rojas Mendoza", "tecnico", false, true),
-        new(4, "Miguel Ángel Torres", "tecnico", true, false)
+        new(1, "tecnico", "Tecnico de campo", true),
+        new(2, "asignador", "Asignador de rutas", true),
+        new(3, "administrador", "Administrador", true),
+        new(4, "mecanico", "Mecanico de medidores", true)
     ];
 
-    public Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync() =>
-        Task.FromResult<IReadOnlyList<TecnicoDto>>(Tecnicos);
+    private static readonly List<UsuarioDto> Usuarios =
+    [
+        new(1, "Juan Perez Garcia", "tecnico1", "tecnico", 1, true, 1001, DateTime.Today.AddDays(-30)),
+        new(2, "Luis Mamani Condori", "tecnico2", "tecnico", 1, true, 1002, DateTime.Today.AddDays(-20)),
+        new(5, "Ana Soliz Rueda", "asignador1", "asignador", 2, true, null, DateTime.Today.AddDays(-15)),
+        new(6, "Rocio Flores Medina", "admin", "administrador", 3, true, null, DateTime.Today.AddDays(-10)),
+        new(7, "Manuel Ortega Vega", "mecanico1", "mecanico", 4, true, null, DateTime.Today.AddDays(-5))
+    ];
 
-    public Task<IReadOnlyList<UsuarioDto>> ObtenerUsuariosAsync()
+    private static readonly List<FuncionarioDto> Funcionarios =
+    [
+        new(125, "Jorge Vides Ortega", "JOVIOR", true),
+        new(126, "Luis Gualberto Pecas Calla", "LGPECA", true),
+        new(130, "Willan Mario Alfaro Tejerina", "WMALTE", true)
+    ];
+
+    public Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync()
     {
-        UsuarioDto[] usuarios =
-        [
-            new(1, "Juan Pérez García", "tecnico", true, null),
-            new(2, "Luis Mamani Condori", "tecnico", true, null),
-            new(3, "Carlos Rojas Mendoza", "tecnico", false, null),
-            new(4, "Miguel Ángel Torres", "tecnico", true, null),
-            new(5, "Ana Soliz Rueda", "asignador", true, null),
-            new(6, "Rocío Flores Medina", "administrador", true, null),
-            new(7, "Manuel Ortega Vega", "mecanico", true, null)
-        ];
-        return Task.FromResult<IReadOnlyList<UsuarioDto>>(usuarios);
+        var tecnicos = Usuarios.Where(u => u.Rol == "tecnico")
+            .Select(u => new TecnicoDto(u.Id, u.NombreCompleto, u.Rol, u.Activo, false))
+            .ToList();
+        return Task.FromResult<IReadOnlyList<TecnicoDto>>(tecnicos);
     }
 
-    public Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosActivosAsync()
+    public Task<IReadOnlyList<UsuarioDto>> ObtenerUsuariosAsync() =>
+        Task.FromResult<IReadOnlyList<UsuarioDto>>(Usuarios.ToList());
+
+    public Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosActivosAsync() =>
+        Task.FromResult<IReadOnlyList<FuncionarioDto>>(Funcionarios.ToList());
+
+    public Task<IReadOnlyList<RolDto>> ObtenerRolesAsync() =>
+        Task.FromResult<IReadOnlyList<RolDto>>(Roles.ToList());
+
+    public Task<UsuarioDto> CrearAsync(CrearUsuarioRequestDto request)
     {
-        FuncionarioDto[] funcionarios =
-        [
-            new(125, "Jorge Vides Ortega", "JOVIOR", true),
-            new(126, "Luis Gualberto Pecas Calla", "LGPECA", true),
-            new(130, "Willan Mario Alfaro Tejerina", "WMALTE", false)
-        ];
-        return Task.FromResult<IReadOnlyList<FuncionarioDto>>(funcionarios);
+        if (Usuarios.Any(u => u.NombreUsuario.Equals(request.NombreUsuario, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException("Ya existe un usuario con ese nombre de usuario.");
+        var rol = Roles.First(r => r.Id == request.IdRol);
+        var funcionario = Funcionarios.FirstOrDefault(f => f.CodFun == request.CodFunCorporativo);
+        var dto = new UsuarioDto(
+            Interlocked.Increment(ref _nextId),
+            funcionario?.NombreCompleto ?? request.NombreUsuario,
+            request.NombreUsuario.Trim(), rol.Nombre, rol.Id, request.Activo,
+            request.CodFunCorporativo, DateTime.Now);
+        Usuarios.Add(dto);
+        return Task.FromResult(dto);
+    }
+
+    public Task<UsuarioDto?> ActualizarAsync(int id, ActualizarUsuarioRequestDto request)
+    {
+        var index = Usuarios.FindIndex(u => u.Id == id);
+        if (index < 0) return Task.FromResult<UsuarioDto?>(null);
+        if (Usuarios.Any(u => u.Id != id && u.NombreUsuario.Equals(request.NombreUsuario, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException("Ya existe un usuario con ese nombre de usuario.");
+        var anterior = Usuarios[index];
+        var rol = Roles.First(r => r.Id == request.IdRol);
+        var funcionario = Funcionarios.FirstOrDefault(f => f.CodFun == request.CodFunCorporativo);
+        var actualizado = anterior with
+        {
+            NombreCompleto = funcionario?.NombreCompleto ?? request.NombreUsuario,
+            NombreUsuario = request.NombreUsuario.Trim(),
+            Rol = rol.Nombre,
+            IdRol = rol.Id,
+            Activo = request.Activo,
+            CodFunCorporativo = request.CodFunCorporativo
+        };
+        Usuarios[index] = actualizado;
+        return Task.FromResult<UsuarioDto?>(actualizado);
+    }
+}
+
+
+public class MockVerificacionRepository : IVerificacionRepository
+{
+    public Task<IReadOnlyList<SolicitudVerificacionDto>> ObtenerSolicitudesAsync() =>
+        Task.FromResult<IReadOnlyList<SolicitudVerificacionDto>>(Array.Empty<SolicitudVerificacionDto>());
+
+    public Task<TomarVerificacionResponseDto> TomarAsync(TomarVerificacionRequestDto request) =>
+        throw new InvalidOperationException("El modulo de verificaciones mecanicas usa SQL real. Cambia RepositoryMode a Sql para probarlo.");
+
+    public Task<IReadOnlyList<VerificacionDto>> ObtenerVerificacionesAsync(int idMecanico) =>
+        Task.FromResult<IReadOnlyList<VerificacionDto>>(Array.Empty<VerificacionDto>());
+
+    public Task<VerificacionDto?> ObtenerVerificacionAsync(int id) =>
+        Task.FromResult<VerificacionDto?>(null);
+
+    public Task<DatosSocioMedidorDto?> ObtenerDatosSocioMedidorAsync(int idVerificacion) =>
+        Task.FromResult<DatosSocioMedidorDto?>(null);
+
+    public Task<VerificacionDto?> GuardarEnsayoAsync(
+        int idVerificacion,
+        decimal? volumenRegistrado,
+        decimal? error,
+        GuardarEnsayoRequestDto request) =>
+        Task.FromResult<VerificacionDto?>(null);
+}
+
+public class MockParametroNormativoRepository : IParametroNormativoRepository
+{
+    private static int _nextId = 2;
+    private static readonly List<ParametroNormativoDto> Items =
+    [
+        new(1, "NB-ISO4064-Q2", "Regla de demostracion para caudal de transicion", 2.0m, 15m, 120m, new DateTime(2026, 1, 1), null, true),
+        new(2, "NB-ISO4064-Q3", "Regla de demostracion para caudal permanente", 2.0m, 120.01m, 1000m, new DateTime(2026, 1, 1), null, true)
+    ];
+
+    public Task<IReadOnlyList<ParametroNormativoDto>> ObtenerTodosAsync() => Task.FromResult<IReadOnlyList<ParametroNormativoDto>>(Items.ToList());
+    public Task<ParametroNormativoDto?> ObtenerPorIdAsync(int id) => Task.FromResult(Items.FirstOrDefault(p => p.Id == id));
+    public Task<ParametroNormativoDto?> ObtenerVigenteAsync(decimal caudal, DateTime fecha) => Task.FromResult(Items.FirstOrDefault(p => p.Activo && (!p.CaudalMin.HasValue || p.CaudalMin <= caudal) && (!p.CaudalMax.HasValue || p.CaudalMax >= caudal) && (!p.VigenciaInicio.HasValue || p.VigenciaInicio <= fecha) && (!p.VigenciaFin.HasValue || p.VigenciaFin >= fecha)));
+    public Task<ParametroNormativoDto> CrearAsync(GuardarParametroNormativoRequestDto r)
+    {
+        var item = new ParametroNormativoDto(Interlocked.Increment(ref _nextId), r.Codigo, r.Descripcion, r.ErrorMaxPermitido, r.CaudalMin, r.CaudalMax, r.VigenciaInicio, r.VigenciaFin, r.Activo);
+        Items.Add(item);
+        return Task.FromResult(item);
+    }
+    public Task<ParametroNormativoDto?> ActualizarAsync(int id, GuardarParametroNormativoRequestDto r)
+    {
+        var i = Items.FindIndex(p => p.Id == id); if (i < 0) return Task.FromResult<ParametroNormativoDto?>(null);
+        var item = new ParametroNormativoDto(id, r.Codigo, r.Descripcion, r.ErrorMaxPermitido, r.CaudalMin, r.CaudalMax, r.VigenciaInicio, r.VigenciaFin, r.Activo);
+        Items[i] = item; return Task.FromResult<ParametroNormativoDto?>(item);
+    }
+    public Task<ParametroNormativoDto?> CambiarEstadoAsync(int id, bool activo)
+    {
+        var i = Items.FindIndex(p => p.Id == id); if (i < 0) return Task.FromResult<ParametroNormativoDto?>(null);
+        Items[i] = Items[i] with { Activo = activo }; return Task.FromResult<ParametroNormativoDto?>(Items[i]);
     }
 }
 

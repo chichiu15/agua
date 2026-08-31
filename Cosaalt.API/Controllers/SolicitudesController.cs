@@ -1,5 +1,4 @@
 using Cosaalt.API.Application.Services;
-using Cosaalt.API.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cosaalt.API.Controllers;
@@ -8,24 +7,21 @@ namespace Cosaalt.API.Controllers;
 [Route("api/solicitudes")]
 public class SolicitudesController : ControllerBase
 {
-    private readonly SolicitudVirtualService _virtualService;
+    private readonly SolicitudService _service;
 
-    public SolicitudesController(SolicitudVirtualService virtualService) => _virtualService = virtualService;
+    public SolicitudesController(SolicitudService service) => _service = service;
 
     [HttpGet]
-    public async Task<IActionResult> ObtenerSolicitudes(
-        [FromQuery] string? filtro,
-        [FromQuery] int? top)
+    public async Task<IActionResult> ObtenerSolicitudes([FromQuery] string? filtro)
     {
-        var result = await _virtualService.ObtenerSolicitudesOdecoAsync(filtro, top ?? 200);
+        var result = await _service.ObtenerSolicitudesAsync(filtro);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> ObtenerPorId(string id)
     {
-        var result = await _virtualService.ObtenerSolicitudesOdecoAsync(top: BandejaOdecoBuilder.MaxTop);
-        var solicitud = result.Solicitudes.FirstOrDefault(s => s.Id == id);
+        var solicitud = await _service.ObtenerPorIdAsync(id);
         if (solicitud is null)
             return NotFound(new { mensaje = "Solicitud no encontrada." });
 

@@ -17,4 +17,11 @@ public class CatalogosController : ControllerBase
         var result = await _catalogoService.ObtenerMotivosAsync();
         return Ok(result);
     }
+
+    [HttpGet("marcas")]
+    public async Task<IActionResult> ObtenerMarcas()
+    {
+        var result = await _catalogoService.ObtenerMarcasAsync();
+        return Ok(result);
+    }
 }

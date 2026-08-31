@@ -1,12 +1,31 @@
 namespace Cosaalt.API.Application.DTOs;
 
-/// <summary>
-/// Usuario de la aplicación (medidores.Usuarios) con su rol y nombre resuelto
-/// desde el funcionario corporativo. Devuelve TODOS los roles (no solo técnicos).
-/// </summary>
 public record UsuarioDto(
     int Id,
     string NombreCompleto,
+    string NombreUsuario,
     string Rol,
+    int IdRol,
     bool Activo,
-    int? CodFunCorporativo);
+    int? CodFunCorporativo,
+    DateTime FechaCreacion);
+
+public record RolDto(
+    int Id,
+    string Nombre,
+    string? Descripcion,
+    bool Activo);
+
+public record CrearUsuarioRequestDto(
+    int? CodFunCorporativo,
+    string NombreUsuario,
+    string Contrasena,
+    int IdRol,
+    bool Activo = true);
+
+public record ActualizarUsuarioRequestDto(
+    int? CodFunCorporativo,
+    string NombreUsuario,
+    string? Contrasena,
+    int IdRol,
+    bool Activo);
