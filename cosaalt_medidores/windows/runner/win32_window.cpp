@@ -179,6 +179,17 @@ Win32Window::MessageHandler(HWND hwnd,
                             WPARAM const wparam,
                             LPARAM const lparam) noexcept {
   switch (message) {
+    case WM_GETMINMAXINFO: {
+      // Keep the desktop administration interface usable while still allowing
+      // the window to be reduced substantially on smaller screens.
+      auto min_max = reinterpret_cast<MINMAXINFO*>(lparam);
+      const UINT dpi = GetDpiForWindow(hwnd);
+      const double scale_factor = dpi / 96.0;
+      min_max->ptMinTrackSize.x = Scale(560, scale_factor);
+      min_max->ptMinTrackSize.y = Scale(500, scale_factor);
+      return 0;
+    }
+
     case WM_DESTROY:
       window_handle_ = nullptr;
       Destroy();

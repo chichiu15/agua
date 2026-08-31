@@ -6,7 +6,12 @@ namespace Cosaalt.API.Application.Mappers;
 public static class CatalogoMapper
 {
     public static MotivoCambioDto ToDto(MotivoCambioMedidorDbo motivo) =>
-        new(motivo.CodMoCaMe, motivo.NomMoCaMe);
+        new(
+            motivo.CodMoCaMe,
+            motivo.NomMoCaMe,
+            motivo.DesMoCaMe,
+            motivo.EstMoCaMe
+        );
 }
 
 public static class SolicitudMapper

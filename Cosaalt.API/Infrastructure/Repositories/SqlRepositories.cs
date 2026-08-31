@@ -1,3 +1,4 @@
+using System.Data;
 using Cosaalt.API.Application.DTOs;
 using Cosaalt.API.Application.Mappers;
 using Cosaalt.API.Domain.Entities;
@@ -37,21 +38,81 @@ public class SqlCatalogoRepository : ICatalogoRepository
 
     public SqlCatalogoRepository(CosaaltDbContext context) => _context = context;
 
-    public async Task<IReadOnlyList<MotivoCambioDto>> ObtenerMotivosAsync()
+    public async Task<IReadOnlyList<MotivoCambioDto>> ObtenerMotivosAsync(bool incluirInactivos = false)
     {
-        return await _context.MotivosCambioMedidorDbo
-            .AsNoTracking()
-            .Where(m => m.EstMoCaMe)
+        var query = _context.MotivosCambioMedidorDbo.AsNoTracking().AsQueryable();
+        if (!incluirInactivos)
+            query = query.Where(m => m.EstMoCaMe);
+
+        return await query
             .OrderBy(m => m.CodMoCaMe)
-            .Select(m => new MotivoCambioDto(m.CodMoCaMe, m.NomMoCaMe))
+            .Select(m => new MotivoCambioDto(
+                m.CodMoCaMe,
+                m.NomMoCaMe.Trim(),
+                m.DesMoCaMe == null ? null : m.DesMoCaMe.Trim(),
+                m.EstMoCaMe))
             .ToListAsync();
+    }
+
+    public async Task<MotivoCambioDto> CrearMotivoAsync(GuardarMotivoCambioRequestDto request)
+    {
+        var nombre = request.Nombre.Trim();
+        var descripcion = string.IsNullOrWhiteSpace(request.Descripcion) ? null : request.Descripcion.Trim();
+
+        if (await _context.MotivosCambioMedidorDbo.AnyAsync(m => m.NomMoCaMe == nombre))
+            throw new InvalidOperationException("Ya existe un motivo con ese nombre.");
+
+        await using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        var max = await _context.MotivosCambioMedidorDbo
+            .Select(m => (int?)m.CodMoCaMe)
+            .MaxAsync() ?? 0;
+        var next = max + 1;
+        if (next > 99)
+            throw new InvalidOperationException("No hay codigos disponibles para registrar un nuevo motivo.");
+
+        var entity = new MotivoCambioMedidorDbo
+        {
+            CodMoCaMe = next,
+            NomMoCaMe = nombre,
+            DesMoCaMe = descripcion,
+            EstMoCaMe = request.Activo
+        };
+        _context.MotivosCambioMedidorDbo.Add(entity);
+        await _context.SaveChangesAsync();
+        await tx.CommitAsync();
+        return new MotivoCambioDto(entity.CodMoCaMe, entity.NomMoCaMe, entity.DesMoCaMe, entity.EstMoCaMe);
+    }
+
+    public async Task<MotivoCambioDto?> ActualizarMotivoAsync(int id, GuardarMotivoCambioRequestDto request)
+    {
+        var entity = await _context.MotivosCambioMedidorDbo.FirstOrDefaultAsync(m => m.CodMoCaMe == id);
+        if (entity is null) return null;
+
+        var nombre = request.Nombre.Trim();
+        if (await _context.MotivosCambioMedidorDbo.AnyAsync(m => m.CodMoCaMe != id && m.NomMoCaMe == nombre))
+            throw new InvalidOperationException("Ya existe otro motivo con ese nombre.");
+
+        entity.NomMoCaMe = nombre;
+        entity.DesMoCaMe = string.IsNullOrWhiteSpace(request.Descripcion) ? null : request.Descripcion.Trim();
+        entity.EstMoCaMe = request.Activo;
+        await _context.SaveChangesAsync();
+        return new MotivoCambioDto(entity.CodMoCaMe, entity.NomMoCaMe, entity.DesMoCaMe, entity.EstMoCaMe);
+    }
+
+    public async Task<MotivoCambioDto?> CambiarEstadoMotivoAsync(int id, bool activo)
+    {
+        var entity = await _context.MotivosCambioMedidorDbo.FirstOrDefaultAsync(m => m.CodMoCaMe == id);
+        if (entity is null) return null;
+        entity.EstMoCaMe = activo;
+        await _context.SaveChangesAsync();
+        return new MotivoCambioDto(entity.CodMoCaMe, entity.NomMoCaMe.Trim(), entity.DesMoCaMe?.Trim(), entity.EstMoCaMe);
     }
 
     public async Task<IReadOnlyList<MarcaMedidorDto>> ObtenerMarcasAsync()
     {
         return await _context.MarcasDbo
             .AsNoTracking()
-            .OrderBy(m => m.NomMar)
+            .OrderBy(m => m.CodMar)
             .Select(m => new MarcaMedidorDto(m.CodMar, m.NomMar.Trim(), m.AliMar))
             .ToListAsync();
     }

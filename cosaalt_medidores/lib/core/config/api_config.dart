@@ -13,4 +13,15 @@ abstract final class ApiConfig {
   static const String historialEndpoint = '/api/ejecuciones/historial';
   static const String evidenciasEndpoint = '/api/evidencias';
   static const String sincronizacionEndpoint = '/api/sincronizacion/procesar-cambios';
+
+  static const String adminDashboardEndpoint = '/api/admin/dashboard';
+  static const String adminSolicitudesEndpoint = '/api/admin/solicitudes';
+  static const String adminRutasEndpoint = '/api/admin/rutas';
+  static const String adminSincronizacionEndpoint = '/api/admin/sincronizacion';
+  static const String adminVerificacionesEndpoint = '/api/admin/verificaciones';
+  static const String reportesMovimientosEndpoint = '/api/reportes/movimientos';
+  static const String reportesHistoricoCorporativoEndpoint = '/api/reportes/historico-corporativo';
+  static const String reportesVerificacionesEndpoint = '/api/reportes/verificaciones';
+  static const String reportesEstadisticasEndpoint = '/api/reportes/estadisticas';
+
 }

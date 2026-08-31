@@ -13,8 +13,8 @@ builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "COSAALT API — Gestión y Cambio de Medidores",
-        Version = "R1-R5",
-        Description = "API de gestión de medidores, administración y verificación."
+        Version = "R1-R14",
+        Description = "API de gestión de medidores, administración R1-R14 y verificación."
     });
 });
 
@@ -38,7 +38,9 @@ if (repositoryMode.Equals("Sql", StringComparison.OrdinalIgnoreCase))
     }
 
     builder.Services.AddDbContext<CosaaltDbContext>(options =>
-        options.UseSqlServer(connectionString));
+        options.UseSqlServer(
+            connectionString,
+            sqlOptions => sqlOptions.UseCompatibilityLevel(110)));
 
     builder.Services.AddScoped<IAuthRepository, SqlAuthRepository>();
     builder.Services.AddScoped<ICatalogoRepository, SqlCatalogoRepository>();
@@ -49,6 +51,7 @@ if (repositoryMode.Equals("Sql", StringComparison.OrdinalIgnoreCase))
     builder.Services.AddScoped<IUsuarioRepository, SqlUsuarioRepository>();
     builder.Services.AddScoped<IVerificacionRepository, SqlVerificacionRepository>();
     builder.Services.AddScoped<IParametroNormativoRepository, SqlParametroNormativoRepository>();
+    builder.Services.AddScoped<IAdminRepository, SqlAdminRepository>();
     builder.Services.AddScoped<SolicitudVirtualService>();
 }
 else
@@ -62,6 +65,7 @@ else
     builder.Services.AddSingleton<IUsuarioRepository, MockUsuarioRepository>();
     builder.Services.AddSingleton<IVerificacionRepository, MockVerificacionRepository>();
     builder.Services.AddSingleton<IParametroNormativoRepository, MockParametroNormativoRepository>();
+    builder.Services.AddSingleton<IAdminRepository, MockAdminRepository>();
 }
 
 builder.Services.AddScoped<AuthService>();
@@ -73,6 +77,7 @@ builder.Services.AddScoped<RutaService>();
 builder.Services.AddScoped<SincronizacionService>();
 builder.Services.AddScoped<VerificacionService>();
 builder.Services.AddScoped<ParametroNormativoService>();
+builder.Services.AddScoped<AdminService>();
 
 var app = builder.Build();
 
