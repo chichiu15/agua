@@ -77,9 +77,13 @@ public class MockAuthRepository : IAuthRepository
 
 public class MockCatalogoRepository : ICatalogoRepository
 {
+    private static readonly object Sync = new();
     private static readonly List<MotivoCambioDto> Motivos =
     [
-        new(1, "Reparacion"), new(2, "Mantenimiento"), new(3, "Fuga")
+        new(1, "Reparacion", "Cambio por reparacion del medidor", true),
+        new(2, "Mantenimiento", "Cambio por mantenimiento preventivo o correctivo", true),
+        new(3, "Fuga", "Cambio asociado a fuga detectada", true),
+        new(4, "Motivo inactivo de ejemplo", "Registro de demostracion", false)
     ];
 
     private static readonly List<MarcaMedidorDto> Marcas =
@@ -87,8 +91,57 @@ public class MockCatalogoRepository : ICatalogoRepository
         new(1, "SAG", "SAG"), new(2, "Elster", "ELS"), new(3, "LAO", "LAO"), new(4, "Itron", "ITR")
     ];
 
-    public Task<IReadOnlyList<MotivoCambioDto>> ObtenerMotivosAsync() =>
-        Task.FromResult<IReadOnlyList<MotivoCambioDto>>(Motivos);
+    public Task<IReadOnlyList<MotivoCambioDto>> ObtenerMotivosAsync(bool incluirInactivos = false)
+    {
+        lock (Sync)
+        {
+            IReadOnlyList<MotivoCambioDto> result = Motivos
+                .Where(m => incluirInactivos || m.Activo)
+                .OrderBy(m => m.Id)
+                .ToList();
+            return Task.FromResult(result);
+        }
+    }
+
+    public Task<MotivoCambioDto> CrearMotivoAsync(GuardarMotivoCambioRequestDto request)
+    {
+        lock (Sync)
+        {
+            if (Motivos.Any(m => string.Equals(m.Descripcion, request.Nombre.Trim(), StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("Ya existe un motivo con ese nombre.");
+            var next = Motivos.Count == 0 ? 1 : Motivos.Max(m => m.Id) + 1;
+            var item = new MotivoCambioDto(next, request.Nombre.Trim(), request.Descripcion?.Trim(), request.Activo);
+            Motivos.Add(item);
+            return Task.FromResult(item);
+        }
+    }
+
+    public Task<MotivoCambioDto?> ActualizarMotivoAsync(int id, GuardarMotivoCambioRequestDto request)
+    {
+        lock (Sync)
+        {
+            var index = Motivos.FindIndex(m => m.Id == id);
+            if (index < 0) return Task.FromResult<MotivoCambioDto?>(null);
+            if (Motivos.Any(m => m.Id != id && string.Equals(m.Descripcion, request.Nombre.Trim(), StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("Ya existe otro motivo con ese nombre.");
+            var item = new MotivoCambioDto(id, request.Nombre.Trim(), request.Descripcion?.Trim(), request.Activo);
+            Motivos[index] = item;
+            return Task.FromResult<MotivoCambioDto?>(item);
+        }
+    }
+
+    public Task<MotivoCambioDto?> CambiarEstadoMotivoAsync(int id, bool activo)
+    {
+        lock (Sync)
+        {
+            var index = Motivos.FindIndex(m => m.Id == id);
+            if (index < 0) return Task.FromResult<MotivoCambioDto?>(null);
+            var current = Motivos[index];
+            var item = current with { Activo = activo };
+            Motivos[index] = item;
+            return Task.FromResult<MotivoCambioDto?>(item);
+        }
+    }
 
     public Task<IReadOnlyList<MarcaMedidorDto>> ObtenerMarcasAsync() =>
         Task.FromResult<IReadOnlyList<MarcaMedidorDto>>(Marcas);
@@ -381,3 +434,323 @@ public class MockSincronizacionRepository : ISincronizacionRepository
     }
 }
 
+
+public sealed class MockAdminRepository : IAdminRepository
+{
+    private static readonly DateTime Today = DateTime.Today;
+
+    private static readonly List<AdminSolicitudDto> Solicitudes =
+    [
+        new("ODECO-1042", "ODECO", Today.AddHours(8), Today.AddHours(20), false, 0, 100234, "Maria Elena Vargas", "Av. Las Americas #452", "Fuga interna no visible", "Alta", "Asignada", 1, "Juan Perez Garcia", "M-789012", "SAG", null, null, null, null, false),
+        new("ODECO-1043", "ODECO", Today.AddDays(-2).AddHours(9), Today.AddDays(-1).AddHours(9), true, 2, 100567, "Carlos Mendoza Rios", "Calle Junin #890", "Medidor destrozado", "Alta", "Pendiente", null, null, "M-456789", "Elster", null, null, null, null, false),
+        new("LEC-201", "LECTURA", Today.AddDays(-5), new DateTime(Today.Year, Today.Month, 1).AddMonths(1), false, 5, 100891, "Ana Lucia Fernandez", "Pasaje Los Olivos #23", "Posible fuga despues del medidor", "Normal", "En proceso", 4, "Luis Mamani Condori", "M-123456", "SAG", 890.3m, 1250.7m, 360.4m, null, false),
+        new("LEC-203", "LECTURA", Today.AddDays(-1), new DateTime(Today.Year, Today.Month, 1).AddMonths(1), false, 1, 101200, "Roberto Sanchez Perez", "Av. Heroinas #1567", "Medidor empanado", "Normal", "Completada", 1, "Juan Perez Garcia", "M-334455", "SAG", 456.2m, 458.1m, 1.9m, Today.AddHours(10), true)
+    ];
+
+    private static readonly List<AdminRutaDto> Rutas =
+    [
+        new(1247, 1, "Juan Perez Garcia", Today.AddHours(8), "EnCurso", 4, 2, 2, 50m, Today.AddHours(10),
+        [
+            new(1, 1, "ODECO-1042", "ODECO", "Maria Elena Vargas", "Av. Las Americas #452", -21.53, -64.72, "Completada", true, Today.AddHours(9)),
+            new(2, 2, "LEC-203", "LECTURA", "Roberto Sanchez Perez", "Av. Heroinas #1567", -21.54, -64.73, "Completada", true, Today.AddHours(10)),
+            new(3, 3, "ODECO-1043", "ODECO", "Carlos Mendoza Rios", "Calle Junin #890", null, null, "Pendiente", false, null),
+            new(4, 4, "LEC-201", "LECTURA", "Ana Lucia Fernandez", "Pasaje Los Olivos #23", null, null, "Pendiente", false, null)
+        ]),
+        new(1248, 4, "Luis Mamani Condori", Today.AddHours(8.5), "Planificado", 3, 0, 3, 0m, null,
+        [
+            new(5, 1, "LEC-210", "LECTURA", "Cliente Demo 1", "Zona Norte", null, null, "Pendiente", false, null),
+            new(6, 2, "LEC-211", "LECTURA", "Cliente Demo 2", "Zona Norte", null, null, "Pendiente", false, null),
+            new(7, 3, "ODECO-1050", "ODECO", "Cliente Demo 3", "Zona Norte", null, null, "Pendiente", false, null)
+        ])
+    ];
+
+    private static readonly List<AdminVerificacionResumenDto> Verificaciones =
+    [
+        new(45, "ODECO", "1042", 100234, "Maria Elena Vargas", "M-789012", Today.AddHours(9), 5, "Manuel Ortega Vega", "EnCurso", null, 0.4m, 120m, false, false, null, false),
+        new(44, "ODECO", "1030", 100120, "Pedro Flores", "LAO-085399", Today.AddDays(-1).AddHours(11), 5, "Manuel Ortega Vega", "Completada", "CUMPLE", 0.4m, 120m, true, true, "INF-0044", true),
+        new(43, "LECTURA", "198", 100110, "Maria Quispe", "SAG-554433", Today.AddDays(-2).AddHours(10), 5, "Manuel Ortega Vega", "Completada", "NO CUMPLE", 3.2m, 85m, false, true, "INF-0043", false)
+    ];
+
+    private static readonly List<AdminMovimientoDto> Movimientos =
+    [
+        new(5002, Today.AddHours(10), "LECTURA", "203", 101200, "Roberto Sanchez Perez", "Av. Heroinas #1567", "M-334455", "SAG", 458.1m, 1, "Reparacion", "M-998001", "Lao", "Cambio realizado sin novedad", "-21.53,-64.72", 1, "Juan Perez Garcia", true, 2,
+        [new("MedidorRetirado", "/uploads/203/retirado.jpg"), new("MedidorNuevo", "/uploads/203/nuevo.jpg")]),
+        new(5001, Today.AddDays(-1).AddHours(15), "ODECO", "1030", 100120, "Pedro Flores", "Calle Bolivar #100", "LAO-085399", "Lao", 3305.67m, 2, "Mantenimiento", "SAG-991100", "SAG", "Cambio por reclamo", null, 4, "Luis Mamani Condori", true, 1,
+        [new("MedidorRetirado", "/uploads/1030/retirado.jpg")])
+    ];
+
+
+    private static readonly List<AdminMovimientoCorporativoDto> HistoricoCorporativo =
+    [
+        new(85108, 100234, "Maria Elena Vargas", "Av. Las Americas #452", "M-789012", "Lao", true, 1, "Reparacion", "Movimiento corporativo vigente de demostracion", 12045),
+        new(74402, 100234, "Maria Elena Vargas", "Av. Las Americas #452", "M-445566", "Schlumberger", false, 2, "Mantenimiento", "Movimiento corporativo historico de demostracion", 9910),
+        new(81221, 100120, "Pedro Flores", "Calle Bolivar #100", "LAO-085399", "Lao", true, 2, "Mantenimiento", null, null)
+    ];
+    public Task<AdminDashboardDto> ObtenerDashboardAsync(DateTime? desde = null, DateTime? hasta = null)
+    {
+        var sync = CrearSync();
+        var dashboard = new AdminDashboardDto(
+            SolicitudesPendientes: Solicitudes.Count(s => s.Estado != "Completada"),
+            OdecoPendientes: Solicitudes.Count(s => s.TipoOrigen == "ODECO" && s.Estado != "Completada"),
+            OdecoUrgentes: Solicitudes.Count(s => s.TipoOrigen == "ODECO" && s.Prioridad == "Alta" && s.Estado != "Completada"),
+            OdecoVencidas: Solicitudes.Count(s => s.TipoOrigen == "ODECO" && s.Vencida && s.Estado != "Completada"),
+            LecturaPendientes: Solicitudes.Count(s => s.TipoOrigen == "LECTURA" && s.Estado != "Completada"),
+            RutasActivasHoy: Rutas.Count(r => r.Estado != "Completada"),
+            TecnicosConRutaHoy: Rutas.Select(r => r.IdTecnico).Distinct().Count(),
+            CambiosEjecutadosHoy: Movimientos.Count(m => m.FechaHora.Date == Today),
+            CambiosSincronizadosHoy: Movimientos.Count(m => m.FechaHora.Date == Today && m.Sincronizado),
+            VerificacionesPendientes: Verificaciones.Count(v => v.Estado == "Pendiente"),
+            VerificacionesEnCurso: Verificaciones.Count(v => v.Estado == "EnCurso"),
+            VerificacionesCompletadas: Verificaciones.Count(v => v.Estado == "Completada"),
+            VerificacionesCumple: Verificaciones.Count(v => v.Resultado == "CUMPLE"),
+            VerificacionesNoCumple: Verificaciones.Count(v => v.Resultado == "NO CUMPLE"),
+            SolicitudesPorEstado: Solicitudes.GroupBy(s => s.Estado).Select(g => new AdminCategoriaCantidadDto(g.Key, g.Count())).ToList(),
+            MotivosCambioFrecuentes: Movimientos.GroupBy(m => m.Motivo).Select(g => new AdminCategoriaCantidadDto(g.Key, g.Count())).ToList(),
+            Tecnicos: sync.Select(s => new AdminTecnicoResumenDto(s.IdTecnico, s.NombreTecnico, s.Activo, s.RutasHoy, s.ParadasHoy, s.ParadasCompletadasHoy, s.ParadasHoy == 0 ? 0 : (decimal)s.ParadasCompletadasHoy * 100m / s.ParadasHoy, s.UltimaEjecucionRecibida, s.EstadoServidor)).ToList(),
+            ActividadReciente:
+            [
+                new(Today.AddHours(10), "CAMBIO", "Cambio #5002", "LEC-203 por Juan Perez Garcia", "Sincronizado"),
+                new(Today.AddHours(9), "VERIFICACION", "Verificacion #45", "CodCon 100234", "EnCurso")
+            ],
+            Alertas:
+            [
+                new("ODECO", "Critica", "ODECO vencidas", "Solicitudes que superaron el plazo.", 1)
+            ]);
+        return Task.FromResult(dashboard);
+    }
+
+    public Task<PagedResultDto<AdminSolicitudDto>> ObtenerSolicitudesAsync(AdminSolicitudFiltro filtro)
+    {
+        IEnumerable<AdminSolicitudDto> items = Solicitudes;
+        if (filtro.Desde.HasValue) items = items.Where(x => x.FechaSolicitud >= filtro.Desde.Value.Date);
+        if (filtro.Hasta.HasValue) items = items.Where(x => x.FechaSolicitud < filtro.Hasta.Value.Date.AddDays(1));
+        if (!string.IsNullOrWhiteSpace(filtro.Origen) && !filtro.Origen.Equals("Todos", StringComparison.OrdinalIgnoreCase))
+            items = items.Where(x => x.TipoOrigen.Equals(filtro.Origen, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(filtro.Estado) && !filtro.Estado.Equals("Todos", StringComparison.OrdinalIgnoreCase))
+            items = filtro.Estado.Equals("Vencida", StringComparison.OrdinalIgnoreCase)
+                ? items.Where(x => x.Vencida && x.Estado != "Completada")
+                : items.Where(x => x.Estado.Equals(filtro.Estado, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(filtro.Prioridad) && !filtro.Prioridad.Equals("Todas", StringComparison.OrdinalIgnoreCase))
+            items = items.Where(x => x.Prioridad.Equals(filtro.Prioridad, StringComparison.OrdinalIgnoreCase));
+        if (filtro.TecnicoId.HasValue) items = items.Where(x => x.IdTecnico == filtro.TecnicoId.Value);
+        if (!string.IsNullOrWhiteSpace(filtro.Buscar))
+        {
+            var q = filtro.Buscar.Trim();
+            items = items.Where(x =>
+                x.Id.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.CodCon.ToString().Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.NombreCliente.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.Direccion.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (x.NumeroMedidor?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (x.Motivo?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+        return Task.FromResult(Paginar(items.OrderByDescending(x => x.Vencida).ThenByDescending(x => x.FechaSolicitud).ToList(), filtro.Page, filtro.PageSize));
+    }
+
+    public Task<PagedResultDto<AdminRutaDto>> ObtenerRutasAsync(AdminRutaFiltro filtro)
+    {
+        IEnumerable<AdminRutaDto> items = Rutas;
+        if (filtro.Fecha.HasValue) items = items.Where(x => x.FechaAsignacion.Date == filtro.Fecha.Value.Date);
+        if (filtro.TecnicoId.HasValue) items = items.Where(x => x.IdTecnico == filtro.TecnicoId.Value);
+        if (!string.IsNullOrWhiteSpace(filtro.Estado) && !filtro.Estado.Equals("Todos", StringComparison.OrdinalIgnoreCase))
+            items = items.Where(x => x.Estado.Equals(filtro.Estado, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(filtro.Buscar))
+        {
+            var q = filtro.Buscar.Trim();
+            items = items.Where(x =>
+                x.IdAsignacion.ToString().Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.NombreTecnico.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.Detalles.Any(d => d.NombreCliente.Contains(q, StringComparison.OrdinalIgnoreCase) || d.Direccion.Contains(q, StringComparison.OrdinalIgnoreCase)));
+        }
+        return Task.FromResult(Paginar(items.OrderByDescending(x => x.FechaAsignacion).ToList(), filtro.Page, filtro.PageSize));
+    }
+
+    public Task<AdminRutaDto?> ObtenerRutaAsync(int idAsignacion) => Task.FromResult(Rutas.FirstOrDefault(x => x.IdAsignacion == idAsignacion));
+
+    public Task<IReadOnlyList<AdminSincronizacionTecnicoDto>> ObtenerSincronizacionAsync(DateTime? fecha = null) => Task.FromResult<IReadOnlyList<AdminSincronizacionTecnicoDto>>(CrearSync());
+
+    public Task<PagedResultDto<AdminVerificacionResumenDto>> ObtenerVerificacionesAsync(AdminVerificacionFiltro filtro)
+    {
+        IEnumerable<AdminVerificacionResumenDto> items = Verificaciones;
+        if (filtro.Desde.HasValue) items = items.Where(x => x.Fecha >= filtro.Desde.Value.Date);
+        if (filtro.Hasta.HasValue) items = items.Where(x => x.Fecha < filtro.Hasta.Value.Date.AddDays(1));
+        if (filtro.MecanicoId.HasValue) items = items.Where(x => x.IdMecanico == filtro.MecanicoId.Value);
+        if (!string.IsNullOrWhiteSpace(filtro.Estado) && !filtro.Estado.Equals("Todos", StringComparison.OrdinalIgnoreCase))
+            items = items.Where(x => x.Estado.Equals(filtro.Estado, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(filtro.Resultado) && !filtro.Resultado.Equals("Todos", StringComparison.OrdinalIgnoreCase))
+            items = items.Where(x => string.Equals(x.Resultado, filtro.Resultado, StringComparison.OrdinalIgnoreCase));
+        if (filtro.SoloConInforme == true) items = items.Where(x => x.TieneInforme);
+        if (!string.IsNullOrWhiteSpace(filtro.Buscar))
+        {
+            var q = filtro.Buscar.Trim();
+            items = items.Where(x =>
+                x.IdVerificacion.ToString().Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.CodCon.ToString().Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.NombreCliente.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (x.NumeroMedidor?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                x.NombreMecanico.Contains(q, StringComparison.OrdinalIgnoreCase));
+        }
+        return Task.FromResult(Paginar(items.OrderByDescending(x => x.Fecha).ToList(), filtro.Page, filtro.PageSize));
+    }
+
+    public Task<IReadOnlyList<AdminVerificacionResumenDto>> ObtenerVerificacionesExportAsync(AdminVerificacionFiltro filtro, int maximo = 50000)
+    {
+        IEnumerable<AdminVerificacionResumenDto> items = Verificaciones;
+        if (filtro.Desde.HasValue) items = items.Where(x => x.Fecha >= filtro.Desde.Value.Date);
+        if (filtro.Hasta.HasValue) items = items.Where(x => x.Fecha < filtro.Hasta.Value.Date.AddDays(1));
+        if (filtro.MecanicoId.HasValue) items = items.Where(x => x.IdMecanico == filtro.MecanicoId.Value);
+        if (!string.IsNullOrWhiteSpace(filtro.Estado) && filtro.Estado != "Todos") items = items.Where(x => x.Estado == filtro.Estado);
+        if (!string.IsNullOrWhiteSpace(filtro.Resultado) && filtro.Resultado != "Todos") items = items.Where(x => x.Resultado == filtro.Resultado);
+        if (filtro.SoloConInforme == true) items = items.Where(x => x.TieneInforme);
+        if (!string.IsNullOrWhiteSpace(filtro.Buscar))
+        {
+            var q = filtro.Buscar.Trim();
+            items = items.Where(x =>
+                x.IdVerificacion.ToString().Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.CodCon.ToString().Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.NombreCliente.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (x.NumeroMedidor?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                x.NombreMecanico.Contains(q, StringComparison.OrdinalIgnoreCase));
+        }
+        return Task.FromResult<IReadOnlyList<AdminVerificacionResumenDto>>(items.OrderByDescending(x => x.Fecha).Take(Math.Clamp(maximo, 1, 50000)).ToList());
+    }
+
+    public Task<AdminVerificacionDetalleDto?> ObtenerVerificacionDetalleAsync(int idVerificacion)
+    {
+        var r = Verificaciones.FirstOrDefault(x => x.IdVerificacion == idVerificacion);
+        if (r is null) return Task.FromResult<AdminVerificacionDetalleDto?>(null);
+        var detalle = new AdminVerificacionDetalleDto(
+            r,
+            new DatosSocioMedidorDto(r.CodCon, r.NombreCliente, "Direccion de demostracion", "Domestica", null, null, null, r.NumeroMedidor, "Lao", Today.AddYears(-5)),
+            new EnsayoVerificacionDto(1, "Banco portatil 10 litros", 1000m, 1010m, 10m, r.Caudal, 10m, r.Error, r.Fugas, "Ensayo de demostracion"),
+            [new ParticipanteVerificacionDto(1, r.NombreMecanico, "Mecanico", "Tecnico"), new ParticipanteVerificacionDto(2, r.NombreCliente, null, "Usuario")],
+            r.TieneInforme ? [new AdminInformeVerificacionDto(1, r.NroInforme ?? "INF-DEMO", r.Fecha.AddMinutes(30), r.InformeFirmado ? r.Fecha.AddHours(1) : null, null, r.InformeFirmado, 0)] : []);
+        return Task.FromResult<AdminVerificacionDetalleDto?>(detalle);
+    }
+
+    public Task<PagedResultDto<AdminMovimientoDto>> ObtenerMovimientosAsync(AdminMovimientoFiltro filtro)
+    {
+        var items = FiltrarMovimientos(filtro).ToList();
+        return Task.FromResult(Paginar(items, filtro.Page, filtro.PageSize));
+    }
+
+    public Task<IReadOnlyList<AdminMovimientoDto>> ObtenerMovimientosExportAsync(AdminMovimientoFiltro filtro, int maximo = 50000) =>
+        Task.FromResult<IReadOnlyList<AdminMovimientoDto>>(FiltrarMovimientos(filtro).Take(maximo).ToList());
+
+    public Task<PagedResultDto<AdminMovimientoCorporativoDto>> ObtenerHistoricoCorporativoAsync(AdminMovimientoCorporativoFiltro filtro)
+    {
+        var items = FiltrarHistoricoCorporativo(filtro).ToList();
+        return Task.FromResult(Paginar(items, filtro.Page, filtro.PageSize));
+    }
+
+    public Task<IReadOnlyList<AdminMovimientoCorporativoDto>> ObtenerHistoricoCorporativoExportAsync(AdminMovimientoCorporativoFiltro filtro, int maximo = 50000) =>
+        Task.FromResult<IReadOnlyList<AdminMovimientoCorporativoDto>>(FiltrarHistoricoCorporativo(filtro).Take(Math.Clamp(maximo, 1, 50000)).ToList());
+
+    public Task<AdminEstadisticasDto> ObtenerEstadisticasAsync(AdminEstadisticasFiltro filtro)
+    {
+        var desde = filtro.Desde?.Date ?? Today.AddDays(-30);
+        var hastaExclusiva = (filtro.Hasta?.Date ?? Today).AddDays(1);
+
+        IEnumerable<AdminMovimientoDto> movQuery = Movimientos.Where(m => m.FechaHora >= desde && m.FechaHora < hastaExclusiva);
+        if (filtro.TecnicoId.HasValue) movQuery = movQuery.Where(m => m.IdTecnico == filtro.TecnicoId.Value);
+        if (filtro.MotivoId.HasValue) movQuery = movQuery.Where(m => m.IdMotivo == filtro.MotivoId.Value);
+        if (!string.IsNullOrWhiteSpace(filtro.Origen) && !filtro.Origen.Equals("Todos", StringComparison.OrdinalIgnoreCase))
+            movQuery = movQuery.Where(m => m.TipoOrigen.Equals(filtro.Origen, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(filtro.Marca))
+        {
+            var marca = filtro.Marca.Trim();
+            movQuery = movQuery.Where(m =>
+                (m.MarcaRetirado?.Contains(marca, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.MarcaInstalado?.Contains(marca, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+        var movs = movQuery.ToList();
+
+        IEnumerable<AdminVerificacionResumenDto> verQuery = Verificaciones.Where(v => v.Fecha >= desde && v.Fecha < hastaExclusiva);
+        if (filtro.MecanicoId.HasValue) verQuery = verQuery.Where(v => v.IdMecanico == filtro.MecanicoId.Value);
+        if (!string.IsNullOrWhiteSpace(filtro.Origen) && !filtro.Origen.Equals("Todos", StringComparison.OrdinalIgnoreCase))
+            verQuery = verQuery.Where(v => v.TipoOrigen.Equals(filtro.Origen, StringComparison.OrdinalIgnoreCase));
+        var vers = verQuery.ToList();
+
+        var cumple = vers.Count(v => v.Resultado == "CUMPLE");
+        var noCumple = vers.Count(v => v.Resultado == "NO CUMPLE");
+        var conResultado = cumple + noCumple;
+        var errores = vers.Where(v => v.Error.HasValue).Select(v => v.Error!.Value).ToList();
+
+        var result = new AdminEstadisticasDto(
+            movs.Count,
+            vers.Count,
+            cumple,
+            noCumple,
+            conResultado == 0 ? 0 : Math.Round((decimal)cumple * 100m / conResultado, 1),
+            vers.Count(v => v.Fugas == true),
+            errores.Count == 0 ? null : Math.Round(errores.Average(), 3),
+            movs.Count == 0 ? null : 18.5m,
+            movs.GroupBy(m => m.Motivo).Select(g => new AdminCategoriaCantidadDto(g.Key, g.Count())).OrderByDescending(x => x.Cantidad).ToList(),
+            movs.GroupBy(m => m.MarcaRetirado ?? "Sin marca").Select(g => new AdminCategoriaCantidadDto(g.Key, g.Count())).OrderByDescending(x => x.Cantidad).ToList(),
+            movs.GroupBy(m => m.TipoOrigen).Select(g => new AdminCategoriaCantidadDto(g.Key, g.Count())).OrderByDescending(x => x.Cantidad).ToList(),
+            movs.GroupBy(m => m.FechaHora.Date).OrderBy(g => g.Key).Select(g => new AdminSerieTemporalDto(g.Key.ToString("yyyy-MM-dd"), g.Count())).ToList(),
+            movs.GroupBy(m => new { m.IdTecnico, m.NombreTecnico }).Select(g => new AdminPersonaMetricaDto(g.Key.IdTecnico, g.Key.NombreTecnico, "tecnico", g.Count(), null, 0, 0)).OrderByDescending(x => x.Atenciones).ToList(),
+            vers.GroupBy(v => new { v.IdMecanico, v.NombreMecanico }).Select(g =>
+            {
+                var errs = g.Where(v => v.Error.HasValue).Select(v => v.Error!.Value).ToList();
+                return new AdminPersonaMetricaDto(
+                    g.Key.IdMecanico,
+                    g.Key.NombreMecanico,
+                    "mecanico",
+                    g.Count(),
+                    errs.Count == 0 ? null : Math.Round(errs.Average(), 3),
+                    g.Count(v => v.Resultado == "CUMPLE"),
+                    g.Count(v => v.Resultado == "NO CUMPLE"));
+            }).OrderByDescending(x => x.Atenciones).ToList());
+        return Task.FromResult(result);
+    }
+
+    private static List<AdminSincronizacionTecnicoDto> CrearSync() =>
+    [
+        new(1, "Juan Perez Garcia", true, 1, 4, 2, 2, 2, 0, 0, 0, 0, Today.AddHours(10), "En curso", "Estado conocido por el servidor."),
+        new(4, "Luis Mamani Condori", true, 1, 3, 0, 0, 0, 0, 0, 0, 0, null, "Sin actividad", "Estado conocido por el servidor.")
+    ];
+
+    private static IEnumerable<AdminMovimientoDto> FiltrarMovimientos(AdminMovimientoFiltro filtro)
+    {
+        IEnumerable<AdminMovimientoDto> items = Movimientos;
+        if (filtro.Desde.HasValue) items = items.Where(x => x.FechaHora >= filtro.Desde.Value.Date);
+        if (filtro.Hasta.HasValue) items = items.Where(x => x.FechaHora < filtro.Hasta.Value.Date.AddDays(1));
+        if (filtro.TecnicoId.HasValue) items = items.Where(x => x.IdTecnico == filtro.TecnicoId.Value);
+        if (filtro.MotivoId.HasValue) items = items.Where(x => x.IdMotivo == filtro.MotivoId.Value);
+        if (!string.IsNullOrWhiteSpace(filtro.Origen) && filtro.Origen != "Todos") items = items.Where(x => x.TipoOrigen == filtro.Origen);
+        if (!string.IsNullOrWhiteSpace(filtro.Marca)) items = items.Where(x => (x.MarcaRetirado?.Contains(filtro.Marca, StringComparison.OrdinalIgnoreCase) ?? false) || (x.MarcaInstalado?.Contains(filtro.Marca, StringComparison.OrdinalIgnoreCase) ?? false));
+        if (filtro.Sincronizado.HasValue) items = items.Where(x => x.Sincronizado == filtro.Sincronizado.Value);
+        if (!string.IsNullOrWhiteSpace(filtro.Buscar)) items = items.Where(x => x.NombreCliente.Contains(filtro.Buscar, StringComparison.OrdinalIgnoreCase) || x.CodCon.ToString().Contains(filtro.Buscar));
+        return items.OrderByDescending(x => x.FechaHora);
+    }
+
+    private static IEnumerable<AdminMovimientoCorporativoDto> FiltrarHistoricoCorporativo(AdminMovimientoCorporativoFiltro filtro)
+    {
+        IEnumerable<AdminMovimientoCorporativoDto> items = HistoricoCorporativo;
+        if (filtro.CodCon.HasValue) items = items.Where(x => x.CodCon == filtro.CodCon.Value);
+        if (filtro.Vigente.HasValue) items = items.Where(x => x.Vigente == filtro.Vigente.Value);
+        if (filtro.MotivoId.HasValue) items = items.Where(x => x.IdMotivo == filtro.MotivoId.Value);
+        if (!string.IsNullOrWhiteSpace(filtro.Marca)) items = items.Where(x => x.Marca?.Contains(filtro.Marca, StringComparison.OrdinalIgnoreCase) == true);
+        if (!string.IsNullOrWhiteSpace(filtro.Buscar))
+        {
+            var q = filtro.Buscar.Trim();
+            items = items.Where(x =>
+                x.CodCaMe.ToString().Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.CodCon.ToString().Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.NombreCliente.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                x.NumeroMedidor.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (x.Marca?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (x.Motivo?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+        return items.OrderByDescending(x => x.Vigente).ThenByDescending(x => x.CodCaMe);
+    }
+
+    private static PagedResultDto<T> Paginar<T>(IReadOnlyList<T> items, int page, int pageSize)
+    {
+        page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 5, 100);
+        var total = items.Count;
+        var data = items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        return new PagedResultDto<T>(data, page, pageSize, total, total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize));
+    }
+}

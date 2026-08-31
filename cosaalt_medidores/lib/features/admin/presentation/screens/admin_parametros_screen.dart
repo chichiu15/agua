@@ -24,7 +24,7 @@ class _AdminParametrosScreenState extends ConsumerState<AdminParametrosScreen> {
     final state = ref.watch(adminControllerProvider);
     return AdminShell(
       title: 'Parametros Normativos',
-      subtitle: 'R5 - Reglas que usara el mecanico para validar CUMPLE / NO CUMPLE.',
+      subtitle: 'Configura los limites de error y rangos de caudal utilizados en la verificacion metrologica.',
       currentRoute: '/admin/parametros',
       actions: [FilledButton.icon(onPressed: state.isSaving ? null : () => _abrirFormulario(context, null), icon: const Icon(Icons.add), label: const Text('Nuevo parametro'))],
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -32,7 +32,7 @@ class _AdminParametrosScreenState extends ConsumerState<AdminParametrosScreen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(color: const Color(0xFFF0F5FF), border: Border.all(color: const Color(0xFFC9DAFF)), borderRadius: BorderRadius.circular(10)),
-          child: const Row(children: [Icon(Icons.info_outline, color: Color(0xFF1677FF)), SizedBox(width: 10), Expanded(child: Text('M12 de Manuel consumira GET /api/parametros-normativos/vigente?caudal=... para comparar el error calculado del ensayo con el error maximo permitido.'))]),
+          child: const Row(children: [Icon(Icons.info_outline, color: Color(0xFF1677FF)), SizedBox(width: 10), Expanded(child: Text('Estos parametros se utilizan para determinar automaticamente si el resultado de una verificacion se encuentra dentro del limite permitido.'))]),
         ),
         const SizedBox(height: 16),
         if (state.isLoading) const LinearProgressIndicator(),
@@ -76,12 +76,12 @@ class _AdminParametrosScreenState extends ConsumerState<AdminParametrosScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Probar parametro vigente',
+                    'Consultar parametro aplicable',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Esta prueba usa exactamente el endpoint que despues consumira el modulo mecanico.',
+                    'Ingrese un caudal para consultar que parametro vigente corresponde a ese rango.',
                     style: TextStyle(color: Color(0xFF68737D)),
                   ),
                   const SizedBox(height: 14),
@@ -120,7 +120,7 @@ class _AdminParametrosScreenState extends ConsumerState<AdminParametrosScreen> {
                                     .probarVigente(value);
                               },
                         icon: const Icon(Icons.science_outlined),
-                        label: const Text('Buscar regla vigente'),
+                        label: const Text('Consultar'),
                       ),
                     ],
                   ),

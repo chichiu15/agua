@@ -5,6 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../features/admin/presentation/screens/admin_catalogos_screen.dart';
 import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/admin/presentation/screens/admin_parametros_screen.dart';
+import '../../features/admin/presentation/screens/admin_movimientos_screen.dart';
+import '../../features/admin/presentation/screens/admin_recorridos_screen.dart';
+import '../../features/admin/presentation/screens/admin_reportes_screen.dart';
+import '../../features/admin/presentation/screens/admin_sincronizacion_screen.dart';
+import '../../features/admin/presentation/screens/admin_solicitudes_screen.dart';
+import '../../features/admin/presentation/screens/admin_verificaciones_screen.dart';
 import '../../features/admin/presentation/screens/admin_usuarios_screen.dart';
 import '../../features/auth/domain/entities/app_user.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
@@ -30,6 +36,13 @@ abstract final class AppRoutes {
   static const String adminUsuarios = '/admin/usuarios';
   static const String adminCatalogos = '/admin/catalogos';
   static const String adminParametros = '/admin/parametros';
+  static const String adminSolicitudes = '/admin/solicitudes';
+  static const String adminRecorridos = '/admin/recorridos';
+  static const String adminSincronizacion = '/admin/sincronizacion';
+  static const String adminMovimientos = '/admin/movimientos';
+  static const String adminReportes = '/admin/reportes';
+  static const String adminVerificaciones = '/admin/verificaciones';
+  static const String adminInformes = '/admin/informes';
   static const String mecanicoHome = '/mecanico';
 
   static const String cambioMedidor = '/trabajo/cambio/:solicitudId';
@@ -102,6 +115,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.adminUsuarios, builder: (context, state) => const AdminUsuariosScreen()),
       GoRoute(path: AppRoutes.adminCatalogos, builder: (context, state) => const AdminCatalogosScreen()),
       GoRoute(path: AppRoutes.adminParametros, builder: (context, state) => const AdminParametrosScreen()),
+      GoRoute(path: AppRoutes.adminSolicitudes, builder: (context, state) => const AdminSolicitudesScreen()),
+      GoRoute(path: AppRoutes.adminRecorridos, builder: (context, state) => const AdminRecorridosScreen()),
+      GoRoute(path: AppRoutes.adminSincronizacion, builder: (context, state) => const AdminSincronizacionScreen()),
+      GoRoute(path: AppRoutes.adminMovimientos, builder: (context, state) => const AdminMovimientosScreen()),
+      GoRoute(path: AppRoutes.adminReportes, builder: (context, state) => const AdminReportesScreen()),
+      GoRoute(path: AppRoutes.adminVerificaciones, builder: (context, state) => const AdminVerificacionesScreen()),
+      GoRoute(path: AppRoutes.adminInformes, builder: (context, state) => const AdminInformesScreen()),
       GoRoute(path: AppRoutes.mecanicoHome, builder: (context, state) => const MecanicoHomeScreen()),
 
       GoRoute(

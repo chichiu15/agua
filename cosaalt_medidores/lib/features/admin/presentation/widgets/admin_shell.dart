@@ -30,42 +30,52 @@ class AdminShell extends ConsumerWidget {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, root) {
-            final compactNav = root.maxWidth < 1080;
-            final veryCompact = root.maxWidth < 820;
-            final navWidth = compactNav ? 82.0 : 238.0;
+            final compactNav = root.maxWidth < 1120;
+            final veryCompact = root.maxWidth < 760;
+            final navWidth = veryCompact ? 64.0 : (compactNav ? 82.0 : 238.0);
 
             return Column(
               children: [
                 Container(
                   height: 66,
                   color: const Color(0xFF006B3F),
-                  padding: EdgeInsets.symmetric(horizontal: veryCompact ? 12 : 22),
+                  padding: EdgeInsets.symmetric(horizontal: veryCompact ? 10 : 18),
                   child: Row(
                     children: [
-                      Image.asset(
-                        'assets/images/logo_cosaalt.png',
-                        height: 42,
-                        width: 42,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.water_drop,
-                          color: Colors.white,
-                          size: 34,
+                      // La identidad del modulo ocupa solo el espacio disponible.
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Image.asset(
+                              'assets/images/logo_cosaalt.png',
+                              height: 42,
+                              width: 42,
+                              errorBuilder: (_, _, _) => const Icon(
+                                Icons.water_drop,
+                                color: Colors.white,
+                                size: 34,
+                              ),
+                            ),
+                            if (!veryCompact) ...[
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Text(
+                                  'COSAALT - Modulo Medidores',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      if (!veryCompact)
-                        const Flexible(
-                          child: Text(
-                            'COSAALT - Modulo Medidores',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      const Spacer(),
+
+                      // El bloque del usuario siempre queda anclado a la derecha.
                       if (!veryCompact) ...[
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -74,6 +84,7 @@ class AdminShell extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.check_circle, color: Color(0xFF68D391), size: 18),
                               SizedBox(width: 7),
@@ -94,13 +105,14 @@ class AdminShell extends ConsumerWidget {
                       if (!veryCompact) ...[
                         const SizedBox(width: 9),
                         ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 180),
+                          constraints: BoxConstraints(maxWidth: compactNav ? 145 : 190),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 user?.fullName ?? 'Administrador',
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Colors.white,
@@ -153,6 +165,10 @@ class AdminShell extends ConsumerWidget {
                         ),
                         child: Column(
                           children: [
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: [
                             _NavItem(
                               icon: Icons.dashboard_outlined,
                               label: 'Dashboard',
@@ -160,6 +176,61 @@ class AdminShell extends ConsumerWidget {
                               currentRoute: currentRoute,
                               compact: compactNav,
                             ),
+                            const Padding(padding: EdgeInsets.symmetric(vertical: 7), child: Divider()),
+                            _SectionLabel('GESTION DE CAMBIOS', compact: compactNav),
+                            _NavItem(
+                              icon: Icons.assignment_outlined,
+                              label: 'Solicitudes',
+                              route: '/admin/solicitudes',
+                              currentRoute: currentRoute,
+                              compact: compactNav,
+                            ),
+                            _NavItem(
+                              icon: Icons.route_outlined,
+                              label: 'Recorridos',
+                              route: '/admin/recorridos',
+                              currentRoute: currentRoute,
+                              compact: compactNav,
+                            ),
+                            _NavItem(
+                              icon: Icons.sync_outlined,
+                              label: 'Sincronizacion',
+                              route: '/admin/sincronizacion',
+                              currentRoute: currentRoute,
+                              compact: compactNav,
+                            ),
+                            _NavItem(
+                              icon: Icons.table_rows_outlined,
+                              label: 'Planilla Digital',
+                              route: '/admin/movimientos',
+                              currentRoute: currentRoute,
+                              compact: compactNav,
+                            ),
+                            _NavItem(
+                              icon: Icons.bar_chart_outlined,
+                              label: 'Reportes',
+                              route: '/admin/reportes',
+                              currentRoute: currentRoute,
+                              compact: compactNav,
+                            ),
+                            const Padding(padding: EdgeInsets.symmetric(vertical: 7), child: Divider()),
+                            _SectionLabel('REVISION MECANICA', compact: compactNav),
+                            _NavItem(
+                              icon: Icons.fact_check_outlined,
+                              label: 'Verificaciones',
+                              route: '/admin/verificaciones',
+                              currentRoute: currentRoute,
+                              compact: compactNav,
+                            ),
+                            _NavItem(
+                              icon: Icons.description_outlined,
+                              label: 'Informes Tecnicos',
+                              route: '/admin/informes',
+                              currentRoute: currentRoute,
+                              compact: compactNav,
+                            ),
+                            const Padding(padding: EdgeInsets.symmetric(vertical: 7), child: Divider()),
+                            _SectionLabel('CONFIGURACION', compact: compactNav),
                             _NavItem(
                               icon: Icons.people_outline,
                               label: 'Usuarios',
@@ -181,53 +252,16 @@ class AdminShell extends ConsumerWidget {
                               currentRoute: currentRoute,
                               compact: compactNav,
                             ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 10),
-                              child: Divider(),
-                            ),
-                            if (!compactNav)
-                              const Align(
-                                alignment: Alignment.centerLeft,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left: 12, bottom: 6),
-                                  child: Text(
-                                    'PROXIMAS FASES',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
+                                  ],
                                 ),
                               ),
-                            _DisabledItem(
-                              icon: Icons.assignment_outlined,
-                              label: 'Solicitudes (R7)',
-                              compact: compactNav,
                             ),
-                            _DisabledItem(
-                              icon: Icons.route_outlined,
-                              label: 'Recorridos (R8)',
-                              compact: compactNav,
-                            ),
-                            _DisabledItem(
-                              icon: Icons.fact_check_outlined,
-                              label: 'Verificaciones (R9)',
-                              compact: compactNav,
-                            ),
-                            _DisabledItem(
-                              icon: Icons.description_outlined,
-                              label: 'Planillas / Reportes (R11-R14)',
-                              compact: compactNav,
-                            ),
-                            const Spacer(),
                             const Divider(),
                             if (!compactNav)
                               const Padding(
                                 padding: EdgeInsets.all(8),
                                 child: Text(
-                                  'R1-R5 Administracion',
+                                  'Modulo de Administracion',
                                   style: TextStyle(color: Colors.grey, fontSize: 11),
                                 ),
                               ),
@@ -292,7 +326,7 @@ class AdminShell extends ConsumerWidget {
                             ),
                             Expanded(
                               child: SingleChildScrollView(
-                                padding: EdgeInsets.all(compactNav ? 16 : 24),
+                                padding: EdgeInsets.all(veryCompact ? 10 : (compactNav ? 16 : 24)),
                                 child: child,
                               ),
                             ),
@@ -395,41 +429,27 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class _DisabledItem extends StatelessWidget {
-  const _DisabledItem({
-    required this.icon,
-    required this.label,
-    required this.compact,
-  });
-
-  final IconData icon;
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.label, {required this.compact});
   final String label;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    if (compact) {
-      return Tooltip(
-        message: label,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Icon(icon, size: 19, color: Colors.grey.shade400),
-        ),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      child: Row(
-        children: [
-          Icon(icon, size: 19, color: Colors.grey.shade400),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-            ),
+    if (compact) return const SizedBox(height: 2);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 2, 8, 6),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 9,
+            color: Color(0xFF8A949D),
+            fontWeight: FontWeight.w900,
+            letterSpacing: .8,
           ),
-        ],
+        ),
       ),
     );
   }

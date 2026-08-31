@@ -41,7 +41,7 @@ class _AdminUsuariosScreenState extends ConsumerState<AdminUsuariosScreen> {
 
     return AdminShell(
       title: 'Gestion de Usuarios',
-      subtitle: 'R2 - Altas, edicion, roles y activacion de cuentas de la aplicacion.',
+      subtitle: 'Gestiona las cuentas de acceso, roles y estado de los usuarios del sistema.',
       currentRoute: '/admin/usuarios',
       actions: [
         FilledButton.icon(
@@ -233,9 +233,11 @@ class _UsuarioFormDialogState extends State<_UsuarioFormDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<int>(
-                  initialValue: _codFun ?? 0,
                   isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Funcionario corporativo'),
+                  initialValue: _codFun ?? 0,
+                  decoration: const InputDecoration(
+                    labelText: 'Funcionario corporativo',
+                  ),
                   items: [
                     const DropdownMenuItem<int>(
                       value: 0,
@@ -257,7 +259,9 @@ class _UsuarioFormDialogState extends State<_UsuarioFormDialog> {
                       ),
                     ),
                   ],
-                  onChanged: (v) => setState(() => _codFun = v == 0 ? null : v),
+                  onChanged: (v) {
+                    setState(() => _codFun = v == 0 ? null : v);
+                  },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -280,20 +284,27 @@ class _UsuarioFormDialogState extends State<_UsuarioFormDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
-                  initialValue: _idRol,
                   isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Rol *'),
+                  initialValue: _idRol,
+                  decoration: const InputDecoration(
+                    labelText: 'Rol *',
+                  ),
                   items: widget.roles
                       .where((r) => r.activo || r.id == usuario?.idRol)
                       .map(
                         (r) => DropdownMenuItem<int>(
                           value: r.id,
                           enabled: r.activo || r.id == usuario?.idRol,
-                          child: Text(r.nombre),
+                          child: Text(
+                            r.nombre,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       )
                       .toList(),
-                  onChanged: (v) => setState(() => _idRol = v),
+                  onChanged: (v) {
+                    setState(() => _idRol = v);
+                  },
                   validator: (v) => v == null ? 'Seleccione un rol.' : null,
                 ),
                 const SizedBox(height: 8),
