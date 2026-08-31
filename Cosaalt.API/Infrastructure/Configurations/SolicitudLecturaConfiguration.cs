@@ -8,7 +8,7 @@ public class SolicitudLecturaConfiguration : IEntityTypeConfiguration<SolicitudL
 {
     public void Configure(EntityTypeBuilder<SolicitudLectura> builder)
     {
-        builder.ToTable("SolicitudLectura");
+        builder.ToTable("SolicitudLectura", "medidores");
         builder.HasKey(s => s.NumeroHoja);
         builder.Property(s => s.NumeroHoja).HasColumnName("Nro_hoja_solicitudLec").HasMaxLength(30);
         builder.Property(s => s.AnioMes).HasColumnName("Año_mes_solicitudLec").HasMaxLength(10);

@@ -1,5 +1,6 @@
 using Cosaalt.API.Application.DTOs;
 using Cosaalt.API.Application.Mappers;
+using Cosaalt.API.Domain.Entities;
 using Cosaalt.API.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,17 +14,20 @@ public class SqlAuthRepository : IAuthRepository
 
     public async Task<LoginResponseDto?> LoginAsync(string usuario, string contrasena)
     {
-        var user = await _context.UsuariosApp
+        var user = await _context.Usuarios
             .AsNoTracking()
+            .Include(u => u.Rol)
+            .Include(u => u.Funcionario)
+                .ThenInclude(f => f!.Persona)
             .FirstOrDefaultAsync(u =>
                 u.NombreUsuario == usuario &&
-                u.ContrasenaHash == contrasena &&
+                u.HashPassword == contrasena &&
                 u.Activo);
 
         if (user is null) return null;
 
         var token = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{user.Id}:{user.NombreUsuario}:{DateTime.UtcNow.Ticks}"));
-        return new LoginResponseDto(user.Id, user.NombreCompleto, user.Rol, token);
+        return new LoginResponseDto(user.Id, user.NombreCompleto, user.Rol.Nombre, token);
     }
 }
 
@@ -35,11 +39,20 @@ public class SqlCatalogoRepository : ICatalogoRepository
 
     public async Task<IReadOnlyList<MotivoCambioDto>> ObtenerMotivosAsync()
     {
-        return await _context.MotivosCambio
+        return await _context.MotivosCambioMedidorDbo
             .AsNoTracking()
-            .Where(m => m.Activo)
-            .OrderBy(m => m.Id)
-            .Select(m => new MotivoCambioDto(m.Id, m.Descripcion))
+            .Where(m => m.EstMoCaMe)
+            .OrderBy(m => m.CodMoCaMe)
+            .Select(m => new MotivoCambioDto(m.CodMoCaMe, m.NomMoCaMe))
+            .ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<MarcaMedidorDto>> ObtenerMarcasAsync()
+    {
+        return await _context.MarcasDbo
+            .AsNoTracking()
+            .OrderBy(m => m.NomMar)
+            .Select(m => new MarcaMedidorDto(m.CodMar, m.NomMar.Trim(), m.AliMar))
             .ToListAsync();
     }
 }
@@ -54,42 +67,37 @@ public class SqlSolicitudRepository : ISolicitudRepository
     {
         var solicitudes = new List<SolicitudBandejaDto>();
 
-        // Obtener IDs de solicitudes que ya tienen ruta asignada
         var idsAsignados = await _context.DetallesRuta
             .AsNoTracking()
             .Select(d => d.TipoOrigen + "-" + d.IdOrigen)
             .Distinct()
             .ToListAsync();
 
+        // LECTURA: detalles propios, socio resuelto desde dbo.Conexiones por CodCon.
         var detalles = await _context.DetallesSolicitudLectura
             .AsNoTracking()
             .Include(d => d.Solicitud)
-            .Include(d => d.Socio)
-            .ThenInclude(s => s.Medidor)
+            .Include(d => d.Conexion)
+                .ThenInclude(c => c!.Predio)
             .ToListAsync();
+
+        var codConsLectura = detalles.Select(d => d.CodCon).Distinct().ToList();
+        var medidorPorCodCon = await BandejaOdecoBuilder.MedidorVigentePorCodConAsync(_context, codConsLectura);
 
         foreach (var detalle in detalles)
         {
-            var solicitudId = $"LEC-{detalle.Id}";
             var estado = idsAsignados.Contains($"LECTURA-{detalle.Id}")
                 ? "Asignada" : "Pendiente";
             solicitudes.Add(SolicitudMapper.FromDetalleLectura(
-                detalle, detalle.Solicitud, detalle.Socio, detalle.Socio.Medidor, estado));
+                detalle,
+                detalle.Solicitud,
+                detalle.Conexion,
+                medidorPorCodCon.GetValueOrDefault(detalle.CodCon),
+                estado));
         }
 
-        var reclamos = await _context.ReclamosOdeco
-            .AsNoTracking()
-            .Include(r => r.Socio)
-            .ThenInclude(s => s.Medidor)
-            .ToListAsync();
-
-        foreach (var reclamo in reclamos)
-        {
-            var estado = idsAsignados.Contains($"ODECO-{reclamo.Folio}")
-                ? "Asignada" : "Pendiente";
-            solicitudes.Add(SolicitudMapper.FromReclamoOdeco(
-                reclamo, reclamo.Socio, reclamo.Socio.Medidor, estado));
-        }
+        // ODECO: lectura directa de dbo.Reclamos + Conexion + Recurrente.
+        solicitudes.AddRange(await BandejaOdecoBuilder.BuildAsync(_context, BandejaOdecoBuilder.MaxTop));
 
         var filtradas = filtro?.ToLowerInvariant() switch
         {
@@ -127,5 +135,47 @@ public class SqlEjecucionRepository : IEjecucionRepository
         _context.EjecucionesCambio.Add(entity);
         await _context.SaveChangesAsync();
         return EjecucionMapper.ToResponse(entity);
+    }
+
+    public async Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null)
+    {
+        var ejecuciones = await _context.EjecucionesCambio
+            .AsNoTracking()
+            .Include(e => e.Conexion)
+                .ThenInclude(c => c!.Predio)
+            .Include(e => e.Usuario)
+                .ThenInclude(u => u.Funcionario)
+                .ThenInclude(f => f!.Persona)
+            .Include(e => e.Motivo)
+            .Include(e => e.Evidencias)
+            .OrderByDescending(e => e.FechaHoraEjecucion)
+            .Take(100)
+            .ToListAsync();
+
+        var historial = ejecuciones
+            .Where(e => codCon is null || e.CodCon == codCon)
+            .Select(e => new EjecucionHistorialDto(
+                IdEjecucion: e.Id,
+                TipoOrigen: e.TipoOrigen,
+                IdOrigen: e.IdOrigen,
+                SolicitudId: $"{e.TipoOrigen}-{e.IdOrigen}",
+                FechaHoraEjecucion: e.FechaHoraEjecucion,
+                CodCon: e.CodCon,
+                NombreCliente: e.Conexion?.NomSoc,
+                Direccion: BandejaOdecoBuilder.BuildDireccion(e.Conexion?.Predio),
+                NumeroMedidorRetirado: e.NumeroMedidorRetirado,
+                MarcaRetirado: e.MarcaRetirado,
+                LecturaRetiro: e.LecturaRetiro,
+                NumeroMedidorInstalado: e.NumeroMedidorInstalado,
+                MarcaInstalado: e.MarcaInstalado,
+                Observaciones: e.ObservacionesInstalacion,
+                NombreTecnico: e.Usuario?.NombreCompleto,
+                MotivoDescripcion: e.Motivo?.NomMoCaMe,
+                Evidencias: e.Evidencias
+                    .Select(ev => new EvidenciaHistorialDto(ev.TipoFoto, ev.RutaArchivo))
+                    .ToList()))
+            .ToList();
+
+        return historial;
     }
 }

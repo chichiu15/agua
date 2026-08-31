@@ -5,8 +5,8 @@ namespace Cosaalt.API.Application.Mappers;
 
 public static class CatalogoMapper
 {
-    public static MotivoCambioDto ToDto(MotivoCambioMedidor motivo) =>
-        new(motivo.Id, motivo.Descripcion);
+    public static MotivoCambioDto ToDto(MotivoCambioMedidorDbo motivo) =>
+        new(motivo.CodMoCaMe, motivo.NomMoCaMe);
 }
 
 public static class SolicitudMapper
@@ -14,8 +14,8 @@ public static class SolicitudMapper
     public static SolicitudBandejaDto FromDetalleLectura(
         DetalleSolicitudLectura detalle,
         SolicitudLectura solicitud,
-        Socio socio,
-        Medidor? medidor,
+        Conexion? conexion,
+        (string? NumeroMedidor, string? MarcaMedidor) medidor,
         string estado)
     {
         return new SolicitudBandejaDto(
@@ -23,14 +23,14 @@ public static class SolicitudMapper
             TipoOrigen: "LECTURA",
             Estado: estado,
             EsUrgente: false,
-            RegistroSocio: socio.RegistroSocio,
-            NombreCliente: socio.Nombre,
-            Direccion: socio.Direccion,
-            Categoria: socio.Categoria,
-            Ruta: socio.Ruta,
-            Recorrido: socio.Recorrido,
-            NumeroMedidor: medidor?.NumeroMedidor,
-            MarcaMedidor: medidor?.Marca,
+            CodCon: conexion?.CodCon ?? 0,
+            NombreCliente: conexion?.NomSoc ?? "Sin nombre",
+            Direccion: Cosaalt.API.Infrastructure.Repositories.BandejaOdecoBuilder.BuildDireccion(conexion?.Predio),
+            Categoria: null,
+            Ruta: null,
+            Recorrido: null,
+            NumeroMedidor: medidor.NumeroMedidor,
+            MarcaMedidor: medidor.MarcaMedidor,
             LecturaAnterior: detalle.LecturaAnterior,
             LecturaActual: detalle.LecturaActual,
             Consumo: detalle.Consumo,
@@ -38,44 +38,9 @@ public static class SolicitudMapper
             FechaSolicitud: solicitud.FechaEmision,
             FolioOdeco: null,
             ConclusionOdeco: null,
-            // Antes: socio.Latitud / socio.Longitud. Ahora la ubicación
-            // real es la del medidor (un socio puede tener más de uno).
-            Latitud: medidor?.Latitud,
-            Longitud: medidor?.Longitud);
-    }
-
-    public static SolicitudBandejaDto FromReclamoOdeco(
-        ReclamoOdeco reclamo,
-        Socio socio,
-        Medidor? medidor,
-        string estado)
-    {
-        var esUrgente = reclamo.Conclusion?.Contains("CAMBIAR", StringComparison.OrdinalIgnoreCase) == true
-            || reclamo.PrioridadNota?.Contains("URGENTE", StringComparison.OrdinalIgnoreCase) == true
-            || reclamo.PrioridadNota?.Contains("24", StringComparison.OrdinalIgnoreCase) == true;
-
-        return new SolicitudBandejaDto(
-            Id: $"ODECO-{reclamo.Folio}",
-            TipoOrigen: "ODECO",
-            Estado: estado,
-            EsUrgente: esUrgente,
-            RegistroSocio: socio.RegistroSocio,
-            NombreCliente: socio.Nombre,
-            Direccion: socio.Direccion,
-            Categoria: socio.Categoria,
-            Ruta: socio.Ruta,
-            Recorrido: socio.Recorrido,
-            NumeroMedidor: medidor?.NumeroMedidor,
-            MarcaMedidor: medidor?.Marca,
-            LecturaAnterior: reclamo.LecturaAnteriorAnalisis,
-            LecturaActual: reclamo.LecturaActualAnalisis,
-            Consumo: reclamo.ConsumoAnalisis,
-            MotivoObservacion: reclamo.MotivoReclamo ?? reclamo.Comentarios,
-            FechaSolicitud: reclamo.FechaReclamo,
-            FolioOdeco: reclamo.Folio,
-            ConclusionOdeco: reclamo.Conclusion,
-            Latitud: medidor?.Latitud,
-            Longitud: medidor?.Longitud);
+            // La ubicación es la de la conexión (el medidor sale de dbo, sin coords).
+            Latitud: conexion?.CooX2Con,
+            Longitud: conexion?.CooY2Con);
     }
 }
 
@@ -109,8 +74,7 @@ public static class EjecucionMapper
 }
 
 public static class RutaMapper
-{
-    public static DetalleRuta ToEntity(DetalleRutaRequestDto dto) =>
+{    public static DetalleRuta ToEntity(DetalleRutaRequestDto dto) =>
         new()
         {
             TipoOrigen = dto.TipoOrigen,
@@ -124,8 +88,20 @@ public static class RutaMapper
             Longitud = dto.Longitud
         };
 
-    public static DetalleRutaResponseDto ToResponse(DetalleRuta entity) =>
-        new(
+    public static DetalleRutaResponseDto ToResponse(
+        DetalleRuta entity,
+        IReadOnlyDictionary<string, (int? CodCon, string? NumeroMedidor)>? resolucion = null)
+    {
+        int? codCon = null;
+        string? medidor = null;
+
+        if (resolucion?.TryGetValue($"{entity.TipoOrigen}-{entity.IdOrigen}", out var r) == true)
+        {
+            codCon = r.CodCon;
+            medidor = r.NumeroMedidor;
+        }
+
+        return new DetalleRutaResponseDto(
             Id: entity.Id,
             SolicitudId: entity.SolicitudId,
             TipoOrigen: entity.TipoOrigen,
@@ -135,9 +111,15 @@ public static class RutaMapper
             Direccion: entity.Direccion,
             Latitud: entity.Latitud,
             Longitud: entity.Longitud,
-            EsUrgente: entity.TipoOrigen == "ODECO");
+            EsUrgente: entity.TipoOrigen == "ODECO",
+            CodCon: codCon,
+            NumeroMedidor: medidor);
+    }
 
-    public static RutaAsignadaResponseDto ToResponse(AsignacionRuta entity, string nombreTecnico) =>
+    public static RutaAsignadaResponseDto ToResponse(
+        AsignacionRuta entity,
+        string nombreTecnico,
+        IReadOnlyDictionary<string, (int? CodCon, string? NumeroMedidor)>? resolucion = null) =>
         new(
             IdAsignacion: entity.Id,
             IdUsuarioTecnico: entity.IdUsuarioApp,
@@ -145,5 +127,62 @@ public static class RutaMapper
             FechaAsignacion: entity.FechaAsignacion,
             Estado: entity.Estado,
             TotalParadas: entity.Detalles.Count,
-            Detalles: entity.Detalles.OrderBy(d => d.OrdenVisita).Select(ToResponse).ToList());
+            Detalles: entity.Detalles
+                .OrderBy(d => d.OrdenVisita)
+                .Select(d => ToResponse(d, resolucion))
+                .ToList());
+}
+
+public static class VerificacionMapper
+{
+    public static Verificacion ToEntity(TomarVerificacionRequestDto request) =>
+        new()
+        {
+            TipoOrigen = request.TipoOrigen,
+            IdOrigen = request.IdOrigen,
+            CodCon = request.CodCon,
+            IdUsuarioMecanico = request.IdUsuarioMecanico,
+            IdMedidor = request.IdMedidor,
+            FechaVerificacion = DateTime.Now,
+            Estado = "EnCurso",
+            Resultado = null
+        };
+
+    public static VerificacionDto ToDto(
+        Verificacion entity,
+        string? nombreCliente = null,
+        string? nombreMecanico = null) =>
+        new(
+            Id: entity.Id,
+            TipoOrigen: entity.TipoOrigen,
+            IdOrigen: entity.IdOrigen,
+            CodCon: entity.CodCon,
+            IdUsuarioMecanico: entity.IdUsuarioMecanico,
+            IdMedidor: entity.IdMedidor,
+            FechaVerificacion: entity.FechaVerificacion,
+            Estado: entity.Estado,
+            Resultado: entity.Resultado,
+            NombreCliente: nombreCliente,
+            NombreMecanico: nombreMecanico,
+            Ensayo: entity.Ensayo is null
+                ? null
+                : new EnsayoVerificacionDto(
+                    Id: entity.Ensayo.Id,
+                    Condiciones: entity.Ensayo.Condiciones,
+                    LecturaInicial: entity.Ensayo.LecturaInicial,
+                    LecturaFinal: entity.Ensayo.LecturaFinal,
+                    VolumenPatron: entity.Ensayo.VolumenPatron,
+                    Caudal: entity.Ensayo.Caudal,
+                    VolumenRegistrado: entity.Ensayo.VolumenRegistrado,
+                    Error: entity.Ensayo.Error,
+                    Fugas: entity.Ensayo.Fugas,
+                    Observaciones: entity.Ensayo.Observaciones),
+            Participantes: entity.Participantes
+                .OrderBy(p => p.Id)
+                .Select(p => new ParticipanteVerificacionDto(
+                    Id: p.Id,
+                    Nombre: p.Nombre,
+                    Cargo: p.Cargo,
+                    Rol: p.Rol))
+                .ToList());
 }

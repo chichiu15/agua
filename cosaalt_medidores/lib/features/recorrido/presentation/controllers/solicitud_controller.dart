@@ -60,8 +60,8 @@ final solicitudRepositoryProvider = Provider<SolicitudRepository>((ref) {
 
 final solicitudControllerProvider =
     NotifierProvider<SolicitudController, SolicitudState>(
-  SolicitudController.new,
-);
+      SolicitudController.new,
+    );
 
 class SolicitudController extends Notifier<SolicitudState> {
   @override
@@ -140,9 +140,7 @@ class SolicitudController extends Notifier<SolicitudState> {
 
   void guardarOrden(List<String> idsOrdenados) {
     final idsSeleccionados = state.seleccionadas;
-    final ordenLimpio = idsOrdenados
-        .where(idsSeleccionados.contains)
-        .toList();
+    final ordenLimpio = idsOrdenados.where(idsSeleccionados.contains).toList();
 
     for (final id in idsSeleccionados) {
       if (!ordenLimpio.contains(id)) {
@@ -214,10 +212,7 @@ class SolicitudController extends Notifier<SolicitudState> {
 
       return true;
     } on SolicitudException catch (e) {
-      state = state.copyWith(
-        isAsignando: false,
-        errorMessage: e.message,
-      );
+      state = state.copyWith(isAsignando: false, errorMessage: e.message);
       return false;
     } catch (_) {
       state = state.copyWith(

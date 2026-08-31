@@ -22,14 +22,16 @@ class _Paso2ReordenarScreenState extends ConsumerState<Paso2ReordenarScreen> {
   void initState() {
     super.initState();
     _puntos = List<Solicitud>.from(
-      ref.read(solicitudControllerProvider.notifier).solicitudesSeleccionadasOrdenadas,
+      ref
+          .read(solicitudControllerProvider.notifier)
+          .solicitudesSeleccionadasOrdenadas,
     );
   }
 
   void _guardarOrden() {
-    ref.read(solicitudControllerProvider.notifier).guardarOrden(
-          _puntos.map((s) => s.id).toList(),
-        );
+    ref
+        .read(solicitudControllerProvider.notifier)
+        .guardarOrden(_puntos.map((s) => s.id).toList());
   }
 
   void _sugerirOrden() {
@@ -169,80 +171,83 @@ class _SolicitudCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          Container(
-            width: 48,
-            color: AppColors.lightBlue,
-            alignment: Alignment.center,
-            child: Text(
-              '$orden',
-              style: const TextStyle(
-                color: AppColors.darkBlue,
-                fontWeight: FontWeight.w900,
-                fontSize: 22,
+            Container(
+              width: 48,
+              color: AppColors.lightBlue,
+              alignment: Alignment.center,
+              child: Text(
+                '$orden',
+                style: const TextStyle(
+                  color: AppColors.darkBlue,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            _TipoBadge(
-                              texto: solicitud.tipoOrigen,
-                              color: _tipoColor,
-                            ),
-                            if (solicitud.esVencida) ...[
-                              const SizedBox(width: 6),
-                              const _TipoBadge(
-                                texto: 'VENCIDA',
-                                color: AppColors.overdueOrange,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 11,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              _TipoBadge(
+                                texto: solicitud.tipoOrigen,
+                                color: _tipoColor,
                               ),
+                              if (solicitud.esVencida) ...[
+                                const SizedBox(width: 6),
+                                const _TipoBadge(
+                                  texto: 'VENCIDA',
+                                  color: AppColors.overdueOrange,
+                                ),
+                              ],
                             ],
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          solicitud.direccion,
-                          style: const TextStyle(
-                            color: AppColors.darkBlue,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
                           ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          '${solicitud.nombreCliente} - ${solicitud.numeroMedidor ?? "S/N"}',
-                          style: const TextStyle(
-                            color: AppColors.actionBlue,
-                            fontSize: 12,
+                          const SizedBox(height: 6),
+                          Text(
+                            solicitud.direccion,
+                            style: const TextStyle(
+                              color: AppColors.darkBlue,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ReorderableDragStartListener(
-                    index: dragIndex,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.drag_indicator_rounded,
-                        color: AppColors.textSecondary,
-                        size: 28,
+                          const SizedBox(height: 3),
+                          Text(
+                            '${solicitud.nombreCliente} - ${solicitud.numeroMedidor ?? "S/N"}',
+                            style: const TextStyle(
+                              color: AppColors.actionBlue,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    ReorderableDragStartListener(
+                      index: dragIndex,
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(
+                          Icons.drag_indicator_rounded,
+                          color: AppColors.textSecondary,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );
@@ -250,10 +255,7 @@ class _SolicitudCard extends StatelessWidget {
 }
 
 class _TipoBadge extends StatelessWidget {
-  const _TipoBadge({
-    required this.texto,
-    required this.color,
-  });
+  const _TipoBadge({required this.texto, required this.color});
 
   final String texto;
   final Color color;

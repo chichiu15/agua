@@ -4,3 +4,6 @@ obj/
 Migrations/
 *.user
 *.suo
+# Credenciales de conexión: nunca se commitean (usar env var o secrets)
+appsettings.json
+appsettings.Development.json

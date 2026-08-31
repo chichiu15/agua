@@ -8,11 +8,11 @@ public class DetalleSolicitudLecturaConfiguration : IEntityTypeConfiguration<Det
 {
     public void Configure(EntityTypeBuilder<DetalleSolicitudLectura> builder)
     {
-        builder.ToTable("DetalleSolicitudLectura");
+        builder.ToTable("DetalleSolicitudLectura", "medidores");
         builder.HasKey(d => d.Id);
         builder.Property(d => d.Id).HasColumnName("Id_detalle").ValueGeneratedNever();
         builder.Property(d => d.NumeroHoja).HasColumnName("Nro_hoja_detalle").HasMaxLength(30);
-        builder.Property(d => d.RegistroSocio).HasColumnName("Reg_soc");
+        builder.Property(d => d.CodCon).HasColumnName("Cod_con").HasConversion(NumericConversions.IntToDecimal);
         builder.Property(d => d.LecturaAnterior).HasColumnName("Lec_ant_detalle");
         builder.Property(d => d.LecturaActual).HasColumnName("Lec_act_detalle");
         builder.Property(d => d.Consumo).HasColumnName("Consumo_detalle");
@@ -21,8 +21,9 @@ public class DetalleSolicitudLecturaConfiguration : IEntityTypeConfiguration<Det
             .WithMany(s => s.Detalles)
             .HasForeignKey(d => d.NumeroHoja);
 
-        builder.HasOne(d => d.Socio)
-            .WithMany(s => s.DetallesLectura)
-            .HasForeignKey(d => d.RegistroSocio);
+        // La conexión (dbo.Conexiones) es la cuenta del socio en COSAALT; solo lectura.
+        builder.HasOne(d => d.Conexion)
+            .WithMany()
+            .HasForeignKey(d => d.CodCon);
     }
 }

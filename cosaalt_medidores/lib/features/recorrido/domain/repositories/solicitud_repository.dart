@@ -25,6 +25,9 @@ abstract interface class SolicitudRepository {
   Future<SolicitudesResponse> obtenerSolicitudes({String? filtro});
   Future<List<Tecnico>> obtenerTecnicos();
   Future<void> asignarRuta(AsignarRutaParams params);
-  Future<List<RutaAsignada>> obtenerRutasTecnico(int idTecnico, {DateTime? fecha});
+  Future<List<RutaAsignada>> obtenerRutasTecnico(
+    int idTecnico, {
+    DateTime? fecha,
+  });
   Future<RutaAsignada> obtenerRutaPorId(int idAsignacion);
 }

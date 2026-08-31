@@ -8,7 +8,7 @@ public class EvidenciaFotograficaConfiguration : IEntityTypeConfiguration<Eviden
 {
     public void Configure(EntityTypeBuilder<EvidenciaFotografica> builder)
     {
-        builder.ToTable("EvidenciaFotografica");
+        builder.ToTable("EvidenciaFotografica", "medidores");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("IdFoto");
         builder.Property(e => e.IdEjecucion).HasColumnName("IdEjecucion");

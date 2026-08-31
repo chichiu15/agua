@@ -31,28 +31,7 @@ class ArmarRecorridoScaffold extends ConsumerWidget {
   final VoidCallback? onBack;
 
   void _handleBottomNavigation(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        context.go('/asignador');
-        break;
-      case 1:
-        context.go('/asignador/recorrido/paso1');
-        break;
-      case 2:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Historial se implementará en el módulo correspondiente.'),
-          ),
-        );
-        break;
-      case 3:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sincronización se implementará en el módulo correspondiente.'),
-          ),
-        );
-        break;
-    }
+    context.go('/asignador?tab=$index');
   }
 
   @override
@@ -124,7 +103,7 @@ class ArmarRecorridoScaffold extends ConsumerWidget {
         ),
       ),
       bottomNavigationBar: CosaaltBottomNav(
-        currentIndex: 1,
+        currentIndex: 0,
         onTap: (index) => _handleBottomNavigation(context, index),
       ),
     );

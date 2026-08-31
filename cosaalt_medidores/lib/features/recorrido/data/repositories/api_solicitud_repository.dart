@@ -11,7 +11,7 @@ import '../../domain/repositories/solicitud_repository.dart';
 
 class ApiSolicitudRepository implements SolicitudRepository {
   ApiSolicitudRepository({ApiAuthRepository? authRepository})
-      : _authRepository = authRepository ?? ApiAuthRepository();
+    : _authRepository = authRepository ?? ApiAuthRepository();
 
   final ApiAuthRepository _authRepository;
 
@@ -43,9 +43,7 @@ class ApiSolicitudRepository implements SolicitudRepository {
 
   @override
   Future<List<Tecnico>> obtenerTecnicos() async {
-    final uri = Uri.parse(
-      '${ApiConfig.baseUrl}${ApiConfig.tecnicosEndpoint}',
-    );
+    final uri = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.tecnicosEndpoint}');
 
     final response = await http.get(uri, headers: await _headers());
     if (response.statusCode != 200) {
@@ -115,7 +113,10 @@ class ApiSolicitudRepository implements SolicitudRepository {
     final response = await http.get(uri, headers: await _headers());
     if (response.statusCode != 200) {
       throw SolicitudException(
-        _leerMensajeError(response, fallback: 'Error al obtener las rutas del técnico.'),
+        _leerMensajeError(
+          response,
+          fallback: 'Error al obtener las rutas del técnico.',
+        ),
       );
     }
 
@@ -133,7 +134,10 @@ class ApiSolicitudRepository implements SolicitudRepository {
     final response = await http.get(uri, headers: await _headers());
     if (response.statusCode != 200) {
       throw SolicitudException(
-        _leerMensajeError(response, fallback: 'Error al obtener el detalle de la ruta.'),
+        _leerMensajeError(
+          response,
+          fallback: 'Error al obtener el detalle de la ruta.',
+        ),
       );
     }
 
@@ -142,10 +146,7 @@ class ApiSolicitudRepository implements SolicitudRepository {
     );
   }
 
-  String _leerMensajeError(
-    http.Response response, {
-    required String fallback,
-  }) {
+  String _leerMensajeError(http.Response response, {required String fallback}) {
     try {
       final body = jsonDecode(response.body);
       if (body is Map<String, dynamic>) {

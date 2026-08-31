@@ -9,7 +9,7 @@ import '../../domain/repositories/auth_repository.dart';
 
 class ApiAuthRepository implements AuthRepository {
   ApiAuthRepository({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 
@@ -27,10 +27,7 @@ class ApiAuthRepository implements AuthRepository {
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'Usuario': username,
-        'Contrasena': password,
-      }),
+      body: jsonEncode({'Usuario': username, 'Contrasena': password}),
     );
 
     if (response.statusCode == 401) {
