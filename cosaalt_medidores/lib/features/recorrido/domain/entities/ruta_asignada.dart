@@ -12,6 +12,7 @@ class DetalleRutaAsignada {
     required this.esUrgente,
     this.codCon,
     this.numeroMedidor,
+    this.pendienteSincronizacion = false,
   });
 
   final int id;
@@ -26,8 +27,10 @@ class DetalleRutaAsignada {
   final bool esUrgente;
   final int? codCon;
   final String? numeroMedidor;
+  final bool pendienteSincronizacion;
 
-  bool get completada => estado.toLowerCase() == 'completada';
+  bool get completadaServidor => estado.toLowerCase() == 'completada';
+  bool get completada => completadaServidor || pendienteSincronizacion;
 
   factory DetalleRutaAsignada.fromJson(Map<String, dynamic> json) {
     return DetalleRutaAsignada(
@@ -43,6 +46,7 @@ class DetalleRutaAsignada {
       esUrgente: json['esUrgente'] as bool? ?? false,
       codCon: json['codCon'] as int?,
       numeroMedidor: json['numeroMedidor'] as String?,
+      pendienteSincronizacion: false,
     );
   }
 }

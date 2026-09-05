@@ -165,7 +165,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   textInputAction: TextInputAction.done,
                                   autofillHints: const [AutofillHints.password],
                                   onFieldSubmitted: (_) {
-                                    if (!authState.isLoading) {
+                                    if (!authState.isLoading && !authState.isRestoring) {
                                       _submit();
                                     }
                                   },
@@ -216,7 +216,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 const SizedBox(height: 22),
 
                                 ElevatedButton(
-                                  onPressed: authState.isLoading
+                                  onPressed: authState.isLoading || authState.isRestoring
                                       ? null
                                       : _submit,
                                   style: ElevatedButton.styleFrom(
@@ -226,7 +226,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       0xFFE7EEE8,
                                     ),
                                   ),
-                                  child: authState.isLoading
+                                  child: authState.isLoading || authState.isRestoring
                                       ? const SizedBox(
                                           width: 22,
                                           height: 22,

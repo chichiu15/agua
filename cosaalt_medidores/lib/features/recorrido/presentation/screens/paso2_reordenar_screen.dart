@@ -35,13 +35,48 @@ class _Paso2ReordenarScreenState extends ConsumerState<Paso2ReordenarScreen> {
   }
 
   void _sugerirOrden() {
+    if (_puntos.length < 2) return;
+
+    final conCoordenadas = _puntos
+        .where((p) => p.latitud != null && p.longitud != null)
+        .toList();
+    final sinCoordenadas = _puntos
+        .where((p) => p.latitud == null || p.longitud == null)
+        .toList();
+
+    if (conCoordenadas.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Se necesitan coordenadas válidas en al menos dos solicitudes.'),
+        ),
+      );
+      return;
+    }
+
+    // Vecino más cercano: propuesta local, instantánea y reproducible. El
+    // asignador conserva el control porque todavía puede reordenar arrastrando.
+    final pendientes = List<Solicitud>.from(conCoordenadas);
+    final sugeridos = <Solicitud>[pendientes.removeAt(0)];
+    while (pendientes.isNotEmpty) {
+      final actual = sugeridos.last;
+      pendientes.sort((a, b) =>
+          _distanciaCuadrada(actual, a).compareTo(_distanciaCuadrada(actual, b)));
+      sugeridos.add(pendientes.removeAt(0));
+    }
+
+    setState(() => _puntos = [...sugeridos, ...sinCoordenadas]);
+    _guardarOrden();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text(
-          'La sugerencia automática de orden se implementará cuando definamos el criterio de optimización.',
-        ),
+        content: Text('Orden sugerido por cercanía. Podés ajustarlo arrastrando las tarjetas.'),
       ),
     );
+  }
+
+  double _distanciaCuadrada(Solicitud a, Solicitud b) {
+    final dLat = a.latitud! - b.latitud!;
+    final dLon = a.longitud! - b.longitud!;
+    return dLat * dLat + dLon * dLon;
   }
 
   @override

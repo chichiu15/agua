@@ -3,110 +3,19 @@ using Cosaalt.API.Domain.Entities;
 
 namespace Cosaalt.API.Application.Mappers;
 
-public static class CatalogoMapper
-{
-    public static MotivoCambioDto ToDto(MotivoCambioMedidorDbo motivo) =>
-        new(
-            motivo.CodMoCaMe,
-            motivo.NomMoCaMe,
-            motivo.DesMoCaMe,
-            motivo.EstMoCaMe
-        );
-}
-
-public static class SolicitudMapper
-{
-    public static SolicitudBandejaDto FromDetalleLectura(
-        DetalleSolicitudLectura detalle,
-        SolicitudLectura solicitud,
-        Conexion? conexion,
-        (string? NumeroMedidor, string? MarcaMedidor) medidor,
-        string estado)
-    {
-        return new SolicitudBandejaDto(
-            Id: $"LEC-{detalle.Id}",
-            TipoOrigen: "LECTURA",
-            Estado: estado,
-            EsUrgente: false,
-            CodCon: conexion?.CodCon ?? 0,
-            NombreCliente: conexion?.NomSoc ?? "Sin nombre",
-            Direccion: Cosaalt.API.Infrastructure.Repositories.BandejaOdecoBuilder.BuildDireccion(conexion?.Predio),
-            Categoria: null,
-            Ruta: null,
-            Recorrido: null,
-            NumeroMedidor: medidor.NumeroMedidor,
-            MarcaMedidor: medidor.MarcaMedidor,
-            LecturaAnterior: detalle.LecturaAnterior,
-            LecturaActual: detalle.LecturaActual,
-            Consumo: detalle.Consumo,
-            MotivoObservacion: solicitud.DescripcionObservacion ?? $"Código {solicitud.CodigoObservacion}",
-            FechaSolicitud: solicitud.FechaEmision,
-            FolioOdeco: null,
-            ConclusionOdeco: null,
-            // La ubicación es la de la conexión (el medidor sale de dbo, sin coords).
-            Latitud: conexion?.CooX2Con,
-            Longitud: conexion?.CooY2Con);
-    }
-}
-
 public static class EjecucionMapper
 {
-    public static EjecucionCambio ToEntity(EjecucionCambioRequestDto dto) =>
-        new()
-        {
-            TipoOrigen = dto.TipoOrigen,
-            IdOrigen = dto.IdOrigen,
-            IdUsuarioApp = dto.IdUsuarioApp,
-            FechaHoraEjecucion = dto.FechaHoraEjecucion,
-            NumeroMedidorRetirado = dto.NumeroMedidorRetirado,
-            MarcaRetirado = dto.MarcaRetirado,
-            LecturaRetiro = dto.LecturaRetiro,
-            IdMotivo = dto.IdMotivo,
-            NumeroMedidorInstalado = dto.NumeroMedidorInstalado,
-            MarcaInstalado = dto.MarcaInstalado,
-            ObservacionesInstalacion = dto.ObservacionesInstalacion,
-            LatLong = dto.LatLong,
-            Sincronizado = true,
-            Evidencias = dto.Evidencias?.Select(e => new EvidenciaFotografica
-            {
-                TipoFoto = e.TipoFoto,
-                RutaArchivo = e.RutaArchivo
-            }).ToList() ?? []
-        };
-
-    public static EjecucionCambioResponseDto ToResponse(EjecucionCambio entity) =>
-        new(entity.Id, "Ejecución registrada correctamente.", entity.Sincronizado);
+    public static EjecucionCambioResponseDto ToResponse(EjecucionCambio entity, bool yaExistia = false) =>
+        new(entity.Id,
+            yaExistia ? "La ejecucion ya habia sido registrada; no se duplico." : "Ejecucion registrada correctamente.",
+            entity.Sincronizado,
+            yaExistia);
 }
 
 public static class RutaMapper
-{    public static DetalleRuta ToEntity(DetalleRutaRequestDto dto) =>
-        new()
-        {
-            TipoOrigen = dto.TipoOrigen,
-            IdOrigen = dto.IdOrigen,
-            OrdenVisita = dto.OrdenVisita,
-            Estado = "Pendiente",
-            SolicitudId = dto.SolicitudId,
-            NombreCliente = dto.NombreCliente,
-            Direccion = dto.Direccion,
-            Latitud = dto.Latitud,
-            Longitud = dto.Longitud
-        };
-
-    public static DetalleRutaResponseDto ToResponse(
-        DetalleRuta entity,
-        IReadOnlyDictionary<string, (int? CodCon, string? NumeroMedidor)>? resolucion = null)
-    {
-        int? codCon = null;
-        string? medidor = null;
-
-        if (resolucion?.TryGetValue($"{entity.TipoOrigen}-{entity.IdOrigen}", out var r) == true)
-        {
-            codCon = r.CodCon;
-            medidor = r.NumeroMedidor;
-        }
-
-        return new DetalleRutaResponseDto(
+{
+    public static DetalleRutaResponseDto ToResponse(DetalleRuta entity, string? numeroMedidor = null) =>
+        new(
             Id: entity.Id,
             SolicitudId: entity.SolicitudId,
             TipoOrigen: entity.TipoOrigen,
@@ -114,45 +23,15 @@ public static class RutaMapper
             Estado: entity.Estado,
             NombreCliente: entity.NombreCliente,
             Direccion: entity.Direccion,
-            Latitud: entity.Latitud,
-            Longitud: entity.Longitud,
-            EsUrgente: entity.TipoOrigen == "ODECO",
-            CodCon: codCon,
-            NumeroMedidor: medidor);
-    }
-
-    public static RutaAsignadaResponseDto ToResponse(
-        AsignacionRuta entity,
-        string nombreTecnico,
-        IReadOnlyDictionary<string, (int? CodCon, string? NumeroMedidor)>? resolucion = null) =>
-        new(
-            IdAsignacion: entity.Id,
-            IdUsuarioTecnico: entity.IdUsuarioApp,
-            NombreTecnico: nombreTecnico,
-            FechaAsignacion: entity.FechaAsignacion,
-            Estado: entity.Estado,
-            TotalParadas: entity.Detalles.Count,
-            Detalles: entity.Detalles
-                .OrderBy(d => d.OrdenVisita)
-                .Select(d => ToResponse(d, resolucion))
-                .ToList());
+            Latitud: entity.Latitud.HasValue ? (double?)entity.Latitud.Value : null,
+            Longitud: entity.Longitud.HasValue ? (double?)entity.Longitud.Value : null,
+            EsUrgente: entity.TipoOrigen.Equals("ODECO", StringComparison.OrdinalIgnoreCase),
+            CodCon: entity.RegSoc,
+            NumeroMedidor: numeroMedidor);
 }
 
 public static class VerificacionMapper
 {
-    public static Verificacion ToEntity(TomarVerificacionRequestDto request) =>
-        new()
-        {
-            TipoOrigen = request.TipoOrigen,
-            IdOrigen = request.IdOrigen,
-            CodCon = request.CodCon,
-            IdUsuarioMecanico = request.IdUsuarioMecanico,
-            IdMedidor = request.IdMedidor,
-            FechaVerificacion = DateTime.Now,
-            Estado = "EnCurso",
-            Resultado = null
-        };
-
     public static VerificacionDto ToDto(
         Verificacion entity,
         string? nombreCliente = null,
@@ -161,9 +40,9 @@ public static class VerificacionMapper
             Id: entity.Id,
             TipoOrigen: entity.TipoOrigen,
             IdOrigen: entity.IdOrigen,
-            CodCon: entity.CodCon,
+            CodCon: entity.RegSoc,
             IdUsuarioMecanico: entity.IdUsuarioMecanico,
-            IdMedidor: entity.IdMedidor,
+            IdMedidor: entity.CodMedidor.ToString(),
             FechaVerificacion: entity.FechaVerificacion,
             Estado: entity.Estado,
             Resultado: entity.Resultado,
@@ -184,10 +63,6 @@ public static class VerificacionMapper
                     Observaciones: entity.Ensayo.Observaciones),
             Participantes: entity.Participantes
                 .OrderBy(p => p.Id)
-                .Select(p => new ParticipanteVerificacionDto(
-                    Id: p.Id,
-                    Nombre: p.Nombre,
-                    Cargo: p.Cargo,
-                    Rol: p.Rol))
+                .Select(p => new ParticipanteVerificacionDto(p.Id, p.Nombre, p.Cargo, p.Rol))
                 .ToList());
 }

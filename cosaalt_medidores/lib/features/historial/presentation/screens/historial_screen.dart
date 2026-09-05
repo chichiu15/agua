@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -50,6 +52,9 @@ class _HistorialViewState extends ConsumerState<HistorialView> {
   }
 
   void _verFoto(BuildContext context, String rutaArchivo, String tipoFoto) {
+    final image = rutaArchivo.startsWith('/uploads/')
+        ? Image.network('${ApiConfig.baseUrl}$rutaArchivo', fit: BoxFit.contain)
+        : Image.file(File(rutaArchivo), fit: BoxFit.contain);
     showDialog<void>(
       context: context,
       builder: (context) => Dialog(
@@ -59,33 +64,7 @@ class _HistorialViewState extends ConsumerState<HistorialView> {
           children: [
             InteractiveViewer(
               child: Center(
-                child: Image.network(
-                  '${ApiConfig.baseUrl}$rutaArchivo',
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryGreen,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) => Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.broken_image_outlined,
-                        color: Colors.white54,
-                        size: 56,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'No se pudo cargar la foto ($tipoFoto)',
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ),
+                child: image,
               ),
             ),
             Positioned(
@@ -237,12 +216,9 @@ class _TarjetaHistorial extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                '#${ejecucion.idEjecucion}',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
+              _ChipInfo(
+                icon: ejecucion.sincronizado ? Icons.cloud_done_outlined : Icons.cloud_upload_outlined,
+                label: ejecucion.sincronizado ? 'Sincronizado' : 'Pendiente',
               ),
             ],
           ),
@@ -421,7 +397,8 @@ class _MiniaturaFoto extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.network(
+            child: rutaArchivo.startsWith('/uploads/')
+                ? Image.network(
               '${ApiConfig.baseUrl}$rutaArchivo',
               width: 84,
               height: 84,
@@ -450,7 +427,20 @@ class _MiniaturaFoto extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
               ),
-            ),
+            )
+                : Image.file(
+                    File(rutaArchivo),
+                    width: 84,
+                    height: 84,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 84,
+                      height: 84,
+                      color: AppColors.border,
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.broken_image_outlined, color: AppColors.textSecondary),
+                    ),
+                  ),
           ),
           const SizedBox(height: 3),
           Text(

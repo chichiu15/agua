@@ -40,69 +40,97 @@ class DetalleRecorridoController extends Notifier<DetalleRecorridoState> {
 
   Future<void> cargar() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
+    final usuario = ref.read(authControllerProvider).user;
+    if (usuario == null) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'No hay usuario autenticado.',
+      );
+      return;
+    }
 
+    final repository = ref.read(solicitudRepositoryProvider);
+
+    // 1) Pintamos inmediatamente la copia local si existe. Esto evita que al
+    // cortar Internet la pantalla quede esperando el timeout HTTP.
     try {
-      final usuario = ref.read(authControllerProvider).user;
-      if (usuario == null) {
+      final local = await repository.obtenerRutaActualTecnico(
+        usuario.id,
+        soloCache: true,
+      );
+      if (local != null) {
         state = state.copyWith(
+          ruta: await _aplicarPendientesLocales(local, usuario.id),
           isLoading: false,
-          errorMessage: 'No hay usuario autenticado.',
+          errorMessage: null,
         );
+      }
+    } catch (_) {}
+
+    // 2) Intentamos refrescar desde servidor. Si falla y ya había cache,
+    // mantenemos la ruta local visible.
+    try {
+      final remota = await repository.obtenerRutaActualTecnico(usuario.id);
+      if (remota == null) {
+        if (state.ruta == null) {
+          state = state.copyWith(ruta: null, isLoading: false, errorMessage: null);
+        }
         return;
       }
-
-      final repository = ref.read(solicitudRepositoryProvider);
-      final rutas = await repository.obtenerRutasTecnico(usuario.id);
-
-      // Si el técnico tiene varias asignaciones hoy, mostramos la más reciente.
-      final ordenadas = [...rutas]
-        ..sort((a, b) => b.fechaAsignacion.compareTo(a.fechaAsignacion));
-      final ruta = ordenadas.isEmpty ? null : ordenadas.first;
-
-      // Opción A: una parada ejecutada localmente (draft pendiente de sync)
-      // ya cuenta como "Completada" en el dispositivo, aunque el servidor
-      // todavía la tenga como pendiente.
-      if (ruta != null) {
-        final drafts = await ref
-            .read(syncLocalServiceProvider)
-            .cargarDraftsPendientes();
-        final idsPendientes = drafts.map((d) => d.solicitudId).toSet();
-
-        final detallesActualizados = ruta.detalles.map((d) {
-          if (idsPendientes.contains(d.solicitudId)) {
-            return DetalleRutaAsignada(
-              id: d.id,
-              solicitudId: d.solicitudId,
-              tipoOrigen: d.tipoOrigen,
-              ordenVisita: d.ordenVisita,
-              estado: 'Completada',
-              nombreCliente: d.nombreCliente,
-              direccion: d.direccion,
-              latitud: d.latitud,
-              longitud: d.longitud,
-              esUrgente: d.esUrgente,
-              codCon: d.codCon,
-              numeroMedidor: d.numeroMedidor,
-            );
-          }
-          return d;
-        }).toList();
-
-        final rutaConLocales = RutaAsignada(
-          idAsignacion: ruta.idAsignacion,
-          idUsuarioTecnico: ruta.idUsuarioTecnico,
-          nombreTecnico: ruta.nombreTecnico,
-          fechaAsignacion: ruta.fechaAsignacion,
-          estado: ruta.estado,
-          totalParadas: ruta.totalParadas,
-          detalles: detallesActualizados,
+      state = state.copyWith(
+        ruta: await _aplicarPendientesLocales(remota, usuario.id),
+        isLoading: false,
+        errorMessage: null,
+      );
+    } catch (_) {
+      if (state.ruta == null) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage:
+              'No hay conexion y este tecnico todavia no tiene una ruta descargada.',
         );
-        state = state.copyWith(ruta: rutaConLocales, isLoading: false);
       } else {
-        state = state.copyWith(ruta: ruta, isLoading: false);
+        state = state.copyWith(isLoading: false);
       }
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
+  }
+
+  Future<RutaAsignada> _aplicarPendientesLocales(
+    RutaAsignada ruta,
+    int idUsuario,
+  ) async {
+    final drafts = await ref
+        .read(syncLocalServiceProvider)
+        .cargarDraftsPendientes(idUsuarioApp: idUsuario);
+    final idsPendientes = drafts.map((d) => d.solicitudId).toSet();
+
+    final detallesActualizados = ruta.detalles.map((d) {
+      if (!idsPendientes.contains(d.solicitudId)) return d;
+      return DetalleRutaAsignada(
+        id: d.id,
+        solicitudId: d.solicitudId,
+        tipoOrigen: d.tipoOrigen,
+        ordenVisita: d.ordenVisita,
+        estado: 'Completada',
+        nombreCliente: d.nombreCliente,
+        direccion: d.direccion,
+        latitud: d.latitud,
+        longitud: d.longitud,
+        esUrgente: d.esUrgente,
+        codCon: d.codCon,
+        numeroMedidor: d.numeroMedidor,
+        pendienteSincronizacion: true,
+      );
+    }).toList();
+
+    return RutaAsignada(
+      idAsignacion: ruta.idAsignacion,
+      idUsuarioTecnico: ruta.idUsuarioTecnico,
+      nombreTecnico: ruta.nombreTecnico,
+      fechaAsignacion: ruta.fechaAsignacion,
+      estado: ruta.estado,
+      totalParadas: ruta.totalParadas,
+      detalles: detallesActualizados,
+    );
   }
 }

@@ -11,33 +11,32 @@ public class EjecucionCambioConfiguration : IEntityTypeConfiguration<EjecucionCa
         builder.ToTable("EjecucionCambio", "medidores");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("IdEjecucion");
-        builder.Property(e => e.TipoOrigen).HasColumnName("TipoOrigen").HasMaxLength(20);
-        builder.Property(e => e.IdOrigen).HasColumnName("IdOrigen").HasMaxLength(50);
-        builder.Property(e => e.CodCon).HasColumnName("Cod_con").HasConversion(NumericConversions.IntToDecimal);
+        builder.Property(e => e.TipoOrigen).HasColumnName("TipoOrigen").HasMaxLength(20).IsRequired();
+        builder.Property(e => e.IdOrigen).HasColumnName("IdOrigen").HasMaxLength(50).IsRequired();
+        builder.Property(e => e.RegSoc).HasColumnName("RegSoc").HasConversion<decimal>().HasPrecision(6, 0);
         builder.Property(e => e.IdUsuarioApp).HasColumnName("IdUsuarioApp");
         builder.Property(e => e.FechaHoraEjecucion).HasColumnName("FechaHoraEjecucion");
-        builder.Property(e => e.NumeroMedidorRetirado).HasColumnName("NroMedidorRetirado").HasMaxLength(30);
+        builder.Property(e => e.CodMedidorRetirado).HasColumnName("CodMedidorRetirado").HasConversion<decimal?>().HasPrecision(6, 0);
+        builder.Property(e => e.SerieMedidorRetirado).HasColumnName("SerieMedidorRetirado").HasMaxLength(30).IsRequired();
         builder.Property(e => e.MarcaRetirado).HasColumnName("MarcaRetirado").HasMaxLength(50);
-        builder.Property(e => e.LecturaRetiro).HasColumnName("LecturaRetiro");
-        builder.Property(e => e.IdMotivo).HasColumnName("IdMotivo").HasConversion(NumericConversions.IntToDecimal);
-        builder.Property(e => e.NumeroMedidorInstalado).HasColumnName("NroMedidorInstalado").HasMaxLength(30);
+        builder.Property(e => e.LecturaRetiro).HasColumnName("LecturaRetiro").HasPrecision(18, 2);
+        builder.Property(e => e.IdMotivoInstitucional).HasColumnName("IdMotivoInstitucional").HasConversion<decimal?>().HasPrecision(10, 0);
+        builder.Property(e => e.MotivoDescripcionSnapshot).HasColumnName("MotivoDescripcionSnapshot").HasMaxLength(200);
+        builder.Property(e => e.CodMedidorInstalado).HasColumnName("CodMedidorInstalado").HasConversion<decimal?>().HasPrecision(6, 0);
+        builder.Property(e => e.SerieMedidorInstalado).HasColumnName("SerieMedidorInstalado").HasMaxLength(30).IsRequired();
         builder.Property(e => e.MarcaInstalado).HasColumnName("MarcaInstalado").HasMaxLength(50);
-        builder.Property(e => e.ObservacionesInstalacion).HasColumnName("Observaciones").HasMaxLength(500);
-        builder.Property(e => e.LatLong).HasColumnName("LatLong").HasMaxLength(50);
+        builder.Property(e => e.ObservacionesInstalacion).HasColumnName("ObservacionesInstalacion").HasMaxLength(500);
+        builder.Property(e => e.Latitud).HasColumnName("Latitud").HasPrecision(18, 12);
+        builder.Property(e => e.Longitud).HasColumnName("Longitud").HasPrecision(18, 12);
         builder.Property(e => e.Sincronizado).HasColumnName("Sincronizado");
-
-        // La conexión (dbo.Conexiones) es la cuenta del socio en COSAALT; solo lectura.
-        builder.HasOne(e => e.Conexion)
-            .WithMany()
-            .HasForeignKey(e => e.CodCon);
+        builder.Property(e => e.FechaSincronizacion).HasColumnName("FechaSincronizacion");
+        builder.Property(e => e.EstadoIntegracionInstitucional).HasColumnName("EstadoIntegracionInstitucional").HasMaxLength(30).IsRequired();
+        builder.Property(e => e.FechaIntegracionInstitucional).HasColumnName("FechaIntegracionInstitucional");
+        builder.Property(e => e.DetalleIntegracionInstitucional).HasColumnName("DetalleIntegracionInstitucional").HasMaxLength(500);
 
         builder.HasOne(e => e.Usuario)
             .WithMany(u => u.Ejecuciones)
-            .HasForeignKey(e => e.IdUsuarioApp);
-
-        // El motivo sale del catálogo real de COSAALT (dbo), solo lectura.
-        builder.HasOne(e => e.Motivo)
-            .WithMany()
-            .HasForeignKey(e => e.IdMotivo);
+            .HasForeignKey(e => e.IdUsuarioApp)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

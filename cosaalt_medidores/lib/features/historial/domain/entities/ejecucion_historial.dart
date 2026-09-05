@@ -30,6 +30,7 @@ class EjecucionHistorial {
     required this.nombreTecnico,
     required this.motivoDescripcion,
     required this.evidencias,
+    this.sincronizado = true,
   });
 
   final int idEjecucion;
@@ -49,6 +50,7 @@ class EjecucionHistorial {
   final String? nombreTecnico;
   final String? motivoDescripcion;
   final List<EvidenciaHistorial> evidencias;
+  final bool sincronizado;
 
   factory EjecucionHistorial.fromJson(Map<String, dynamic> json) =>
       EjecucionHistorial(
@@ -74,5 +76,6 @@ class EjecucionHistorial {
             .whereType<Map<String, dynamic>>()
             .map(EvidenciaHistorial.fromJson)
             .toList(),
+        sincronizado: true,
       );
 }

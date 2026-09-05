@@ -5,10 +5,16 @@ import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 class AuthState {
-  const AuthState({this.user, this.isLoading = false, this.errorMessage});
+  const AuthState({
+    this.user,
+    this.isLoading = false,
+    this.isRestoring = false,
+    this.errorMessage,
+  });
 
   final AppUser? user;
   final bool isLoading;
+  final bool isRestoring;
   final String? errorMessage;
 
   bool get isAuthenticated => user != null;
@@ -23,21 +29,34 @@ final authControllerProvider = NotifierProvider<AuthController, AuthState>(
 );
 
 class AuthController extends Notifier<AuthState> {
+  bool _restoreStarted = false;
+
   @override
   AuthState build() {
-    return const AuthState();
+    if (!_restoreStarted) {
+      _restoreStarted = true;
+      Future.microtask(_restoreSession);
+    }
+    return const AuthState(isRestoring: true);
+  }
+
+  Future<void> _restoreSession() async {
+    try {
+      final user = await ref.read(authRepositoryProvider).restoreSession();
+      state = AuthState(user: user);
+    } catch (_) {
+      state = const AuthState();
+    }
   }
 
   Future<void> login({
     required String username,
     required String password,
   }) async {
-    state = const AuthState(isLoading: true);
+    state = AuthState(user: state.user, isLoading: true);
 
     try {
-      final repository = ref.read(authRepositoryProvider);
-
-      final user = await repository.login(
+      final user = await ref.read(authRepositoryProvider).login(
         username: username,
         password: password,
       );
@@ -52,19 +71,15 @@ class AuthController extends Notifier<AuthState> {
       state = AuthState(user: user);
     } on AuthException catch (error) {
       state = AuthState(errorMessage: error.message);
-    } catch (e) {
-      print('ERROR LOGIN: $e');
+    } catch (_) {
       state = const AuthState(
         errorMessage: 'Ocurrió un error inesperado al iniciar sesión.',
       );
     }
   }
 
-  void logout() {
-    final repository = ref.read(authRepositoryProvider);
-    if (repository is ApiAuthRepository) {
-      repository.clearSession();
-    }
+  Future<void> logout() async {
+    await ref.read(authRepositoryProvider).logout();
     state = const AuthState();
   }
 }

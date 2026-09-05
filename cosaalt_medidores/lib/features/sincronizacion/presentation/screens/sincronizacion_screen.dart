@@ -62,6 +62,11 @@ class _SincronizacionViewState extends ConsumerState<SincronizacionView> {
           isSyncing: syncState.isSyncing,
           lastSyncTime: syncState.lastSyncTime,
           syncedCount: syncState.syncedCount,
+          failedCount: syncState.failedCount,
+          progress: syncState.progress,
+          progressCurrent: syncState.progressCurrent,
+          progressTotal: syncState.progressTotal,
+          statusMessage: syncState.statusMessage,
         ),
         if (syncState.errorMessage != null) ...[
           const SizedBox(height: 12),
@@ -156,12 +161,22 @@ class _StatusCard extends StatelessWidget {
     required this.isSyncing,
     required this.lastSyncTime,
     required this.syncedCount,
+    required this.failedCount,
+    required this.progress,
+    required this.progressCurrent,
+    required this.progressTotal,
+    required this.statusMessage,
   });
 
   final int pendientes;
   final bool isSyncing;
   final DateTime? lastSyncTime;
   final int syncedCount;
+  final int failedCount;
+  final double progress;
+  final int progressCurrent;
+  final int progressTotal;
+  final String? statusMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -197,12 +212,49 @@ class _StatusCard extends StatelessWidget {
               letterSpacing: 0.5,
             ),
           ),
+          if (isSyncing) ...[
+            const SizedBox(height: 18),
+            LinearProgressIndicator(
+              value: progressTotal > 0 ? progress : null,
+              minHeight: 10,
+              borderRadius: BorderRadius.circular(10),
+              backgroundColor: Colors.white,
+              color: AppColors.primaryGreen,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              progressTotal > 0
+                  ? '${(progress * 100).round()}% · $progressCurrent de $progressTotal pasos'
+                  : 'Conectando...',
+              style: const TextStyle(color: AppColors.darkBlue, fontWeight: FontWeight.w800),
+            ),
+            if (statusMessage != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                statusMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              ),
+            ],
+          ],
           if (lastSyncTime != null) ...[
             const SizedBox(height: 10),
             Text(
               'Última sync: ${_formatFecha(lastSyncTime!)}',
               style: TextStyle(
                 color: AppColors.darkBlue.withValues(alpha: 0.6),
+                fontSize: 12,
+              ),
+            ),
+          ],
+          if (failedCount > 0) ...[
+            const SizedBox(height: 8),
+            Text(
+              '$failedCount trabajo(s) requieren revisión y permanecen guardados.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.odecoRed,
+                fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),
             ),

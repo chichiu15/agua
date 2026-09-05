@@ -5,8 +5,49 @@ class MotivoCambio {
   final String descripcion;
 
   factory MotivoCambio.fromJson(Map<String, dynamic> json) => MotivoCambio(
-    id: json['id'] as int,
-    descripcion: json['descripcion'] as String,
+    id: (json['id'] as num).toInt(),
+    descripcion: (json['descripcion'] as String? ?? '').trim(),
+  );
+}
+
+class MedidorDisponible {
+  const MedidorDisponible({
+    required this.codMedidor,
+    required this.serie,
+    required this.marca,
+    this.tipo,
+    this.capacidad,
+    this.diametro,
+    this.codigoEstado,
+    this.estado,
+    required this.disponibilidad,
+  });
+
+  final int codMedidor;
+  final String serie;
+  final String marca;
+  final String? tipo;
+  final String? capacidad;
+  final String? diametro;
+  final int? codigoEstado;
+  final String? estado;
+  final String disponibilidad;
+
+  String get etiqueta => '$serie · $marca · Cód. $codMedidor';
+
+  bool get estaLibre => disponibilidad.trim().toUpperCase() == 'L';
+  bool get estaPerfecto => codigoEstado == 5 || estado?.trim().toUpperCase() == 'PERFECTO';
+
+  factory MedidorDisponible.fromJson(Map<String, dynamic> json) => MedidorDisponible(
+    codMedidor: (json['codMedidor'] as num).toInt(),
+    serie: (json['serie'] as String? ?? '').trim(),
+    marca: (json['marca'] as String? ?? '').trim(),
+    tipo: (json['tipo'] as String?)?.trim(),
+    capacidad: (json['capacidad'] as String?)?.trim(),
+    diametro: (json['diametro'] as String?)?.trim(),
+    codigoEstado: (json['codigoEstado'] as num?)?.toInt(),
+    estado: (json['estado'] as String?)?.trim(),
+    disponibilidad: (json['disponibilidad'] as String? ?? '').trim(),
   );
 }
 
@@ -25,12 +66,12 @@ class CambioMedidorDraft {
     required this.marcaRetirado,
     required this.lecturaRetiro,
     required this.idMotivo,
+    required this.codMedidorInstalado,
     required this.numeroMedidorInstalado,
     required this.marcaInstalado,
-    required this.estadoMedidorInstalado,
     required this.observaciones,
-    required this.fotoMedidorRetirado,
-    required this.fotoMedidorNuevo,
+    this.fotoMedidorRetirado,
+    this.fotoMedidorNuevo,
     this.latitud,
     this.longitud,
   });
@@ -48,21 +89,21 @@ class CambioMedidorDraft {
   final String? marcaRetirado;
   final double lecturaRetiro;
   final int idMotivo;
+
+  /// Código institucional de dbo.Medidor. Es nullable únicamente para poder
+  /// leer archivos locales antiguos creados antes de incorporar este campo.
+  final int? codMedidorInstalado;
   final String numeroMedidorInstalado;
   final String marcaInstalado;
-  final String estadoMedidorInstalado;
   final String? observaciones;
-  final String fotoMedidorRetirado;
-  final String fotoMedidorNuevo;
+  final String? fotoMedidorRetirado;
+  final String? fotoMedidorNuevo;
   final double? latitud;
   final double? longitud;
 
-  String get observacionesApi {
+  String? get observacionesApi {
     final detalle = observaciones?.trim();
-    if (detalle == null || detalle.isEmpty) {
-      return 'Estado: $estadoMedidorInstalado';
-    }
-    return 'Estado: $estadoMedidorInstalado. $detalle';
+    return (detalle == null || detalle.isEmpty) ? null : detalle;
   }
 
   Map<String, dynamic> toJson() => {
@@ -79,11 +120,10 @@ class CambioMedidorDraft {
     'marcaRetirado': marcaRetirado,
     'lecturaRetiro': lecturaRetiro,
     'idMotivo': idMotivo,
+    'codMedidorInstalado': codMedidorInstalado,
     'numeroMedidorInstalado': numeroMedidorInstalado,
     'marcaInstalado': marcaInstalado,
-    'estadoMedidorInstalado': estadoMedidorInstalado,
     'observaciones': observaciones,
-    'observacionesApi': observacionesApi,
     'fotoMedidorRetirado': fotoMedidorRetirado,
     'fotoMedidorNuevo': fotoMedidorNuevo,
     'latitud': latitud,

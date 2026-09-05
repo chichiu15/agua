@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,6 +36,7 @@ class _AdminMovimientosScreenState extends ConsumerState<AdminMovimientosScreen>
   String _vigenteCorporativo = 'Todos';
   int _pageCorporativo = 1;
   AdminMovimientoCorporativo? _seleccionadoCorporativo;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -46,9 +49,19 @@ class _AdminMovimientosScreenState extends ConsumerState<AdminMovimientosScreen>
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _buscar.dispose();
     _codConCorporativo.dispose();
     super.dispose();
+  }
+
+  void _programarBusqueda(String _) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      if (_corporativo) { _pageCorporativo = 1; } else { _pageApp = 1; }
+      _load();
+    });
   }
 
   bool? get _syncValue => switch (_sync) {
@@ -358,9 +371,11 @@ class _AdminMovimientosScreenState extends ConsumerState<AdminMovimientosScreen>
         width: 270,
         child: TextField(
           controller: _buscar,
+          onChanged: _programarBusqueda,
           onSubmitted: state.isLoading
               ? null
               : (_) {
+                  _searchDebounce?.cancel();
                   if (_corporativo) {
                     _pageCorporativo = 1;
                   } else {

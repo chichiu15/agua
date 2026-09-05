@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,12 +20,22 @@ class MonitoreoTecnicosScreen extends ConsumerStatefulWidget {
 
 class _MonitoreoTecnicosScreenState
     extends ConsumerState<MonitoreoTecnicosScreen> {
+  Timer? _refreshTimer;
   @override
   void initState() {
     super.initState();
     Future.microtask(
       () => ref.read(monitoreoControllerProvider.notifier).cargar(),
     );
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted) ref.read(monitoreoControllerProvider.notifier).cargar(silencioso: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -64,7 +76,7 @@ class _MonitoreoTecnicosScreenState
               const Padding(
                 padding: EdgeInsets.only(left: 48, bottom: 16),
                 child: Text(
-                  'Avance de las rutas asignadas a técnicos o al asignador para hoy.',
+                  'Rutas pendientes de cualquier fecha y rutas finalizadas hoy.',
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
               ),

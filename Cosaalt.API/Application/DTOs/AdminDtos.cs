@@ -222,10 +222,11 @@ public record AdminMovimientoFiltro(
     int PageSize = 25);
 
 /// <summary>
-/// Fila del historial corporativo dbo.CambioMedidores.
-/// IMPORTANTE: el mapeo actual de COSAALT no expone una fecha del movimiento,
-/// por eso este DTO no inventa ni deriva una fecha. El estado vigente se toma
-/// exclusivamente de EstCaMe. Es una vista de auditoria SOLO LECTURA.
+/// Fila compatible para presentar el historial corporativo proveniente de dbo.hist_pred_med.
+/// IMPORTANTE: se conserva el contrato de nombres usado por el frontend anterior,
+/// pero la fuente real ahora es dbo.hist_pred_med. No se interpreta el significado
+/// de est_med A/B hasta confirmacion de COSAALT. "Vigente" se infiere solo cuando
+/// marca+serie del historico coinciden con el medidor actualmente asociado al socio.
 /// </summary>
 public record AdminMovimientoCorporativoDto(
     int CodCaMe,

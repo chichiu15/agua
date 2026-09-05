@@ -83,15 +83,39 @@ class GuardarMotivoCatalogo {
 }
 
 class MarcaCatalogo {
-  const MarcaCatalogo({required this.id, required this.nombre, this.alias});
+  const MarcaCatalogo({
+    required this.id,
+    required this.codigo,
+    required this.nombre,
+    this.alias,
+    required this.activo,
+  });
   final int id;
+  final String codigo;
   final String nombre;
   final String? alias;
+  final bool activo;
+
   factory MarcaCatalogo.fromJson(Map<String, dynamic> json) => MarcaCatalogo(
-    id: json['id'] as int,
+    id: (json['id'] as num).toInt(),
+    codigo: (json['codigo'] as String?) ?? (json['alias'] as String?) ?? (json['nombre'] as String?) ?? '',
     nombre: (json['nombre'] as String?) ?? '',
     alias: json['alias'] as String?,
+    activo: (json['activo'] as bool?) ?? true,
   );
+}
+
+class GuardarMarcaCatalogo {
+  const GuardarMarcaCatalogo({
+    required this.codigo,
+    required this.nombre,
+    this.alias,
+    required this.activo,
+  });
+  final String codigo;
+  final String nombre;
+  final String? alias;
+  final bool activo;
 }
 
 class ParametroNormativo {
