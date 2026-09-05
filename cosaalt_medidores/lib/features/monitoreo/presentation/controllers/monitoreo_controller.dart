@@ -37,41 +37,25 @@ class MonitoreoController extends Notifier<MonitoreoState> {
   @override
   MonitoreoState build() => const MonitoreoState();
 
-  Future<void> cargar() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+  Future<void> cargar({bool silencioso = false}) async {
+    if (!silencioso) {
+      state = state.copyWith(isLoading: true, errorMessage: null);
+    }
 
     try {
       final repository = ref.read(solicitudRepositoryProvider);
-      final tecnicos = await repository.obtenerTecnicos();
-      final usuarioActual = ref.read(authControllerProvider).user;
-
-      // El endpoint /usuarios/tecnicos sólo devuelve técnicos. Como el
-      // asignador también puede usar "Asignarme a mí", agregamos explícitamente
-      // al usuario autenticado para consultar también sus rutas.
-      final idsUsuarios = <int>{
-        ...tecnicos.where((t) => t.activo).map((t) => t.id),
-        if (usuarioActual != null && usuarioActual.active) usuarioActual.id,
-      };
-
-      final resultados = await Future.wait(
-        idsUsuarios.map(
-          (idUsuario) => repository.obtenerRutasTecnico(idUsuario),
-        ),
+      // Sin filtro de fecha: el backend incluye rutas pendientes arrastradas
+      // de otros días y las finalizadas hoy.
+      final rutas = await repository.obtenerRutasActivas();
+      rutas.sort((a, b) => b.fechaAsignacion.compareTo(a.fechaAsignacion));
+      state = state.copyWith(rutas: rutas, isLoading: false, errorMessage: null);
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: silencioso
+            ? state.errorMessage
+            : 'No se pudo actualizar el monitoreo de rutas.',
       );
-
-      // Evita duplicados si en algún momento el usuario actual también aparece
-      // en el listado retornado por la API.
-      final porId = <int, RutaAsignada>{};
-      for (final ruta in resultados.expand((r) => r)) {
-        porId[ruta.idAsignacion] = ruta;
-      }
-
-      final rutas = porId.values.toList()
-        ..sort((a, b) => b.fechaAsignacion.compareTo(a.fechaAsignacion));
-
-      state = state.copyWith(rutas: rutas, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
 }

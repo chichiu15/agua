@@ -147,36 +147,26 @@ class _Paso1SeleccionarSolicitudesScreenState
                 ),
               ),
             )
-          else if (puntosVisibles
-              .where((s) => s.latitud != null && s.longitud != null)
-              .isEmpty)
-            const Expanded(
-              child: Center(
-                child: Text(
-                  'No hay solicitudes con ubicación para los filtros seleccionados.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-            )
           else
             Expanded(
-              child: FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  initialCenter: LatLng(-21.5350, -64.7260),
-                  initialZoom: 13,
-                ),
+              child: Stack(
                 children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.cosaalt_medidores',
-                  ),
-                  MarkerLayer(
-                    markers: puntosVisibles
-                        .where((s) => s.latitud != null && s.longitud != null)
-                        .map((solicitud) {
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      // Plaza Los Laureles / zona de prueba indicada por COSAALT.
+                      initialCenter: const LatLng(-21.50440, -64.71810),
+                      initialZoom: 16.2,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.cosaalt.cosaalt_medidores',
+                      ),
+                      MarkerLayer(
+                        markers: puntosVisibles
+                            .where((s) => s.latitud != null && s.longitud != null)
+                            .map((solicitud) {
                           final asignada = _estadoEs(solicitud, 'Asignada');
                           final asignable = _estadoEs(solicitud, 'Pendiente');
                           final seleccionado = solicitudState.seleccionadas
@@ -235,9 +225,38 @@ class _Paso1SeleccionarSolicitudesScreenState
                               ),
                             ),
                           );
-                        })
-                        .toList(),
+                            })
+                            .toList(),
+                      ),
+                    ],
                   ),
+                  if (puntosVisibles.where((s) => s.latitud != null && s.longitud != null).isEmpty)
+                    Positioned(
+                      left: 20,
+                      right: 20,
+                      top: 18,
+                      child: Material(
+                        elevation: 2,
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white.withValues(alpha: 0.94),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.info_outline, color: AppColors.textSecondary),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'El mapa esta activo, pero las solicitudes filtradas no tienen coordenadas. La bateria E2E agrega 20 puntos de prueba sin modificar dbo.',
+                                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -174,6 +174,86 @@ class AdminController extends Notifier<AdminState> {
     }
   }
 
+  Future<bool> guardarMotivo({int? id, required GuardarMotivoCatalogo motivo}) async {
+    state = state.copyWith(isSaving: true, clearMessages: true);
+    try {
+      final repo = ref.read(adminRepositoryProvider);
+      if (id == null) {
+        await repo.crearMotivo(motivo);
+      } else {
+        await repo.actualizarMotivo(id, motivo);
+      }
+      final motivos = await repo.obtenerMotivos();
+      state = AdminState(
+        usuarios: state.usuarios, roles: state.roles, funcionarios: state.funcionarios,
+        motivos: motivos, marcas: state.marcas, parametros: state.parametros,
+        parametroVigente: state.parametroVigente, isLoading: false, isSaving: false,
+        successMessage: id == null ? 'Motivo registrado correctamente.' : 'Motivo actualizado correctamente.',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(isSaving: false, errorMessage: e.toString());
+      return false;
+    }
+  }
+
+  Future<void> cambiarEstadoMotivo(MotivoCatalogo motivo, bool activo) async {
+    state = state.copyWith(isSaving: true, clearMessages: true);
+    try {
+      final repo = ref.read(adminRepositoryProvider);
+      await repo.cambiarEstadoMotivo(motivo.id, activo);
+      final motivos = await repo.obtenerMotivos();
+      state = AdminState(
+        usuarios: state.usuarios, roles: state.roles, funcionarios: state.funcionarios,
+        motivos: motivos, marcas: state.marcas, parametros: state.parametros,
+        parametroVigente: state.parametroVigente, isLoading: false, isSaving: false,
+        successMessage: activo ? 'Motivo activado correctamente.' : 'Motivo desactivado correctamente.',
+      );
+    } catch (e) {
+      state = state.copyWith(isSaving: false, errorMessage: e.toString());
+    }
+  }
+
+  Future<bool> guardarMarca({int? id, required GuardarMarcaCatalogo marca}) async {
+    state = state.copyWith(isSaving: true, clearMessages: true);
+    try {
+      final repo = ref.read(adminRepositoryProvider);
+      if (id == null) {
+        await repo.crearMarca(marca);
+      } else {
+        await repo.actualizarMarca(id, marca);
+      }
+      final marcas = await repo.obtenerMarcas();
+      state = AdminState(
+        usuarios: state.usuarios, roles: state.roles, funcionarios: state.funcionarios,
+        motivos: state.motivos, marcas: marcas, parametros: state.parametros,
+        parametroVigente: state.parametroVigente, isLoading: false, isSaving: false,
+        successMessage: id == null ? 'Marca registrada correctamente.' : 'Marca actualizada correctamente.',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(isSaving: false, errorMessage: e.toString());
+      return false;
+    }
+  }
+
+  Future<void> cambiarEstadoMarca(MarcaCatalogo marca, bool activo) async {
+    state = state.copyWith(isSaving: true, clearMessages: true);
+    try {
+      final repo = ref.read(adminRepositoryProvider);
+      await repo.cambiarEstadoMarca(marca.id, activo);
+      final marcas = await repo.obtenerMarcas();
+      state = AdminState(
+        usuarios: state.usuarios, roles: state.roles, funcionarios: state.funcionarios,
+        motivos: state.motivos, marcas: marcas, parametros: state.parametros,
+        parametroVigente: state.parametroVigente, isLoading: false, isSaving: false,
+        successMessage: activo ? 'Marca activada correctamente.' : 'Marca desactivada correctamente.',
+      );
+    } catch (e) {
+      state = state.copyWith(isSaving: false, errorMessage: e.toString());
+    }
+  }
+
   Future<void> cargarParametros() async {
     state = state.copyWith(isLoading: true, clearMessages: true);
     try {

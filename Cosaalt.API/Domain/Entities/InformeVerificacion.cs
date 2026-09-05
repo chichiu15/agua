@@ -9,7 +9,8 @@ public class InformeVerificacion
     public DateTime? FechaFirma { get; set; }
     public string? RutaPdf { get; set; }
     public bool Firmado { get; set; }
-    public int Repeticiones { get; set; }
+    public int VersionInforme { get; set; } = 1;
+    public string? Observaciones { get; set; }
 
     public Verificacion Verificacion { get; set; } = null!;
 }

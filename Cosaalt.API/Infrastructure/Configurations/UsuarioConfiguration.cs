@@ -11,24 +11,17 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         builder.ToTable("Usuarios", "medidores");
         builder.HasKey(u => u.Id);
         builder.Property(u => u.Id).HasColumnName("Id");
-        builder.Property(u => u.CodFunCorporativo).HasColumnName("CodFunCorporativo").HasConversion(NumericConversions.NullableIntToDecimal);
-        builder.Property(u => u.NombreUsuario).HasColumnName("NombreUsuario").HasMaxLength(50);
-        builder.Property(u => u.HashPassword).HasColumnName("HashPassword").HasMaxLength(200);
+        builder.Property(u => u.CodPersonaCorporativa).HasColumnName("CodPersonaCorporativa").HasConversion<decimal?>().HasPrecision(18, 0);
+        builder.Property(u => u.NombreUsuario).HasColumnName("NombreUsuario").HasMaxLength(50).IsRequired();
+        builder.Property(u => u.HashPassword).HasColumnName("HashPassword").HasMaxLength(255).IsRequired();
         builder.Property(u => u.IdRol).HasColumnName("IdRol");
         builder.Property(u => u.Activo).HasColumnName("Activo");
         builder.Property(u => u.FechaCreacion).HasColumnName("FechaCreacion");
-
-        // NombreCompleto es computado (Funcionario→Persona), no una columna.
-        builder.Ignore(u => u.NombreCompleto);
+        builder.Property(u => u.FechaActualizacion).HasColumnName("FechaActualizacion");
 
         builder.HasOne(u => u.Rol)
             .WithMany(r => r.Usuarios)
-            .HasForeignKey(u => u.IdRol);
-
-        // dbo.Funcionarios se lee, nunca se escribe.
-        builder.HasOne(u => u.Funcionario)
-            .WithMany()
-            .HasForeignKey(u => u.CodFunCorporativo)
-            .IsRequired(false);
+            .HasForeignKey(u => u.IdRol)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -14,7 +14,7 @@ public class ParticipanteVerificacionConfiguration : IEntityTypeConfiguration<Pa
         builder.Property(p => p.IdVerificacion).HasColumnName("IdVerificacion");
         builder.Property(p => p.Nombre).HasColumnName("Nombre").HasMaxLength(200);
         builder.Property(p => p.Cargo).HasColumnName("Cargo").HasMaxLength(100);
-        builder.Property(p => p.Rol).HasColumnName("Rol").HasMaxLength(50);
+        builder.Property(p => p.Rol).HasColumnName("Rol").HasMaxLength(100);
 
         builder.HasOne(p => p.Verificacion)
             .WithMany(v => v.Participantes)

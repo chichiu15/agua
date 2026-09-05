@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/dashboard_widgets.dart';
@@ -237,6 +238,22 @@ class _TarjetaParada extends StatelessWidget {
 
   final DetalleRutaAsignada parada;
 
+  Future<void> _abrirNavegacion(BuildContext context) async {
+    final destino = parada.latitud != null && parada.longitud != null
+        ? '${parada.latitud},${parada.longitud}'
+        : parada.direccion.trim();
+    final uri = Uri.https(
+      'www.google.com',
+      '/maps/dir/',
+      {'api': '1', 'destination': destino},
+    );
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir la aplicación de navegación.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final esUrgente = parada.esUrgente;
@@ -360,43 +377,66 @@ class _TarjetaParada extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          parada.completada
-              ? const Column(
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: AppColors.primaryGreen,
-                      size: 26,
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Completada',
-                      style: TextStyle(
-                        color: AppColors.primaryGreen,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                )
-              : FilledButton.icon(
-                  onPressed: () {
-                    context.go('/trabajo/cambio/${parada.solicitudId}');
-                  },
-                  icon: const Icon(Icons.play_arrow, size: 18),
-                  label: const Text('IR / EJECUTAR'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
+          if (parada.completadaServidor)
+            const Column(
+              children: [
+                Icon(Icons.check_circle, color: AppColors.primaryGreen, size: 26),
+                SizedBox(height: 2),
+                Text(
+                  'Completada',
+                  style: TextStyle(
+                    color: AppColors.primaryGreen,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
+              ],
+            )
+          else if (parada.pendienteSincronizacion)
+            Column(
+              children: [
+                const Icon(Icons.cloud_upload_outlined, color: AppColors.overdueOrange, size: 25),
+                const SizedBox(height: 2),
+                const Text(
+                  'Pendiente sync',
+                  style: TextStyle(
+                    color: AppColors.overdueOrange,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => context.go('/trabajo/cambio/${parada.solicitudId}'),
+                  child: const Text('REVISAR'),
+                ),
+              ],
+            )
+          else
+            Column(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _abrirNavegacion(context),
+                  icon: const Icon(Icons.navigation_outlined, size: 16),
+                  label: const Text('CÓMO LLEGAR'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+                    textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                FilledButton.icon(
+                  onPressed: () => context.go('/trabajo/cambio/${parada.solicitudId}'),
+                  icon: const Icon(Icons.play_arrow, size: 16),
+                  label: const Text('EJECUTAR'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                    textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

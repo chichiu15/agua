@@ -12,7 +12,7 @@ class SyncLocalService {
     return Directory(p.join(docs.path, 'cosaalt_medidores', 'pendientes'));
   }
 
-  Future<List<CambioMedidorDraft>> cargarDraftsPendientes() async {
+  Future<List<CambioMedidorDraft>> cargarDraftsPendientes({int? idUsuarioApp}) async {
     final dir = await _pendientesDir;
     if (!await dir.exists()) return [];
 
@@ -27,9 +27,12 @@ class SyncLocalService {
       try {
         final contenido = await archivo.readAsString();
         final json = jsonDecode(contenido) as Map<String, dynamic>;
-        drafts.add(_fromJson(json));
+        final draft = _fromJson(json);
+        if (idUsuarioApp == null || draft.idUsuarioApp == idUsuarioApp) {
+          drafts.add(draft);
+        }
       } catch (_) {
-        // Archivo corrupto, lo ignoramos
+        // Un archivo local corrupto no debe bloquear el resto de la cola.
       }
     }
 
@@ -37,22 +40,19 @@ class SyncLocalService {
     return drafts;
   }
 
-  Future<int> contarPendientes() async {
-    final dir = await _pendientesDir;
-    if (!await dir.exists()) return 0;
-
-    return dir
-        .list()
-        .where((e) => e is File && e.path.endsWith('.json'))
-        .length;
+  Future<int> contarPendientes({int? idUsuarioApp}) async {
+    if (idUsuarioApp == null) {
+      final dir = await _pendientesDir;
+      if (!await dir.exists()) return 0;
+      return dir.list().where((e) => e is File && e.path.endsWith('.json')).length;
+    }
+    return (await cargarDraftsPendientes(idUsuarioApp: idUsuarioApp)).length;
   }
 
   Future<void> eliminarDraft(String localId) async {
     final dir = await _pendientesDir;
     final archivo = File(p.join(dir.path, '$localId.json'));
-    if (await archivo.exists()) {
-      await archivo.delete();
-    }
+    if (await archivo.exists()) await archivo.delete();
   }
 
   CambioMedidorDraft _fromJson(Map<String, dynamic> json) {
@@ -60,22 +60,22 @@ class SyncLocalService {
       localId: json['localId'] as String,
       solicitudId: json['solicitudId'] as String,
       tipoOrigen: json['tipoOrigen'] as String,
-      idOrigen: json['idOrigen'] as String,
-      idUsuarioApp: json['idUsuarioApp'] as int,
+      idOrigen: json['idOrigen'].toString(),
+      idUsuarioApp: (json['idUsuarioApp'] as num).toInt(),
       fechaHoraEjecucion: DateTime.parse(json['fechaHoraEjecucion'] as String),
-      codCon: json['codCon'] as int,
-      nombreSocio: json['nombreSocio'] as String,
-      direccion: json['direccion'] as String,
+      codCon: (json['codCon'] as num).toInt(),
+      nombreSocio: json['nombreSocio'] as String? ?? '',
+      direccion: json['direccion'] as String? ?? '',
       numeroMedidorRetirado: json['numeroMedidorRetirado'] as String,
       marcaRetirado: json['marcaRetirado'] as String?,
       lecturaRetiro: (json['lecturaRetiro'] as num).toDouble(),
-      idMotivo: json['idMotivo'] as int,
+      idMotivo: (json['idMotivo'] as num).toInt(),
+      codMedidorInstalado: (json['codMedidorInstalado'] as num?)?.toInt(),
       numeroMedidorInstalado: json['numeroMedidorInstalado'] as String,
-      marcaInstalado: json['marcaInstalado'] as String,
-      estadoMedidorInstalado: json['estadoMedidorInstalado'] as String,
+      marcaInstalado: json['marcaInstalado'] as String? ?? '',
       observaciones: json['observaciones'] as String?,
-      fotoMedidorRetirado: json['fotoMedidorRetirado'] as String,
-      fotoMedidorNuevo: json['fotoMedidorNuevo'] as String,
+      fotoMedidorRetirado: json['fotoMedidorRetirado'] as String?,
+      fotoMedidorNuevo: json['fotoMedidorNuevo'] as String?,
       latitud: (json['latitud'] as num?)?.toDouble(),
       longitud: (json['longitud'] as num?)?.toDouble(),
     );

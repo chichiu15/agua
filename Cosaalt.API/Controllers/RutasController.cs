@@ -26,6 +26,20 @@ public class RutasController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("tecnico/{idTecnico:int}/actual")]
+    public async Task<IActionResult> ObtenerActualPorTecnico(int idTecnico)
+    {
+        var result = await _service.ObtenerActualPorTecnicoAsync(idTecnico);
+        return result is null ? NotFound(new { mensaje = "El tecnico no tiene una ruta activa." }) : Ok(result);
+    }
+
+    [HttpGet("activas")]
+    public async Task<IActionResult> ObtenerActivas([FromQuery] DateTime? fecha)
+    {
+        var result = await _service.ObtenerActivasAsync(fecha);
+        return Ok(result);
+    }
+
     [HttpGet("{idAsignacion:int}")]
     public async Task<IActionResult> ObtenerPorId(int idAsignacion)
     {

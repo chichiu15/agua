@@ -15,11 +15,12 @@ public class EnsayoVerificacionConfiguration : IEntityTypeConfiguration<EnsayoVe
         builder.Property(e => e.Condiciones).HasColumnName("Condiciones").HasMaxLength(500);
         builder.Property(e => e.LecturaInicial).HasColumnName("LecturaInicial").HasPrecision(18, 2);
         builder.Property(e => e.LecturaFinal).HasColumnName("LecturaFinal").HasPrecision(18, 2);
-        builder.Property(e => e.VolumenPatron).HasColumnName("VolumenPatron").HasPrecision(18, 2);
-        builder.Property(e => e.Caudal).HasColumnName("Caudal").HasPrecision(18, 2);
-        builder.Property(e => e.VolumenRegistrado).HasColumnName("VolumenRegistrado").HasPrecision(18, 2);
+        builder.Property(e => e.VolumenPatron).HasColumnName("VolumenPatron").HasPrecision(18, 4);
+        builder.Property(e => e.Caudal).HasColumnName("Caudal").HasPrecision(18, 4);
+        builder.Property(e => e.VolumenRegistrado).HasColumnName("VolumenRegistrado").HasPrecision(18, 4);
         builder.Property(e => e.Error).HasColumnName("Error").HasPrecision(10, 4);
         builder.Property(e => e.Fugas).HasColumnName("Fugas");
         builder.Property(e => e.Observaciones).HasColumnName("Observaciones").HasMaxLength(500);
+        builder.Property(e => e.FechaRegistro).HasColumnName("FechaRegistro");
     }
 }

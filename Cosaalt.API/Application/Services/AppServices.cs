@@ -19,16 +19,71 @@ public class CatalogoService
 
     public CatalogoService(ICatalogoRepository repository) => _repository = repository;
 
-    public async Task<CatalogoMotivosResponseDto> ObtenerMotivosAsync()
+    public async Task<CatalogoMotivosResponseDto> ObtenerMotivosAsync(bool incluirInactivos = false)
     {
-        var motivos = await _repository.ObtenerMotivosAsync();
+        var motivos = await _repository.ObtenerMotivosAsync(incluirInactivos);
         return new CatalogoMotivosResponseDto(motivos);
     }
 
-    public async Task<CatalogoMarcasResponseDto> ObtenerMarcasAsync()
+    public Task<MotivoCambioDto> CrearMotivoAsync(GuardarMotivoCambioRequestDto request)
     {
-        var marcas = await _repository.ObtenerMarcasAsync();
+        ValidarMotivo(request);
+        return _repository.CrearMotivoAsync(request);
+    }
+
+    public Task<MotivoCambioDto?> ActualizarMotivoAsync(int id, GuardarMotivoCambioRequestDto request)
+    {
+        ValidarMotivo(request);
+        return _repository.ActualizarMotivoAsync(id, request);
+    }
+
+    public Task<MotivoCambioDto?> CambiarEstadoMotivoAsync(int id, bool activo) =>
+        _repository.CambiarEstadoMotivoAsync(id, activo);
+
+    public async Task<CatalogoMarcasResponseDto> ObtenerMarcasAsync(bool incluirInactivos = true)
+    {
+        var marcas = await _repository.ObtenerMarcasAsync(incluirInactivos);
         return new CatalogoMarcasResponseDto(marcas);
+    }
+
+    public Task<MarcaMedidorDto> CrearMarcaAsync(GuardarMarcaMedidorRequestDto request)
+    {
+        ValidarMarca(request);
+        return _repository.CrearMarcaAsync(request);
+    }
+
+    public Task<MarcaMedidorDto?> ActualizarMarcaAsync(int id, GuardarMarcaMedidorRequestDto request)
+    {
+        ValidarMarca(request);
+        return _repository.ActualizarMarcaAsync(id, request);
+    }
+
+    public Task<MarcaMedidorDto?> CambiarEstadoMarcaAsync(int id, bool activo) =>
+        _repository.CambiarEstadoMarcaAsync(id, activo);
+
+    public Task<IReadOnlyList<MedidorDisponibleDto>> ObtenerMedidoresDisponiblesAsync(string? buscar = null, int limite = 100) =>
+        _repository.ObtenerMedidoresDisponiblesAsync(buscar, limite);
+
+    private static void ValidarMotivo(GuardarMotivoCambioRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Nombre))
+            throw new ArgumentException("El nombre del motivo es obligatorio.");
+        if (request.Nombre.Trim().Length > 80)
+            throw new ArgumentException("El nombre del motivo no puede superar 80 caracteres.");
+        if ((request.Descripcion?.Trim().Length ?? 0) > 250)
+            throw new ArgumentException("La descripcion no puede superar 250 caracteres.");
+    }
+
+    private static void ValidarMarca(GuardarMarcaMedidorRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Codigo))
+            throw new ArgumentException("El codigo de marca es obligatorio.");
+        if (request.Codigo.Trim().Length > 3)
+            throw new ArgumentException("El codigo de marca no puede superar 3 caracteres porque dbo.Medidor.Mar_Med usa varchar(3).");
+        if (string.IsNullOrWhiteSpace(request.Nombre))
+            throw new ArgumentException("El nombre de la marca es obligatorio.");
+        if (request.Nombre.Trim().Length > 80 || (request.Alias?.Trim().Length ?? 0) > 80)
+            throw new ArgumentException("Nombre y alias de marca no pueden superar 80 caracteres.");
     }
 }
 
@@ -54,8 +109,8 @@ public class EjecucionService
     public Task<EjecucionCambioResponseDto> RegistrarAsync(EjecucionCambioRequestDto request) =>
         _repository.RegistrarAsync(request);
 
-    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null) =>
-        _repository.ObtenerHistorialAsync(codCon);
+    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null, int? idUsuarioApp = null) =>
+        _repository.ObtenerHistorialAsync(codCon, idUsuarioApp);
 }
 
 public class UsuarioService
@@ -151,6 +206,12 @@ public class RutaService
     public Task<RutasTecnicoResponseDto> ObtenerPorTecnicoAsync(int idTecnico, DateTime? fecha = null) =>
         _repository.ObtenerPorTecnicoAsync(idTecnico, fecha);
 
+    public Task<RutaAsignadaResponseDto?> ObtenerActualPorTecnicoAsync(int idTecnico) =>
+        _repository.ObtenerActualPorTecnicoAsync(idTecnico);
+
+    public Task<RutasTecnicoResponseDto> ObtenerActivasAsync(DateTime? fecha = null) =>
+        _repository.ObtenerActivasAsync(fecha);
+
     public Task<RutaAsignadaResponseDto?> ObtenerPorIdAsync(int id) =>
         _repository.ObtenerPorIdAsync(id);
 }
@@ -222,4 +283,65 @@ public class VerificacionService
         var diff = Math.Abs(volumenRegistrado.Value - request.VolumenPatron.Value);
         return diff / request.VolumenPatron.Value * 100m;
     }
+}
+
+public class AdminService
+{
+    private readonly IAdminRepository _repository;
+
+    public AdminService(IAdminRepository repository) => _repository = repository;
+
+    public Task<AdminDashboardDto> ObtenerDashboardAsync(DateTime? desde = null, DateTime? hasta = null) =>
+        _repository.ObtenerDashboardAsync(desde, hasta);
+
+    public Task<PagedResultDto<AdminSolicitudDto>> ObtenerSolicitudesAsync(AdminSolicitudFiltro filtro) =>
+        _repository.ObtenerSolicitudesAsync(Normalizar(filtro));
+
+    public Task<PagedResultDto<AdminRutaDto>> ObtenerRutasAsync(AdminRutaFiltro filtro) =>
+        _repository.ObtenerRutasAsync(Normalizar(filtro));
+
+    public Task<AdminRutaDto?> ObtenerRutaAsync(int idAsignacion) =>
+        _repository.ObtenerRutaAsync(idAsignacion);
+
+    public Task<IReadOnlyList<AdminSincronizacionTecnicoDto>> ObtenerSincronizacionAsync(DateTime? fecha = null) =>
+        _repository.ObtenerSincronizacionAsync(fecha);
+
+    public Task<PagedResultDto<AdminVerificacionResumenDto>> ObtenerVerificacionesAsync(AdminVerificacionFiltro filtro) =>
+        _repository.ObtenerVerificacionesAsync(Normalizar(filtro));
+
+    public Task<IReadOnlyList<AdminVerificacionResumenDto>> ObtenerVerificacionesExportAsync(AdminVerificacionFiltro filtro, int maximo = 50000) =>
+        _repository.ObtenerVerificacionesExportAsync(Normalizar(filtro), Math.Clamp(maximo, 1, 50000));
+
+    public Task<AdminVerificacionDetalleDto?> ObtenerVerificacionDetalleAsync(int idVerificacion) =>
+        _repository.ObtenerVerificacionDetalleAsync(idVerificacion);
+
+    public Task<PagedResultDto<AdminMovimientoDto>> ObtenerMovimientosAsync(AdminMovimientoFiltro filtro) =>
+        _repository.ObtenerMovimientosAsync(Normalizar(filtro));
+
+    public Task<IReadOnlyList<AdminMovimientoDto>> ObtenerMovimientosExportAsync(AdminMovimientoFiltro filtro, int maximo = 50000) =>
+        _repository.ObtenerMovimientosExportAsync(Normalizar(filtro), Math.Clamp(maximo, 1, 50000));
+
+    public Task<PagedResultDto<AdminMovimientoCorporativoDto>> ObtenerHistoricoCorporativoAsync(AdminMovimientoCorporativoFiltro filtro) =>
+        _repository.ObtenerHistoricoCorporativoAsync(Normalizar(filtro));
+
+    public Task<IReadOnlyList<AdminMovimientoCorporativoDto>> ObtenerHistoricoCorporativoExportAsync(AdminMovimientoCorporativoFiltro filtro, int maximo = 50000) =>
+        _repository.ObtenerHistoricoCorporativoExportAsync(Normalizar(filtro), Math.Clamp(maximo, 1, 50000));
+
+    public Task<AdminEstadisticasDto> ObtenerEstadisticasAsync(AdminEstadisticasFiltro filtro) =>
+        _repository.ObtenerEstadisticasAsync(filtro);
+
+    private static AdminSolicitudFiltro Normalizar(AdminSolicitudFiltro f) =>
+        f with { Page = Math.Max(1, f.Page), PageSize = Math.Clamp(f.PageSize, 5, 100) };
+
+    private static AdminRutaFiltro Normalizar(AdminRutaFiltro f) =>
+        f with { Page = Math.Max(1, f.Page), PageSize = Math.Clamp(f.PageSize, 5, 100) };
+
+    private static AdminVerificacionFiltro Normalizar(AdminVerificacionFiltro f) =>
+        f with { Page = Math.Max(1, f.Page), PageSize = Math.Clamp(f.PageSize, 5, 100) };
+
+    private static AdminMovimientoFiltro Normalizar(AdminMovimientoFiltro f) =>
+        f with { Page = Math.Max(1, f.Page), PageSize = Math.Clamp(f.PageSize, 5, 100) };
+
+    private static AdminMovimientoCorporativoFiltro Normalizar(AdminMovimientoCorporativoFiltro f) =>
+        f with { Page = Math.Max(1, f.Page), PageSize = Math.Clamp(f.PageSize, 5, 100) };
 }

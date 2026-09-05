@@ -6,6 +6,7 @@ public class EvidenciaFotografica
     public int IdEjecucion { get; set; }
     public string TipoFoto { get; set; } = string.Empty;
     public string RutaArchivo { get; set; } = string.Empty;
+    public DateTime FechaRegistro { get; set; }
 
     public EjecucionCambio Ejecucion { get; set; } = null!;
 }

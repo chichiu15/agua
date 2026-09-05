@@ -27,10 +27,13 @@ class ApiHistorialRepository {
     };
   }
 
-  Future<List<EjecucionHistorial>> obtenerHistorial() async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.historialEndpoint}');
+  Future<List<EjecucionHistorial>> obtenerHistorial({required int idUsuarioApp}) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.historialEndpoint}')
+        .replace(queryParameters: {'idUsuarioApp': '$idUsuarioApp'});
 
-    final response = await http.get(uri, headers: await _headers());
+    final response = await http
+        .get(uri, headers: await _headers())
+        .timeout(const Duration(seconds: 25));
     if (response.statusCode != 200) {
       throw HistorialException(
         _leerMensajeError(response, fallback: 'Error al obtener el historial.'),

@@ -2,6 +2,7 @@ using Cosaalt.API.Application.DTOs;
 using Cosaalt.API.Application.Mappers;
 using Cosaalt.API.Domain.Entities;
 using Cosaalt.API.Infrastructure.Context;
+using Cosaalt.API.Infrastructure.Security;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,380 +11,385 @@ namespace Cosaalt.API.Infrastructure.Repositories;
 public class SqlUsuarioRepository : IUsuarioRepository
 {
     private readonly CosaaltDbContext _context;
+    private readonly CosaaltInstitutionalReader _institutional;
 
-    public SqlUsuarioRepository(CosaaltDbContext context) => _context = context;
+    public SqlUsuarioRepository(CosaaltDbContext context, CosaaltInstitutionalReader institutional)
+    {
+        _context = context;
+        _institutional = institutional;
+    }
 
     public async Task<IReadOnlyList<TecnicoDto>> ObtenerTecnicosActivosAsync()
     {
-        var hoy = DateTime.Today;
-        var tecnicos = await _context.Usuarios
-            .AsNoTracking()
+        var usuarios = await _context.Usuarios.AsNoTracking()
             .Include(u => u.Rol)
-            .Include(u => u.Funcionario).ThenInclude(f => f!.Persona)
-            .Where(u => u.Rol.Nombre == "tecnico")
-            .OrderBy(u => u.Id)
+            .Where(u => u.Activo && u.Rol.Activo && u.Rol.Nombre.ToLower() == "tecnico")
+            .OrderBy(u => u.NombreUsuario)
             .ToListAsync();
-
-        var idsTecnicos = tecnicos.Select(t => t.Id).ToList();
-        var tecnicosConRuta = await _context.AsignacionesRuta
-            .AsNoTracking()
-            .Where(a => idsTecnicos.Contains(a.IdUsuarioApp)
-                && a.FechaAsignacion.Date == hoy
-                && (a.Estado == "Planificado" || a.Estado == "EnCurso"))
-            .Select(a => a.IdUsuarioApp)
-            .Distinct()
-            .ToListAsync();
-
-        var tieneRuta = tecnicosConRuta.ToHashSet();
-        return tecnicos
-            .OrderBy(t => t.NombreCompleto)
-            .Select(t => new TecnicoDto(t.Id, t.NombreCompleto, t.Rol.Nombre, t.Activo, tieneRuta.Contains(t.Id)))
-            .ToList();
+        var conRuta = await _context.AsignacionesRuta.AsNoTracking()
+            .Where(a => a.Estado != "Finalizado" && a.Estado != "Cancelado")
+            .Select(a => a.IdUsuarioApp).Distinct().ToListAsync();
+        var set = conRuta.ToHashSet();
+        var result = new List<TecnicoDto>();
+        foreach (var u in usuarios)
+        {
+            var nombre = await _institutional.ObtenerNombrePersonaAsync(u.CodPersonaCorporativa) ?? u.NombreUsuario;
+            result.Add(new TecnicoDto(u.Id, nombre, u.Rol.Nombre, u.Activo, set.Contains(u.Id)));
+        }
+        return result;
     }
 
     public async Task<IReadOnlyList<UsuarioDto>> ObtenerUsuariosAsync()
     {
-        var usuarios = await ConsultaUsuarios().OrderBy(u => u.Id).ToListAsync();
-        return usuarios.Select(MapUsuario).ToList();
+        var usuarios = await _context.Usuarios.AsNoTracking().Include(u => u.Rol).OrderBy(u => u.NombreUsuario).ToListAsync();
+        var result = new List<UsuarioDto>(usuarios.Count);
+        foreach (var u in usuarios)
+        {
+            var nombre = await _institutional.ObtenerNombrePersonaAsync(u.CodPersonaCorporativa) ?? u.NombreUsuario;
+            result.Add(ToDto(u, nombre));
+        }
+        return result;
     }
 
-    public async Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosActivosAsync()
-    {
-        var funcionarios = await _context.Funcionarios
-            .AsNoTracking()
-            .Include(f => f.Persona)
-            .Where(f => f.EstFun && f.Persona!.EstPer)
-            .OrderBy(f => f.CodFun)
-            .ToListAsync();
+    public Task<IReadOnlyList<FuncionarioDto>> ObtenerFuncionariosActivosAsync() =>
+        _institutional.ObtenerPersonasAsync(null, 500);
 
-        return funcionarios
-            .Select(f => new FuncionarioDto(f.CodFun, f.Persona?.NombreCompleto ?? string.Empty, f.AliFun, f.EstFun))
-            .ToList();
-    }
-
-    public async Task<IReadOnlyList<RolDto>> ObtenerRolesAsync()
-    {
-        return await _context.RolesApp
-            .AsNoTracking()
-            .OrderBy(r => r.IdRol)
-            .Select(r => new RolDto(r.IdRol, r.Nombre, r.Descripcion, r.Activo))
-            .ToListAsync();
-    }
+    public async Task<IReadOnlyList<RolDto>> ObtenerRolesAsync() =>
+        await _context.RolesApp.AsNoTracking().OrderBy(r => r.IdRol)
+            .Select(r => new RolDto(r.IdRol, r.Nombre, r.Descripcion, r.Activo)).ToListAsync();
 
     public async Task<UsuarioDto> CrearAsync(CrearUsuarioRequestDto request)
     {
-        var nombreUsuario = request.NombreUsuario.Trim();
-        await ValidarDatosAsync(nombreUsuario, request.IdRol, request.CodFunCorporativo, null);
+        var username = request.NombreUsuario.Trim();
+        if (await _context.Usuarios.AnyAsync(u => u.NombreUsuario == username))
+            throw new InvalidOperationException("Ya existe un usuario con ese nombre.");
+        var rol = await _context.RolesApp.AsNoTracking().FirstOrDefaultAsync(r => r.IdRol == request.IdRol && r.Activo)
+                  ?? throw new InvalidOperationException("El rol indicado no existe o esta inactivo.");
+        if (request.CodFunCorporativo.HasValue && !await _institutional.PersonaExisteAsync(request.CodFunCorporativo.Value))
+            throw new InvalidOperationException("La persona corporativa seleccionada no existe en dbo.PERSONAS.");
 
         var entity = new Usuario
         {
-            CodFunCorporativo = request.CodFunCorporativo,
-            NombreUsuario = nombreUsuario,
-            HashPassword = request.Contrasena,
-            IdRol = request.IdRol,
+            CodPersonaCorporativa = request.CodFunCorporativo,
+            NombreUsuario = username,
+            HashPassword = PasswordHasher.Hash(request.Contrasena),
+            IdRol = rol.IdRol,
             Activo = request.Activo,
             FechaCreacion = DateTime.Now
         };
-
         _context.Usuarios.Add(entity);
         await _context.SaveChangesAsync();
-        return (await ObtenerPorIdAsync(entity.Id))!;
+        entity.Rol = rol;
+        var nombre = await _institutional.ObtenerNombrePersonaAsync(entity.CodPersonaCorporativa) ?? entity.NombreUsuario;
+        return ToDto(entity, nombre);
     }
 
     public async Task<UsuarioDto?> ActualizarAsync(int id, ActualizarUsuarioRequestDto request)
     {
-        var entity = await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == id);
+        var entity = await _context.Usuarios.Include(u => u.Rol).FirstOrDefaultAsync(u => u.Id == id);
         if (entity is null) return null;
+        var username = request.NombreUsuario.Trim();
+        if (await _context.Usuarios.AnyAsync(u => u.Id != id && u.NombreUsuario == username))
+            throw new InvalidOperationException("Ya existe otro usuario con ese nombre.");
+        var rol = await _context.RolesApp.AsNoTracking().FirstOrDefaultAsync(r => r.IdRol == request.IdRol)
+                  ?? throw new InvalidOperationException("El rol indicado no existe.");
+        if (request.CodFunCorporativo.HasValue && !await _institutional.PersonaExisteAsync(request.CodFunCorporativo.Value))
+            throw new InvalidOperationException("La persona corporativa seleccionada no existe en dbo.PERSONAS.");
 
-        var nombreUsuario = request.NombreUsuario.Trim();
-        await ValidarDatosAsync(nombreUsuario, request.IdRol, request.CodFunCorporativo, id);
-
-        entity.CodFunCorporativo = request.CodFunCorporativo;
-        entity.NombreUsuario = nombreUsuario;
+        entity.CodPersonaCorporativa = request.CodFunCorporativo;
+        entity.NombreUsuario = username;
+        if (!string.IsNullOrWhiteSpace(request.Contrasena)) entity.HashPassword = PasswordHasher.Hash(request.Contrasena);
         entity.IdRol = request.IdRol;
         entity.Activo = request.Activo;
-        if (!string.IsNullOrWhiteSpace(request.Contrasena))
-            entity.HashPassword = request.Contrasena;
-
+        entity.FechaActualizacion = DateTime.Now;
         await _context.SaveChangesAsync();
-        return await ObtenerPorIdAsync(id);
+        entity.Rol = rol;
+        var nombre = await _institutional.ObtenerNombrePersonaAsync(entity.CodPersonaCorporativa) ?? entity.NombreUsuario;
+        return ToDto(entity, nombre);
     }
 
-    private IQueryable<Usuario> ConsultaUsuarios() => _context.Usuarios
-        .AsNoTracking()
-        .Include(u => u.Rol)
-        .Include(u => u.Funcionario).ThenInclude(f => f!.Persona);
-
-    private async Task<UsuarioDto?> ObtenerPorIdAsync(int id)
-    {
-        var entity = await ConsultaUsuarios().FirstOrDefaultAsync(u => u.Id == id);
-        return entity is null ? null : MapUsuario(entity);
-    }
-
-    private static UsuarioDto MapUsuario(Usuario u) => new(
-        u.Id,
-        u.NombreCompleto,
-        u.NombreUsuario,
-        u.Rol.Nombre,
-        u.IdRol,
-        u.Activo,
-        u.CodFunCorporativo,
+    private static UsuarioDto ToDto(Usuario u, string nombre) => new(
+        u.Id, nombre, u.NombreUsuario, u.Rol.Nombre, u.IdRol, u.Activo,
+        u.CodPersonaCorporativa.HasValue && u.CodPersonaCorporativa <= int.MaxValue ? (int?)u.CodPersonaCorporativa.Value : null,
         u.FechaCreacion);
-
-    private async Task ValidarDatosAsync(string nombreUsuario, int idRol, int? codFun, int? idActual)
-    {
-        if (string.IsNullOrWhiteSpace(nombreUsuario))
-            throw new ArgumentException("El nombre de usuario es obligatorio.");
-
-        var duplicado = await _context.Usuarios.AnyAsync(u =>
-            u.NombreUsuario.ToLower() == nombreUsuario.ToLower() &&
-            (!idActual.HasValue || u.Id != idActual.Value));
-        if (duplicado)
-            throw new InvalidOperationException("Ya existe un usuario con ese nombre de usuario.");
-
-        var rolValido = await _context.RolesApp.AnyAsync(r => r.IdRol == idRol && r.Activo);
-        if (!rolValido)
-            throw new ArgumentException("El rol indicado no existe o esta inactivo.");
-
-        if (codFun.HasValue)
-        {
-            var funcionarioExiste = await _context.Funcionarios.AsNoTracking().AnyAsync(f => f.CodFun == codFun.Value);
-            if (!funcionarioExiste)
-                throw new ArgumentException("El funcionario corporativo indicado no existe.");
-
-            var funcionarioUsado = await _context.Usuarios.AnyAsync(u =>
-                u.CodFunCorporativo == codFun.Value &&
-                (!idActual.HasValue || u.Id != idActual.Value));
-            if (funcionarioUsado)
-                throw new InvalidOperationException("Ese funcionario ya esta vinculado a otra cuenta de la aplicacion.");
-        }
-    }
 }
 
 public class SqlRutaRepository : IRutaRepository
 {
     private readonly CosaaltDbContext _context;
+    private readonly CosaaltInstitutionalReader _institutional;
 
-    public SqlRutaRepository(CosaaltDbContext context) => _context = context;
+    public SqlRutaRepository(CosaaltDbContext context, CosaaltInstitutionalReader institutional)
+    {
+        _context = context;
+        _institutional = institutional;
+    }
 
     public async Task<RutaAsignadaResponseDto> AsignarAsync(AsignarRutaRequestDto request)
     {
-        var tecnico = await _context.Usuarios.AsNoTracking()
-            .Include(u => u.Funcionario)
-                .ThenInclude(f => f!.Persona)
-            .FirstOrDefaultAsync(u => u.Id == request.IdUsuarioTecnico);
+        if (request.Detalles is null || request.Detalles.Count == 0)
+            throw new ArgumentException("Debe seleccionar al menos una solicitud.");
 
-        var nombreTecnico = tecnico?.NombreCompleto ?? $"Técnico #{request.IdUsuarioTecnico}";
+        var tecnico = await _context.Usuarios.AsNoTracking().Include(u => u.Rol)
+            .FirstOrDefaultAsync(u => u.Id == request.IdUsuarioTecnico && u.Activo && u.Rol.Activo
+                && (u.Rol.Nombre.ToLower() == "tecnico" || u.Rol.Nombre.ToLower() == "asignador"))
+            ?? throw new InvalidOperationException("El responsable seleccionado no existe, esta inactivo o no tiene rol tecnico/asignador.");
+        var asignador = await _context.Usuarios.AsNoTracking().Include(u => u.Rol)
+            .FirstOrDefaultAsync(u => u.Id == request.IdUsuarioAsignador && u.Activo && u.Rol.Activo && u.Rol.Nombre.ToLower() == "asignador")
+            ?? throw new InvalidOperationException("El usuario asignador no existe, esta inactivo o no tiene el rol asignador.");
 
-        var asignacion = new AsignacionRuta
+        var tieneRutaPendiente = await _context.AsignacionesRuta.AsNoTracking()
+            .AnyAsync(a => a.IdUsuarioApp == tecnico.Id
+                           && a.Estado != "Finalizado"
+                           && a.Estado != "Cancelado");
+        if (tieneRutaPendiente)
+            throw new InvalidOperationException("El técnico ya tiene una ruta activa. Debe completar o cancelar esa ruta antes de recibir otra.");
+
+        var fecha = request.FechaAsignacion == default ? DateTime.Today : request.FechaAsignacion.Date;
+        var entity = new AsignacionRuta
         {
-            IdUsuarioApp = request.IdUsuarioTecnico,
-            FechaAsignacion = request.FechaAsignacion,
+            IdUsuarioApp = tecnico.Id,
+            IdUsuarioAsignador = asignador.Id,
+            FechaAsignacion = fecha,
             Estado = "Planificado",
-            Detalles = request.Detalles.Select(RutaMapper.ToEntity).ToList()
+            FechaCreacion = DateTime.Now
         };
 
-        _context.AsignacionesRuta.Add(asignacion);
+        var ordenes = new HashSet<int>();
+        foreach (var d in request.Detalles.OrderBy(x => x.OrdenVisita))
+        {
+            if (!ordenes.Add(d.OrdenVisita)) throw new ArgumentException("No puede repetir el orden de visita dentro de una ruta.");
+            var tipo = (d.TipoOrigen ?? string.Empty).Trim().ToUpperInvariant();
+            if (tipo is not ("ODECO" or "LECTURA" or "REVISION"))
+                throw new ArgumentException($"Tipo de origen no valido en {d.SolicitudId}: {tipo}.");
+            var idOrigen = NormalizeOrigen(tipo, d.IdOrigen);
+            if (string.IsNullOrWhiteSpace(idOrigen))
+                throw new ArgumentException($"La solicitud {d.SolicitudId} no tiene un IdOrigen valido.");
+            var duplicada = await _context.DetallesRuta.AsNoTracking()
+                .AnyAsync(x => x.TipoOrigen == tipo && x.IdOrigen == idOrigen && x.Estado != "Cancelada" && x.Estado != "Completada");
+            if (duplicada) throw new InvalidOperationException($"La solicitud {d.SolicitudId} ya se encuentra asignada en otra ruta activa.");
+
+            int? regSoc = null;
+            int? codMedidor = null;
+            string nombre = d.NombreCliente;
+            string direccion = d.Direccion;
+            decimal? lat = d.Latitud.HasValue ? Convert.ToDecimal(d.Latitud.Value) : null;
+            decimal? lon = d.Longitud.HasValue ? Convert.ToDecimal(d.Longitud.Value) : null;
+
+            if (idOrigen.StartsWith("QA-", StringComparison.OrdinalIgnoreCase) ||
+                (d.SolicitudId?.StartsWith("QA-", StringComparison.OrdinalIgnoreCase) ?? false))
+            {
+                var qa = await _institutional.ObtenerSolicitudPruebaAsync(d.SolicitudId ?? idOrigen);
+                if (qa is not null)
+                {
+                    regSoc = qa.CodCon;
+                    var actual = await _institutional.ObtenerMedidorActualAsync(qa.CodCon);
+                    codMedidor = actual?.CodMedidor;
+                    if (string.IsNullOrWhiteSpace(nombre)) nombre = qa.NombreCliente;
+                    if (string.IsNullOrWhiteSpace(direccion)) direccion = qa.Direccion;
+                    lat ??= qa.Latitud.HasValue ? Convert.ToDecimal(qa.Latitud.Value) : null;
+                    lon ??= qa.Longitud.HasValue ? Convert.ToDecimal(qa.Longitud.Value) : null;
+                }
+            }
+            else if (tipo == "ODECO" && int.TryParse(idOrigen, out var codRec))
+            {
+                var o = await _institutional.ObtenerOdecoAsync(codRec);
+                if (o is not null)
+                {
+                    regSoc = o.RegSoc;
+                    codMedidor = o.CodMedidor;
+                    if (string.IsNullOrWhiteSpace(nombre)) nombre = o.NombreSocio;
+                    if (string.IsNullOrWhiteSpace(direccion)) direccion = o.Direccion;
+                    lat ??= o.Latitud;
+                    lon ??= o.Longitud;
+                }
+            }
+
+            entity.Detalles.Add(new DetalleRuta
+            {
+                TipoOrigen = tipo,
+                IdOrigen = idOrigen,
+                OrdenVisita = d.OrdenVisita,
+                Estado = "Pendiente",
+                SolicitudId = string.IsNullOrWhiteSpace(d.SolicitudId) ? $"{tipo}-{idOrigen}" : d.SolicitudId.Trim(),
+                RegSoc = regSoc,
+                CodMedidorActual = codMedidor,
+                NombreCliente = string.IsNullOrWhiteSpace(nombre) ? "Sin nombre" : nombre.Trim(),
+                Direccion = direccion?.Trim() ?? string.Empty,
+                Latitud = lat,
+                Longitud = lon
+            });
+        }
+
+        _context.AsignacionesRuta.Add(entity);
         await _context.SaveChangesAsync();
 
-        var resolucion = await ResolverSocioMedidorAsync(asignacion.Detalles);
-        return RutaMapper.ToResponse(asignacion, nombreTecnico, resolucion);
+        // Volvemos a leer desde SQL para garantizar que la respuesta representa
+        // exactamente la ruta persistida (incluidos IdDetalle y relaciones).
+        var persistida = await _context.AsignacionesRuta.AsNoTracking()
+            .Include(a => a.Tecnico).ThenInclude(u => u.Rol)
+            .Include(a => a.Detalles)
+            .FirstAsync(a => a.Id == entity.Id);
+        return await BuildResponseAsync(persistida, persistida.Tecnico);
     }
 
     public async Task<RutasTecnicoResponseDto> ObtenerPorTecnicoAsync(int idTecnico, DateTime? fecha = null)
     {
-        var fechaFiltro = (fecha ?? DateTime.Today).Date;
-
-        var asignaciones = await _context.AsignacionesRuta
-            .AsNoTracking()
+        var query = _context.AsignacionesRuta.AsNoTracking()
+            .Include(a => a.Tecnico).ThenInclude(u => u.Rol)
             .Include(a => a.Detalles)
-            .Include(a => a.Usuario)
-                .ThenInclude(u => u.Funcionario)
-                .ThenInclude(f => f!.Persona)
-            .Where(a => a.IdUsuarioApp == idTecnico && a.FechaAsignacion.Date == fechaFiltro)
+            .Where(a => a.IdUsuarioApp == idTecnico);
+        if (fecha.HasValue)
+        {
+            var day = fecha.Value.Date;
+            query = query.Where(a => a.FechaAsignacion >= day && a.FechaAsignacion < day.AddDays(1));
+        }
+        var rows = await query.OrderByDescending(a => a.FechaAsignacion).ThenByDescending(a => a.Id).ToListAsync();
+        var list = new List<RutaAsignadaResponseDto>();
+        foreach (var row in rows) list.Add(await BuildResponseAsync(row, row.Tecnico));
+        return new RutasTecnicoResponseDto(list);
+    }
+
+    public async Task<RutaAsignadaResponseDto?> ObtenerActualPorTecnicoAsync(int idTecnico)
+    {
+        var hoy = DateTime.Today;
+        var manana = hoy.AddDays(1);
+
+        // La ruta de hoy sigue siendo visible cuando ya fue finalizada; de lo
+        // contrario el dashboard quedaba vacio justo despues de sincronizar
+        // la ultima parada.
+        var row = await _context.AsignacionesRuta.AsNoTracking()
+            .Include(a => a.Tecnico).ThenInclude(u => u.Rol)
+            .Include(a => a.Detalles)
+            .Where(a => a.IdUsuarioApp == idTecnico
+                        && a.Estado != "Cancelado"
+                        && a.FechaAsignacion >= hoy && a.FechaAsignacion < manana)
+            .OrderByDescending(a => a.Id)
+            .FirstOrDefaultAsync();
+
+        row ??= await _context.AsignacionesRuta.AsNoTracking()
+            .Include(a => a.Tecnico).ThenInclude(u => u.Rol)
+            .Include(a => a.Detalles)
+            .Where(a => a.IdUsuarioApp == idTecnico
+                        && a.Estado != "Finalizado"
+                        && a.Estado != "Cancelado")
+            .OrderByDescending(a => a.FechaAsignacion)
+            .ThenByDescending(a => a.Id)
+            .FirstOrDefaultAsync();
+
+        return row is null ? null : await BuildResponseAsync(row, row.Tecnico);
+    }
+
+    public async Task<RutasTecnicoResponseDto> ObtenerActivasAsync(DateTime? fecha = null)
+    {
+        var day = (fecha ?? DateTime.Today).Date;
+        var next = day.AddDays(1);
+        var query = _context.AsignacionesRuta.AsNoTracking()
+            .Include(a => a.Tecnico).ThenInclude(u => u.Rol)
+            .Include(a => a.Detalles)
+            .Where(a => a.Estado != "Cancelado");
+
+        // Sin fecha: monitoreo operativo. Incluye toda ruta pendiente aunque
+        // provenga de días anteriores y las finalizadas hoy. Con fecha: vista
+        // histórica exacta de ese día.
+        query = fecha.HasValue
+            ? query.Where(a => a.FechaAsignacion >= day && a.FechaAsignacion < next)
+            : query.Where(a => a.Estado != "Finalizado"
+                               || (a.FechaAsignacion >= day && a.FechaAsignacion < next));
+
+        var rows = await query
+            .OrderByDescending(a => a.Id)
             .ToListAsync();
 
-        var resolucion = await ResolverSocioMedidorAsync(
-            asignaciones.SelectMany(a => a.Detalles).ToList());
-
-        var resultado = asignaciones
-            .Select(a => RutaMapper.ToResponse(a, a.Usuario.NombreCompleto, resolucion))
-            .ToList();
-
-        return new RutasTecnicoResponseDto(resultado);
+        var list = new List<RutaAsignadaResponseDto>(rows.Count);
+        foreach (var row in rows) list.Add(await BuildResponseAsync(row, row.Tecnico));
+        return new RutasTecnicoResponseDto(list);
     }
 
     public async Task<RutaAsignadaResponseDto?> ObtenerPorIdAsync(int idAsignacion)
     {
-        var asignacion = await _context.AsignacionesRuta
-            .AsNoTracking()
+        var row = await _context.AsignacionesRuta.AsNoTracking()
+            .Include(a => a.Tecnico).ThenInclude(u => u.Rol)
             .Include(a => a.Detalles)
-            .Include(a => a.Usuario)
-                .ThenInclude(u => u.Funcionario)
-                .ThenInclude(f => f!.Persona)
             .FirstOrDefaultAsync(a => a.Id == idAsignacion);
-
-        if (asignacion is null) return null;
-
-        var resolucion = await ResolverSocioMedidorAsync(asignacion.Detalles);
-        return RutaMapper.ToResponse(asignacion, asignacion.Usuario.NombreCompleto, resolucion);
+        return row is null ? null : await BuildResponseAsync(row, row.Tecnico);
     }
 
-    /// <summary>
-    /// Resuelve la conexión (CodCon = cuenta del socio en COSAALT) y su medidor
-    /// VIGENTE (serial, desde dbo.CambioMedidores+Medidores) para cada parada.
-    /// ODECO se resuelve directo desde dbo.Reclamos.CodCon, y LECTURA desde
-    /// DetallesSolicitudLectura.CodCon. Solo lectura: no se modifican tablas de
-    /// dbo. Si una parada no tiene conexión o medidor, devuelve null.
-    /// </summary>
-    private async Task<Dictionary<string, (int? CodCon, string? NumeroMedidor)>> ResolverSocioMedidorAsync(
-        IEnumerable<DetalleRuta> detallesLista)
+    private async Task<RutaAsignadaResponseDto> BuildResponseAsync(AsignacionRuta entity, Usuario tecnico)
     {
-        var detalles = detallesLista.ToList();
-        var codConPorOrigen = new Dictionary<string, int>();
-
-        var folios = detalles
-            .Where(d => d.TipoOrigen == "ODECO")
-            .Select(d => int.TryParse(d.IdOrigen, out var f) ? f : 0)
-            .Where(f => f > 0)
-            .Distinct()
-            .Select(f => (decimal)f)
-            .ToList();
-
-        if (folios.Count > 0)
+        var nombre = await _institutional.ObtenerNombrePersonaAsync(tecnico.CodPersonaCorporativa) ?? tecnico.NombreUsuario;
+        var detalles = new List<DetalleRutaResponseDto>();
+        foreach (var d in entity.Detalles.OrderBy(x => x.OrdenVisita))
         {
-            // FromSqlRaw: EF 10 reescribe Contains() sobre columnas numeric con
-            // conversor a OPENJSON (SQL inválido, error 102). IN de parámetros directo.
-            var filasReclamos = new List<ReclamoCodConRow>();
-
-            foreach (var lote in folios.Chunk(1000))
-            {
-                var parametros = lote
-                    .Select((f, i) => new SqlParameter($"@f{i}", f))
-                    .ToArray();
-                var inClause = string.Join(", ", parametros.Select(p => p.ParameterName));
-
-                var sql = $"""
-                    SELECT r.CodRec, r.CodCon
-                    FROM dbo.Reclamos r
-                    WHERE r.CodCon IS NOT NULL
-                      AND r.CodRec IN ({inClause})
-                    """;
-
-                filasReclamos.AddRange(
-                    await _context.Database.SqlQueryRaw<ReclamoCodConRow>(sql, parametros)
-                        .ToListAsync());
-            }
-
-            foreach (var r in filasReclamos)
-                codConPorOrigen[$"ODECO-{r.CodRec}"] = (int)r.CodCon;
+            string? serie = null;
+            if (d.CodMedidorActual.HasValue)
+                serie = (await _institutional.ObtenerMedidorPorCodigoAsync(d.CodMedidorActual.Value))?.Serie;
+            detalles.Add(RutaMapper.ToResponse(d, serie));
         }
-
-        var lecturas = detalles
-            .Where(d => d.TipoOrigen == "LECTURA")
-            .Select(d => int.TryParse(d.IdOrigen, out var f) ? f : 0)
-            .Where(f => f > 0)
-            .Distinct()
-            .ToList();
-
-        if (lecturas.Count > 0)
-        {
-            var detalle = await _context.DetallesSolicitudLectura
-                .AsNoTracking()
-                .Where(d => lecturas.Contains(d.Id))
-                .Select(d => new { d.Id, d.CodCon })
-                .ToListAsync();
-            foreach (var d in detalle)
-                codConPorOrigen[$"LECTURA-{d.Id}"] = d.CodCon;
-        }
-
-        var codCons = codConPorOrigen.Values.Distinct().ToList();
-        var medidorPorCodCon = new Dictionary<int, string>();
-
-        if (codCons.Count > 0)
-        {
-            var vigentes = await MedidorVigenteResolver.ResolverAsync(_context, codCons);
-            foreach (var kv in vigentes)
-                if (kv.Value.Serial is not null)
-                    medidorPorCodCon[kv.Key] = kv.Value.Serial;
-        }
-
-        var resultado = new Dictionary<string, (int? CodCon, string? NumeroMedidor)>();
-        foreach (var d in detalles)
-        {
-            var key = $"{d.TipoOrigen}-{d.IdOrigen}";
-            if (resultado.ContainsKey(key)) continue;
-            resultado[key] = codConPorOrigen.TryGetValue(key, out var codCon)
-                ? ((int?)codCon, medidorPorCodCon.GetValueOrDefault(codCon))
-                : ((int?)null, null);
-        }
-
-        return resultado;
+        return new RutaAsignadaResponseDto(entity.Id, entity.IdUsuarioApp, nombre, entity.FechaAsignacion, entity.Estado, detalles.Count, detalles);
     }
 
-    private sealed class ReclamoCodConRow
+    private static string NormalizeOrigen(string tipo, string id)
     {
-        public decimal CodRec { get; set; }
-        public decimal CodCon { get; set; }
+        var clean = (id ?? string.Empty).Trim();
+        if (tipo == "ODECO" && clean.StartsWith("ODECO-", StringComparison.OrdinalIgnoreCase)) clean = clean[6..];
+        if (tipo == "LECTURA" && clean.StartsWith("LEC-", StringComparison.OrdinalIgnoreCase)) clean = clean[4..];
+        return clean;
     }
 }
 
 public class SqlSincronizacionRepository : ISincronizacionRepository
 {
-    private readonly CosaaltDbContext _context;
+    private readonly IEjecucionRepository _ejecuciones;
 
-    public SqlSincronizacionRepository(CosaaltDbContext context) => _context = context;
+    public SqlSincronizacionRepository(IEjecucionRepository ejecuciones) => _ejecuciones = ejecuciones;
 
     public async Task<SincronizacionResponseDto> ProcesarCambiosAsync(SincronizacionRequestDto request)
     {
-        var idsGuardados = new List<int>();
-        var errores = 0;
+        var ids = new List<int>();
+        var resultados = new List<SincronizacionItemResultadoDto>();
 
-        foreach (var ejecucionDto in request.Ejecuciones)
+        foreach (var item in request.Ejecuciones ?? [])
         {
             try
             {
-                var entity = EjecucionMapper.ToEntity(ejecucionDto);
-                _context.EjecucionesCambio.Add(entity);
-                await _context.SaveChangesAsync();
-                idsGuardados.Add(entity.Id);
-
-                // Marca la parada correspondiente del recorrido del d�a del
-                // t�cnico como Completada, as� el asignador ve el avance real.
-                var asignacionHoy = await _context.AsignacionesRuta
-                    .AsNoTracking()
-                    .Where(a => a.IdUsuarioApp == request.IdUsuario
-                        && a.FechaAsignacion.Date == DateTime.Today)
-                    .OrderByDescending(a => a.FechaAsignacion)
-                    .Select(a => a.Id)
-                    .FirstOrDefaultAsync();
-
-                DetalleRuta? detalle = null;
-                if (asignacionHoy != 0)
-                {
-                    detalle = await _context.DetallesRuta.FirstOrDefaultAsync(d =>
-                        d.IdAsignacion == asignacionHoy
-                        && d.TipoOrigen == ejecucionDto.TipoOrigen
-                        && d.IdOrigen == ejecucionDto.IdOrigen);
-                }
-
-                if (detalle is not null)
-                {
-                    detalle.Estado = "Completada";
-                    await _context.SaveChangesAsync();
-                }
+                var normalizado = item.IdUsuarioApp == 0
+                    ? item with { IdUsuarioApp = request.IdUsuario }
+                    : item;
+                var result = await _ejecuciones.RegistrarAsync(normalizado);
+                ids.Add(result.Id);
+                resultados.Add(new SincronizacionItemResultadoDto(
+                    normalizado.TipoOrigen, normalizado.IdOrigen, true, result.Id, result.YaExistia, null));
             }
-            catch
+            catch (Exception ex)
             {
-                errores++;
+                resultados.Add(new SincronizacionItemResultadoDto(
+                    item.TipoOrigen, item.IdOrigen, false, null, false,
+                    EsFallaConexionSql(ex)
+                        ? "No hay conexión con la base de datos institucional. Verifique la VPN; el trabajo continúa guardado en el dispositivo."
+                        : ex.Message));
             }
         }
 
+        var total = request.Ejecuciones?.Count ?? 0;
+        var ok = resultados.Count(x => x.Ok);
+        var errores = total - ok;
         return new SincronizacionResponseDto(
-            TotalRecibidos: request.Ejecuciones.Count,
-            ProcesadosOk: idsGuardados.Count,
-            Errores: errores,
-            IdsEjecucion: idsGuardados,
-            Mensaje: $"{idsGuardados.Count} de {request.Ejecuciones.Count} ejecuciones sincronizadas correctamente.");
+            total, ok, errores, ids,
+            errores == 0
+                ? "Sincronizacion completada correctamente."
+                : "Sincronizacion completada con registros pendientes de revision.",
+            resultados);
+    }
+
+    private static bool EsFallaConexionSql(Exception ex)
+    {
+        for (Exception? actual = ex; actual is not null; actual = actual.InnerException)
+        {
+            if (actual is SqlException sql &&
+                (sql.Class >= 20 || sql.Number is -2 or 20 or 40 or 53 or 64 or 121 or 233 or 258 or 10053 or 10054 or 10060))
+                return true;
+        }
+        return false;
     }
 }
