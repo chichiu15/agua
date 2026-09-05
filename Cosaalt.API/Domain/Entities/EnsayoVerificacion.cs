@@ -13,6 +13,7 @@ public class EnsayoVerificacion
     public decimal? Error { get; set; }
     public bool? Fugas { get; set; }
     public string? Observaciones { get; set; }
+    public DateTime FechaRegistro { get; set; }
 
     public Verificacion Verificacion { get; set; } = null!;
 }

@@ -13,7 +13,11 @@ public interface ICatalogoRepository
     Task<MotivoCambioDto> CrearMotivoAsync(GuardarMotivoCambioRequestDto request);
     Task<MotivoCambioDto?> ActualizarMotivoAsync(int id, GuardarMotivoCambioRequestDto request);
     Task<MotivoCambioDto?> CambiarEstadoMotivoAsync(int id, bool activo);
-    Task<IReadOnlyList<MarcaMedidorDto>> ObtenerMarcasAsync();
+    Task<IReadOnlyList<MarcaMedidorDto>> ObtenerMarcasAsync(bool incluirInactivos = true);
+    Task<MarcaMedidorDto> CrearMarcaAsync(GuardarMarcaMedidorRequestDto request);
+    Task<MarcaMedidorDto?> ActualizarMarcaAsync(int id, GuardarMarcaMedidorRequestDto request);
+    Task<MarcaMedidorDto?> CambiarEstadoMarcaAsync(int id, bool activo);
+    Task<IReadOnlyList<MedidorDisponibleDto>> ObtenerMedidoresDisponiblesAsync(string? buscar = null, int limite = 100);
 }
 
 public interface ISolicitudRepository
@@ -25,7 +29,7 @@ public interface ISolicitudRepository
 public interface IEjecucionRepository
 {
     Task<EjecucionCambioResponseDto> RegistrarAsync(EjecucionCambioRequestDto request);
-    Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null);
+    Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null, int? idUsuarioApp = null);
 }
 
 public interface IUsuarioRepository
@@ -52,6 +56,8 @@ public interface IRutaRepository
 {
     Task<RutaAsignadaResponseDto> AsignarAsync(AsignarRutaRequestDto request);
     Task<RutasTecnicoResponseDto> ObtenerPorTecnicoAsync(int idTecnico, DateTime? fecha = null);
+    Task<RutaAsignadaResponseDto?> ObtenerActualPorTecnicoAsync(int idTecnico);
+    Task<RutasTecnicoResponseDto> ObtenerActivasAsync(DateTime? fecha = null);
     Task<RutaAsignadaResponseDto?> ObtenerPorIdAsync(int idAsignacion);
 }
 
@@ -85,4 +91,3 @@ public interface IAdminRepository
     Task<IReadOnlyList<AdminMovimientoCorporativoDto>> ObtenerHistoricoCorporativoExportAsync(AdminMovimientoCorporativoFiltro filtro, int maximo = 50000);
     Task<AdminEstadisticasDto> ObtenerEstadisticasAsync(AdminEstadisticasFiltro filtro);
 }
-

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +21,7 @@ class _AdminSolicitudesScreenState extends ConsumerState<AdminSolicitudesScreen>
   String _origen = 'Todos', _estado = 'Todos', _prioridad = 'Todas';
   int? _tecnicoId;
   int _page = 1;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -30,7 +33,16 @@ class _AdminSolicitudesScreenState extends ConsumerState<AdminSolicitudesScreen>
   }
 
   @override
-  void dispose() { _search.dispose(); super.dispose(); }
+  void dispose() { _searchDebounce?.cancel(); _search.dispose(); super.dispose(); }
+
+  void _programarBusqueda(String _) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      _page = 1;
+      _load();
+    });
+  }
 
   Future<void> _load({int? page}) async {
     if (page != null) _page = page;
@@ -60,7 +72,7 @@ class _AdminSolicitudesScreenState extends ConsumerState<AdminSolicitudesScreen>
           _Drop(label: 'Estado', value: _estado, items: const ['Todos','Pendiente','Asignada','En proceso','Completada','Vencida'], onChanged: (v) => setState(() => _estado = v!)),
           _Drop(label: 'Prioridad', value: _prioridad, items: const ['Todas','Alta','Media','Normal'], onChanged: (v) => setState(() => _prioridad = v!)),
           SizedBox(width: 210, child: DropdownButtonFormField<int?>(isExpanded: true, initialValue: _tecnicoId, decoration: const InputDecoration(labelText: 'Tecnico', border: OutlineInputBorder(), isDense: true), items: [const DropdownMenuItem<int?>(value: null, child: Text('Todos')), ...tecnicos.map((u) => DropdownMenuItem<int?>(value: u.id, child: Text(u.nombreCompleto, overflow: TextOverflow.ellipsis)))], onChanged: (v) => setState(() => _tecnicoId = v))),
-          SizedBox(width: 260, child: TextField(controller: _search, onSubmitted: (_) { _page = 1; _load(); }, decoration: const InputDecoration(labelText: 'Codigo, CodCon, socio, medidor...', prefixIcon: Icon(Icons.search), border: OutlineInputBorder(), isDense: true))),
+          SizedBox(width: 260, child: TextField(controller: _search, onChanged: _programarBusqueda, onSubmitted: (_) { _searchDebounce?.cancel(); _page = 1; _load(); }, decoration: const InputDecoration(labelText: 'Codigo, CodCon, socio, medidor...', prefixIcon: Icon(Icons.search), border: OutlineInputBorder(), isDense: true))),
           FilledButton.icon(onPressed: state.isLoading ? null : () { _page = 1; _load(); }, icon: const Icon(Icons.search), label: const Text('Buscar')),
           TextButton(onPressed: () { setState(() { _desde = null; _hasta = null; _origen = 'Todos'; _estado = 'Todos'; _prioridad = 'Todas'; _tecnicoId = null; _search.clear(); _page = 1; }); _load(); }, child: const Text('Limpiar')),
         ])),

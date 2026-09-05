@@ -99,10 +99,35 @@ class ApiAdminRepository {
   }
 
   Future<List<MarcaCatalogo>> obtenerMarcas() async {
-    final data = await _getJson(ApiConfig.marcasEndpoint);
+    final data = await _getJson('${ApiConfig.marcasEndpoint}?incluirInactivos=true');
     return ((data['marcas'] as List?) ?? const [])
         .map((e) => MarcaCatalogo.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<MarcaCatalogo> crearMarca(GuardarMarcaCatalogo value) async {
+    final data = await _sendJson('POST', ApiConfig.marcasEndpoint, {
+      'codigo': value.codigo,
+      'nombre': value.nombre,
+      'alias': value.alias,
+      'activo': value.activo,
+    });
+    return MarcaCatalogo.fromJson(data);
+  }
+
+  Future<MarcaCatalogo> actualizarMarca(int id, GuardarMarcaCatalogo value) async {
+    final data = await _sendJson('PUT', '${ApiConfig.marcasEndpoint}/$id', {
+      'codigo': value.codigo,
+      'nombre': value.nombre,
+      'alias': value.alias,
+      'activo': value.activo,
+    });
+    return MarcaCatalogo.fromJson(data);
+  }
+
+  Future<MarcaCatalogo> cambiarEstadoMarca(int id, bool activo) async {
+    final data = await _sendJson('PATCH', '${ApiConfig.marcasEndpoint}/$id/estado', {'activo': activo});
+    return MarcaCatalogo.fromJson(data);
   }
 
   Future<List<ParametroNormativo>> obtenerParametros() async {

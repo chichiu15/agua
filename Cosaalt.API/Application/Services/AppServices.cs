@@ -40,20 +40,50 @@ public class CatalogoService
     public Task<MotivoCambioDto?> CambiarEstadoMotivoAsync(int id, bool activo) =>
         _repository.CambiarEstadoMotivoAsync(id, activo);
 
-    public async Task<CatalogoMarcasResponseDto> ObtenerMarcasAsync()
+    public async Task<CatalogoMarcasResponseDto> ObtenerMarcasAsync(bool incluirInactivos = true)
     {
-        var marcas = await _repository.ObtenerMarcasAsync();
+        var marcas = await _repository.ObtenerMarcasAsync(incluirInactivos);
         return new CatalogoMarcasResponseDto(marcas);
     }
+
+    public Task<MarcaMedidorDto> CrearMarcaAsync(GuardarMarcaMedidorRequestDto request)
+    {
+        ValidarMarca(request);
+        return _repository.CrearMarcaAsync(request);
+    }
+
+    public Task<MarcaMedidorDto?> ActualizarMarcaAsync(int id, GuardarMarcaMedidorRequestDto request)
+    {
+        ValidarMarca(request);
+        return _repository.ActualizarMarcaAsync(id, request);
+    }
+
+    public Task<MarcaMedidorDto?> CambiarEstadoMarcaAsync(int id, bool activo) =>
+        _repository.CambiarEstadoMarcaAsync(id, activo);
+
+    public Task<IReadOnlyList<MedidorDisponibleDto>> ObtenerMedidoresDisponiblesAsync(string? buscar = null, int limite = 100) =>
+        _repository.ObtenerMedidoresDisponiblesAsync(buscar, limite);
 
     private static void ValidarMotivo(GuardarMotivoCambioRequestDto request)
     {
         if (string.IsNullOrWhiteSpace(request.Nombre))
             throw new ArgumentException("El nombre del motivo es obligatorio.");
-        if (request.Nombre.Trim().Length > 50)
-            throw new ArgumentException("El nombre del motivo no puede superar 50 caracteres.");
-        if ((request.Descripcion?.Trim().Length ?? 0) > 200)
-            throw new ArgumentException("La descripcion no puede superar 200 caracteres.");
+        if (request.Nombre.Trim().Length > 80)
+            throw new ArgumentException("El nombre del motivo no puede superar 80 caracteres.");
+        if ((request.Descripcion?.Trim().Length ?? 0) > 250)
+            throw new ArgumentException("La descripcion no puede superar 250 caracteres.");
+    }
+
+    private static void ValidarMarca(GuardarMarcaMedidorRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Codigo))
+            throw new ArgumentException("El codigo de marca es obligatorio.");
+        if (request.Codigo.Trim().Length > 3)
+            throw new ArgumentException("El codigo de marca no puede superar 3 caracteres porque dbo.Medidor.Mar_Med usa varchar(3).");
+        if (string.IsNullOrWhiteSpace(request.Nombre))
+            throw new ArgumentException("El nombre de la marca es obligatorio.");
+        if (request.Nombre.Trim().Length > 80 || (request.Alias?.Trim().Length ?? 0) > 80)
+            throw new ArgumentException("Nombre y alias de marca no pueden superar 80 caracteres.");
     }
 }
 
@@ -79,8 +109,8 @@ public class EjecucionService
     public Task<EjecucionCambioResponseDto> RegistrarAsync(EjecucionCambioRequestDto request) =>
         _repository.RegistrarAsync(request);
 
-    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null) =>
-        _repository.ObtenerHistorialAsync(codCon);
+    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null, int? idUsuarioApp = null) =>
+        _repository.ObtenerHistorialAsync(codCon, idUsuarioApp);
 }
 
 public class UsuarioService
@@ -175,6 +205,12 @@ public class RutaService
 
     public Task<RutasTecnicoResponseDto> ObtenerPorTecnicoAsync(int idTecnico, DateTime? fecha = null) =>
         _repository.ObtenerPorTecnicoAsync(idTecnico, fecha);
+
+    public Task<RutaAsignadaResponseDto?> ObtenerActualPorTecnicoAsync(int idTecnico) =>
+        _repository.ObtenerActualPorTecnicoAsync(idTecnico);
+
+    public Task<RutasTecnicoResponseDto> ObtenerActivasAsync(DateTime? fecha = null) =>
+        _repository.ObtenerActivasAsync(fecha);
 
     public Task<RutaAsignadaResponseDto?> ObtenerPorIdAsync(int id) =>
         _repository.ObtenerPorIdAsync(id);

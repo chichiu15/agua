@@ -20,9 +20,9 @@ public class EjecucionesController : ControllerBase
     }
 
     [HttpGet("historial")]
-    public async Task<IActionResult> Historial([FromQuery] int? codCon = null)
+    public async Task<IActionResult> Historial([FromQuery] int? codCon = null, [FromQuery] int? idUsuarioApp = null)
     {
-        var result = await _ejecucionService.ObtenerHistorialAsync(codCon);
+        var result = await _ejecucionService.ObtenerHistorialAsync(codCon, idUsuarioApp);
         return Ok(result);
     }
 }

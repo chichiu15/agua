@@ -1,5 +1,6 @@
 using Cosaalt.API.Application.DTOs;
 using Cosaalt.API.Application.Services;
+using Cosaalt.API.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cosaalt.API.Controllers;
@@ -28,11 +29,15 @@ public class CatalogosController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(new { mensaje = ex.Message });
+        }
+        catch (IntegrationPendingException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { codigo = "INTEGRACION_PENDIENTE", mensaje = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new { message = ex.Message });
+            return Conflict(new { mensaje = ex.Message });
         }
     }
 
@@ -42,15 +47,19 @@ public class CatalogosController : ControllerBase
         try
         {
             var result = await _catalogoService.ActualizarMotivoAsync(id, request);
-            return result is null ? NotFound(new { message = "No se encontro el motivo indicado." }) : Ok(result);
+            return result is null ? NotFound(new { mensaje = "No se encontro el motivo indicado." }) : Ok(result);
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(new { mensaje = ex.Message });
+        }
+        catch (IntegrationPendingException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { codigo = "INTEGRACION_PENDIENTE", mensaje = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new { message = ex.Message });
+            return Conflict(new { mensaje = ex.Message });
         }
     }
 
@@ -58,10 +67,45 @@ public class CatalogosController : ControllerBase
     public async Task<IActionResult> CambiarEstadoMotivo(int id, [FromBody] CambiarEstadoMotivoRequestDto request)
     {
         var result = await _catalogoService.CambiarEstadoMotivoAsync(id, request.Activo);
-        return result is null ? NotFound(new { message = "No se encontro el motivo indicado." }) : Ok(result);
+        return result is null ? NotFound(new { mensaje = "No se encontro el motivo indicado." }) : Ok(result);
     }
 
     [HttpGet("marcas")]
-    public async Task<IActionResult> ObtenerMarcas()
-        => Ok(await _catalogoService.ObtenerMarcasAsync());
+    public async Task<IActionResult> ObtenerMarcas([FromQuery] bool incluirInactivos = true)
+        => Ok(await _catalogoService.ObtenerMarcasAsync(incluirInactivos));
+
+    [HttpPost("marcas")]
+    public async Task<IActionResult> CrearMarca([FromBody] GuardarMarcaMedidorRequestDto request)
+    {
+        try
+        {
+            var result = await _catalogoService.CrearMarcaAsync(request);
+            return CreatedAtAction(nameof(ObtenerMarcas), new { incluirInactivos = true }, result);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { mensaje = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { mensaje = ex.Message }); }
+    }
+
+    [HttpPut("marcas/{id:int}")]
+    public async Task<IActionResult> ActualizarMarca(int id, [FromBody] GuardarMarcaMedidorRequestDto request)
+    {
+        try
+        {
+            var result = await _catalogoService.ActualizarMarcaAsync(id, request);
+            return result is null ? NotFound(new { mensaje = "No se encontro la marca indicada." }) : Ok(result);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { mensaje = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { mensaje = ex.Message }); }
+    }
+
+    [HttpPatch("marcas/{id:int}/estado")]
+    public async Task<IActionResult> CambiarEstadoMarca(int id, [FromBody] CambiarEstadoMotivoRequestDto request)
+    {
+        var result = await _catalogoService.CambiarEstadoMarcaAsync(id, request.Activo);
+        return result is null ? NotFound(new { mensaje = "No se encontro la marca indicada." }) : Ok(result);
+    }
+
+    [HttpGet("medidores-disponibles")]
+    public async Task<IActionResult> ObtenerMedidoresDisponibles([FromQuery] string? buscar = null, [FromQuery] int limite = 100)
+        => Ok(new { medidores = await _catalogoService.ObtenerMedidoresDisponiblesAsync(buscar, limite) });
 }

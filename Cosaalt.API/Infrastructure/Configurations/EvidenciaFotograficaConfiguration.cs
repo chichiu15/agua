@@ -12,11 +12,13 @@ public class EvidenciaFotograficaConfiguration : IEntityTypeConfiguration<Eviden
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("IdFoto");
         builder.Property(e => e.IdEjecucion).HasColumnName("IdEjecucion");
-        builder.Property(e => e.TipoFoto).HasColumnName("TipoFoto").HasMaxLength(30);
-        builder.Property(e => e.RutaArchivo).HasColumnName("RutaArchivoServidor").HasMaxLength(500);
+        builder.Property(e => e.TipoFoto).HasColumnName("TipoFoto").HasMaxLength(30).IsRequired();
+        builder.Property(e => e.RutaArchivo).HasColumnName("RutaArchivo").HasMaxLength(500).IsRequired();
+        builder.Property(e => e.FechaRegistro).HasColumnName("FechaRegistro");
 
         builder.HasOne(e => e.Ejecucion)
             .WithMany(ej => ej.Evidencias)
-            .HasForeignKey(e => e.IdEjecucion);
+            .HasForeignKey(e => e.IdEjecucion)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -29,5 +29,10 @@ abstract interface class SolicitudRepository {
     int idTecnico, {
     DateTime? fecha,
   });
+  Future<RutaAsignada?> obtenerRutaActualTecnico(
+    int idTecnico, {
+    bool soloCache = false,
+  });
+  Future<List<RutaAsignada>> obtenerRutasActivas({DateTime? fecha});
   Future<RutaAsignada> obtenerRutaPorId(int idAsignacion);
 }

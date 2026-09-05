@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,13 +31,23 @@ class _AdminVerificacionesViewState extends ConsumerState<_AdminVerificacionesVi
   int? _mecanicoId;
   String _estado = 'Todos', _resultado = 'Todos';
   int _page = 1;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() { ref.read(adminControllerProvider.notifier).cargarUsuarios(); _load(); });
   }
-  @override void dispose() { _buscar.dispose(); super.dispose(); }
+  @override void dispose() { _searchDebounce?.cancel(); _buscar.dispose(); super.dispose(); }
+
+  void _programarBusqueda(String _) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      _page = 1;
+      _load();
+    });
+  }
 
   Future<void> _load({int? page}) async {
     if (page != null) _page = page;
@@ -82,7 +94,7 @@ class _AdminVerificacionesViewState extends ConsumerState<_AdminVerificacionesVi
           SizedBox(width: 210, child: DropdownButtonFormField<int?>(isExpanded: true, initialValue: _mecanicoId, decoration: const InputDecoration(labelText: 'Mecanico', border: OutlineInputBorder(), isDense: true), items: [const DropdownMenuItem<int?>(value: null, child: Text('Todos')), ...users.map((u) => DropdownMenuItem<int?>(value: u.id, child: Text(u.nombreCompleto, overflow: TextOverflow.ellipsis)))], onChanged: (v) => setState(() => _mecanicoId = v))),
           if (!widget.soloInformes) SizedBox(width: 150, child: DropdownButtonFormField<String>(isExpanded: true, initialValue: _estado, decoration: const InputDecoration(labelText: 'Estado', border: OutlineInputBorder(), isDense: true), items: const ['Todos','Pendiente','EnCurso','Completada'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => _estado = v ?? 'Todos'))),
           SizedBox(width: 155, child: DropdownButtonFormField<String>(isExpanded: true, initialValue: _resultado, decoration: const InputDecoration(labelText: 'Resultado', border: OutlineInputBorder(), isDense: true), items: const ['Todos','CUMPLE','NO CUMPLE'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() => _resultado = v ?? 'Todos'))),
-          SizedBox(width: 250, child: TextField(controller: _buscar, onSubmitted: (_) => _load(), decoration: const InputDecoration(labelText: 'ID, CodCon, socio, medidor...', prefixIcon: Icon(Icons.search), border: OutlineInputBorder(), isDense: true))),
+          SizedBox(width: 250, child: TextField(controller: _buscar, onChanged: _programarBusqueda, onSubmitted: (_) { _searchDebounce?.cancel(); _load(); }, decoration: const InputDecoration(labelText: 'ID, CodCon, socio, medidor...', prefixIcon: Icon(Icons.search), border: OutlineInputBorder(), isDense: true))),
           FilledButton.icon(onPressed: state.isLoading ? null : () { _page = 1; _load(); }, icon: const Icon(Icons.search), label: const Text('Buscar')),
         ])),
         if (state.isLoading) const LinearProgressIndicator(),

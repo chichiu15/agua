@@ -42,25 +42,27 @@ public class MockAuthRepository : IAuthRepository
 {
     private static readonly List<Usuario> Usuarios =
     [
-        new() { Id = 1, CodFunCorporativo = 1001, NombreUsuario = "tecnico1", HashPassword = "123456", Activo = true,
-                Rol = new RolApp { IdRol = 1, Nombre = "tecnico" },
-                Funcionario = new Funcionario { CodFun = 1001, CodPer = 1,
-                    Persona = new Persona { NomPer = "Juan", PriApePer = "Pérez", SegApePer = "García" } } },
-        new() { Id = 2, CodFunCorporativo = 1002, NombreUsuario = "asignador1", HashPassword = "123456", Activo = true,
-                Rol = new RolApp { IdRol = 2, Nombre = "asignador" },
-                Funcionario = new Funcionario { CodFun = 1002, CodPer = 2,
-                    Persona = new Persona { NomPer = "Pedro", PriApePer = "Encargado", SegApePer = "López" } } },
-        new() { Id = 3, CodFunCorporativo = 1003, NombreUsuario = "admin", HashPassword = "admin123", Activo = true,
-                Rol = new RolApp { IdRol = 3, Nombre = "administrador" },
-                Funcionario = new Funcionario { CodFun = 1003, CodPer = 3,
-                    Persona = new Persona { NomPer = "Administrador", PriApePer = "COSAALT" } } },
-        new() { Id = 4, CodFunCorporativo = 1004, NombreUsuario = "tecnico2", HashPassword = "123456", Activo = true,
-                Rol = new RolApp { IdRol = 1, Nombre = "tecnico" },
-                Funcionario = new Funcionario { CodFun = 1004, CodPer = 4,
-                    Persona = new Persona { NomPer = "Luis", PriApePer = "Mamani", SegApePer = "Condori" } } },
-        new() { Id = 5, CodFunCorporativo = null, NombreUsuario = "mecanico1", HashPassword = "123456", Activo = true,
+        new() { Id = 1, CodPersonaCorporativa = 1001, NombreUsuario = "tecnico1", HashPassword = "123456", Activo = true,
+                Rol = new RolApp { IdRol = 1, Nombre = "tecnico" } },
+        new() { Id = 2, CodPersonaCorporativa = 1002, NombreUsuario = "asignador1", HashPassword = "123456", Activo = true,
+                Rol = new RolApp { IdRol = 2, Nombre = "asignador" } },
+        new() { Id = 3, CodPersonaCorporativa = 1003, NombreUsuario = "admin", HashPassword = "admin123", Activo = true,
+                Rol = new RolApp { IdRol = 3, Nombre = "administrador" } },
+        new() { Id = 4, CodPersonaCorporativa = 1004, NombreUsuario = "tecnico2", HashPassword = "123456", Activo = true,
+                Rol = new RolApp { IdRol = 1, Nombre = "tecnico" } },
+        new() { Id = 5, CodPersonaCorporativa = null, NombreUsuario = "mecanico1", HashPassword = "123456", Activo = true,
                 Rol = new RolApp { IdRol = 4, Nombre = "mecanico" } }
     ];
+
+    private static readonly IReadOnlyDictionary<string, string> Nombres =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["tecnico1"] = "Juan Perez Garcia",
+            ["asignador1"] = "Pedro Encargado Lopez",
+            ["admin"] = "Administrador COSAALT",
+            ["tecnico2"] = "Luis Mamani Condori",
+            ["mecanico1"] = "Mecanico COSAALT"
+        };
 
     public Task<LoginResponseDto?> LoginAsync(string usuario, string contrasena)
     {
@@ -71,7 +73,8 @@ public class MockAuthRepository : IAuthRepository
         if (user is null) return Task.FromResult<LoginResponseDto?>(null);
 
         var token = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{user.Id}:{user.NombreUsuario}:{DateTime.UtcNow.Ticks}"));
-        return Task.FromResult<LoginResponseDto?>(new LoginResponseDto(user.Id, user.NombreCompleto, user.Rol.Nombre, token));
+        var nombre = Nombres.TryGetValue(user.NombreUsuario, out var n) ? n : user.NombreUsuario;
+        return Task.FromResult<LoginResponseDto?>(new LoginResponseDto(user.Id, nombre, user.Rol.Nombre, token));
     }
 }
 
@@ -143,8 +146,47 @@ public class MockCatalogoRepository : ICatalogoRepository
         }
     }
 
-    public Task<IReadOnlyList<MarcaMedidorDto>> ObtenerMarcasAsync() =>
-        Task.FromResult<IReadOnlyList<MarcaMedidorDto>>(Marcas);
+    public Task<IReadOnlyList<MarcaMedidorDto>> ObtenerMarcasAsync(bool incluirInactivos = true) =>
+        Task.FromResult<IReadOnlyList<MarcaMedidorDto>>(incluirInactivos ? Marcas : Marcas.Where(x => x.Activo).ToList());
+
+    public Task<MarcaMedidorDto> CrearMarcaAsync(GuardarMarcaMedidorRequestDto request)
+    {
+        var next = Marcas.Count == 0 ? 1 : Marcas.Max(x => x.Id) + 1;
+        var item = new MarcaMedidorDto(next, request.Nombre.Trim(), request.Alias?.Trim(), request.Activo, request.Codigo.Trim().ToUpperInvariant());
+        Marcas.Add(item);
+        return Task.FromResult(item);
+    }
+
+    public Task<MarcaMedidorDto?> ActualizarMarcaAsync(int id, GuardarMarcaMedidorRequestDto request)
+    {
+        var index = Marcas.FindIndex(x => x.Id == id);
+        if (index < 0) return Task.FromResult<MarcaMedidorDto?>(null);
+        var item = new MarcaMedidorDto(id, request.Nombre.Trim(), request.Alias?.Trim(), request.Activo, request.Codigo.Trim().ToUpperInvariant());
+        Marcas[index] = item;
+        return Task.FromResult<MarcaMedidorDto?>(item);
+    }
+
+    public Task<MarcaMedidorDto?> CambiarEstadoMarcaAsync(int id, bool activo)
+    {
+        var index = Marcas.FindIndex(x => x.Id == id);
+        if (index < 0) return Task.FromResult<MarcaMedidorDto?>(null);
+        var current = Marcas[index];
+        var item = current with { Activo = activo };
+        Marcas[index] = item;
+        return Task.FromResult<MarcaMedidorDto?>(item);
+    }
+
+    public Task<IReadOnlyList<MedidorDisponibleDto>> ObtenerMedidoresDisponiblesAsync(string? buscar = null, int limite = 100)
+    {
+        IReadOnlyList<MedidorDisponibleDto> items = new[]
+        {
+            new MedidorDisponibleDto(90001, "TEST001", "HDM", "Velocimetro Mag.", "3M3", "1/2\"", 5, "PERFECTO", "L"),
+            new MedidorDisponibleDto(90002, "TEST002", "LAO", "Velocimetro Mag.", "3M3", "1/2\"", 5, "PERFECTO", "L")
+        };
+        if (!string.IsNullOrWhiteSpace(buscar))
+            items = items.Where(x => x.Serie.Contains(buscar, StringComparison.OrdinalIgnoreCase) || x.Marca.Contains(buscar, StringComparison.OrdinalIgnoreCase)).ToList();
+        return Task.FromResult<IReadOnlyList<MedidorDisponibleDto>>(items.Take(limite).ToList());
+    }
 }
 
 public class MockEjecucionRepository : IEjecucionRepository
@@ -157,7 +199,7 @@ public class MockEjecucionRepository : IEjecucionRepository
         return Task.FromResult(new EjecucionCambioResponseDto(id, "Ejecución registrada.", true));
     }
 
-    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null)
+    public Task<IReadOnlyList<EjecucionHistorialDto>> ObtenerHistorialAsync(int? codCon = null, int? idUsuarioApp = null)
     {
         var historial = new List<EjecucionHistorialDto>
         {
@@ -211,13 +253,19 @@ public class MockEjecucionRepository : IEjecucionRepository
             historial = historial.Where(h => h.CodCon == conexion).ToList();
         }
 
+        // Los datos mock representan tecnico1 (Id=1). Mantener el mismo
+        // contrato que SQL evita que el historial de un usuario muestre
+        // ejecuciones ajenas durante las pruebas sin base de datos.
+        if (idUsuarioApp.HasValue && idUsuarioApp.Value != 1)
+            historial = [];
+
         return Task.FromResult<IReadOnlyList<EjecucionHistorialDto>>(historial);
     }
 }
 
 public class MockUsuarioRepository : IUsuarioRepository
 {
-    private static int _nextId = 7;
+    private static int _nextId = 5;
 
     private static readonly List<RolDto> Roles =
     [
@@ -230,10 +278,10 @@ public class MockUsuarioRepository : IUsuarioRepository
     private static readonly List<UsuarioDto> Usuarios =
     [
         new(1, "Juan Perez Garcia", "tecnico1", "tecnico", 1, true, 1001, DateTime.Today.AddDays(-30)),
-        new(2, "Luis Mamani Condori", "tecnico2", "tecnico", 1, true, 1002, DateTime.Today.AddDays(-20)),
-        new(5, "Ana Soliz Rueda", "asignador1", "asignador", 2, true, null, DateTime.Today.AddDays(-15)),
-        new(6, "Rocio Flores Medina", "admin", "administrador", 3, true, null, DateTime.Today.AddDays(-10)),
-        new(7, "Manuel Ortega Vega", "mecanico1", "mecanico", 4, true, null, DateTime.Today.AddDays(-5))
+        new(4, "Luis Mamani Condori", "tecnico2", "tecnico", 1, true, 1002, DateTime.Today.AddDays(-20)),
+        new(2, "Pedro Encargado Lopez", "asignador1", "asignador", 2, true, null, DateTime.Today.AddDays(-15)),
+        new(3, "Administrador COSAALT", "admin", "administrador", 3, true, null, DateTime.Today.AddDays(-10)),
+        new(5, "Mecanico COSAALT", "mecanico1", "mecanico", 4, true, null, DateTime.Today.AddDays(-5))
     ];
 
     private static readonly List<FuncionarioDto> Funcionarios =
@@ -366,6 +414,7 @@ public class MockRutaRepository : IRutaRepository
         var nombreTecnico = request.IdUsuarioTecnico switch
         {
             1 => "Juan Pérez García",
+            2 => "Pedro Encargado López",
             4 => "Luis Mamani Condori",
             _ => $"Técnico #{request.IdUsuarioTecnico}"
         };
@@ -406,6 +455,38 @@ public class MockRutaRepository : IRutaRepository
         return Task.FromResult(new RutasTecnicoResponseDto(delTecnico));
     }
 
+    public Task<RutaAsignadaResponseDto?> ObtenerActualPorTecnicoAsync(int idTecnico)
+    {
+        var hoy = DateTime.Today;
+        var actual = Rutas
+            .Where(r => r.IdUsuarioTecnico == idTecnico
+                        && r.FechaAsignacion.Date == hoy
+                        && !string.Equals(r.Estado, "Cancelado", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(r => r.IdAsignacion)
+            .FirstOrDefault();
+
+        actual ??= Rutas
+            .Where(r => r.IdUsuarioTecnico == idTecnico
+                        && !string.Equals(r.Estado, "Finalizado", StringComparison.OrdinalIgnoreCase)
+                        && !string.Equals(r.Estado, "Cancelado", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(r => r.FechaAsignacion)
+            .ThenByDescending(r => r.IdAsignacion)
+            .FirstOrDefault();
+
+        return Task.FromResult(actual);
+    }
+
+    public Task<RutasTecnicoResponseDto> ObtenerActivasAsync(DateTime? fecha = null)
+    {
+        var dia = (fecha ?? DateTime.Today).Date;
+        var activas = Rutas
+            .Where(r => r.FechaAsignacion.Date == dia
+                        && !string.Equals(r.Estado, "Cancelado", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(r => r.IdAsignacion)
+            .ToList();
+        return Task.FromResult(new RutasTecnicoResponseDto(activas));
+    }
+
     public Task<RutaAsignadaResponseDto?> ObtenerPorIdAsync(int idAsignacion) =>
         Task.FromResult(Rutas.FirstOrDefault(r => r.IdAsignacion == idAsignacion));
 }
@@ -425,12 +506,16 @@ public class MockSincronizacionRepository : ISincronizacionRepository
             catch { errores++; }
         }
 
+        var resultados = request.Ejecuciones.Select((ej, index) => new SincronizacionItemResultadoDto(
+            ej.TipoOrigen, ej.IdOrigen, true, index < ids.Count ? ids[index] : null, false, null)).ToList();
+
         return Task.FromResult(new SincronizacionResponseDto(
             TotalRecibidos: request.Ejecuciones.Count,
             ProcesadosOk: request.Ejecuciones.Count - errores,
             Errores: errores,
             IdsEjecucion: ids,
-            Mensaje: $"{ids.Count} ejecuciones sincronizadas correctamente."));
+            Mensaje: $"{ids.Count} ejecuciones sincronizadas correctamente.",
+            Resultados: resultados));
     }
 }
 
