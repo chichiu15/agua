@@ -651,6 +651,28 @@ public sealed class CosaaltInstitutionalReader
         return list;
     }
 
+    public async Task<int?> ObtenerCodConexionPorReclamoAsync(int codRec, CancellationToken ct = default)
+    {
+        await using var cn = await OpenAsync(ct);
+        const string sql = """
+            SELECT TOP (1) TRY_CONVERT(int, r.CodCon)
+            FROM dbo.RECLAMOS r
+            WHERE r.CodRec = @codRec;
+            """;
+
+        await using var cmd = new SqlCommand(sql, cn) { CommandTimeout = 30 };
+        cmd.Parameters.Add(new SqlParameter("@codRec", SqlDbType.Decimal)
+        {
+            Precision = 18,
+            Scale = 0,
+            Value = codRec
+        });
+
+        var result = await cmd.ExecuteScalarAsync(ct);
+        if (result is null or DBNull) return null;
+        return Convert.ToInt32(result);
+    }
+
     public async Task<OdecoInstitucional?> ObtenerOdecoAsync(int codRec, CancellationToken ct = default)
     {
         await using var cn = await OpenAsync(ct);

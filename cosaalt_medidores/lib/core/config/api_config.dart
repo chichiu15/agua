@@ -42,4 +42,9 @@ abstract final class ApiConfig {
   static const String reportesHistoricoCorporativoEndpoint = '/api/reportes/historico-corporativo';
   static const String reportesVerificacionesEndpoint = '/api/reportes/verificaciones';
   static const String reportesEstadisticasEndpoint = '/api/reportes/estadisticas';
+
+  static const String verificacionesEndpoint = '/api/verificaciones';
+  static const String verificacionesSolicitudesEndpoint = '/api/verificaciones/solicitudes';
+  static const String verificacionesTomarEndpoint = '/api/verificaciones/tomar';
+  static const String verificacionesCalcularEndpoint = '/api/verificaciones/calcular';
 }
