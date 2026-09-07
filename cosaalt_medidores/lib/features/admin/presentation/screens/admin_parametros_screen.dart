@@ -205,7 +205,15 @@ class _AdminParametrosScreenState extends ConsumerState<AdminParametrosScreen> {
       ),
     );
 
-    if (accepted == true && mounted) {
+    if (accepted == true) {
+      if (!context.mounted) {
+        codigo.dispose();
+        descripcion.dispose();
+        error.dispose();
+        min.dispose();
+        max.dispose();
+        return;
+      }
       final errorValue = _parse(error.text)!;
       final minValue = _parse(min.text);
       final maxValue = _parse(max.text);

@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../recorrido/domain/entities/ruta_asignada.dart';
 import '../../../recorrido/presentation/controllers/solicitud_controller.dart';
 

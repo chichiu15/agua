@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../app/router/app_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/verificacion_mecanico.dart';
 import '../controllers/verificacion_controller.dart';
-import 'informe_verificacion_screen.dart';
+import '../widgets/mecanico_shell.dart';
 
 class InformesMecanicoScreen
     extends ConsumerStatefulWidget {
@@ -66,7 +69,7 @@ class _InformesMecanicoScreenState
         .toList();
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: MecanicoPageAppBar(
         title: const Text(
           'Informes de verificación',
         ),
@@ -202,13 +205,8 @@ class _InformesMecanicoScreenState
   Future<void> _abrirInforme(
     HistorialVerificacionItem item,
   ) async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) =>
-            InformeVerificacionScreen(
-          id: item.idVerificacion,
-        ),
-      ),
+    await context.push<void>(
+      '${AppRoutes.mecanicoHome}/verificacion/${item.idVerificacion}/informe',
     );
 
     if (mounted) {

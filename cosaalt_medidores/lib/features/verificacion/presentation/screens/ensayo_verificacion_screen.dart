@@ -9,6 +9,7 @@ import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/verificacion_mecanico.dart';
 import '../controllers/verificacion_controller.dart';
+import '../widgets/mecanico_shell.dart';
 import '../widgets/verificacion_ui.dart';
 
 class EnsayoVerificacionScreen extends ConsumerStatefulWidget {
@@ -564,7 +565,7 @@ class _EnsayoVerificacionScreenState
         : _unidadCaudalCtrl.text.trim();
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: MecanicoPageAppBar(
         title: const Text('Ensayo de Verificación'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -897,7 +898,8 @@ class _EnsayoVerificacionScreenState
     final value = opciones.contains(actual) ? actual : null;
 
     return DropdownButtonFormField<String>(
-      value: value,
+      key: ValueKey(value),
+      initialValue: value,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: label,

@@ -7,10 +7,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/dashboard_widgets.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/verificacion_controller.dart';
+import '../widgets/mecanico_shell.dart';
 import 'bandeja_solicitudes_screen.dart';
 import 'historial_screen.dart';
-import 'informes_mecanico_screen.dart';
-import 'verificaciones_en_curso_screen.dart';
 
 class MecanicoHomeScreen extends ConsumerStatefulWidget {
   const MecanicoHomeScreen({
@@ -63,12 +62,7 @@ class _MecanicoHomeScreenState extends ConsumerState<MecanicoHomeScreen> {
   }
 
   Future<void> _abrirEnCurso() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) =>
-            const VerificacionesEnCursoScreen(),
-      ),
-    );
+    await context.push<void>(AppRoutes.mecanicoEnCurso);
 
     if (mounted) {
       await _refrescar();
@@ -76,12 +70,7 @@ class _MecanicoHomeScreenState extends ConsumerState<MecanicoHomeScreen> {
   }
 
   Future<void> _abrirInformes() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) =>
-            const InformesMecanicoScreen(),
-      ),
-    );
+    await context.push<void>(AppRoutes.mecanicoInformes);
 
     if (mounted) {
       await _refrescar();
@@ -117,31 +106,9 @@ class _MecanicoHomeScreenState extends ConsumerState<MecanicoHomeScreen> {
             ),
         },
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: MecanicoBottomNav(
         currentIndex: _tabIndex,
         onTap: _irATab,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primaryGreen,
-        unselectedItemColor: AppColors.darkBlue,
-        backgroundColor: Colors.white,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Inicio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_outlined),
-            activeIcon: Icon(Icons.assignment),
-            label: 'Solicitudes',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Historial',
-          ),
-        ],
       ),
     );
   }

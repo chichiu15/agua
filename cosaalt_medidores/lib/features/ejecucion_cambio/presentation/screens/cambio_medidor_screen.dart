@@ -186,7 +186,8 @@ class _CambioMedidorScreenState extends ConsumerState<CambioMedidorScreen> {
                       ),
                       const SizedBox(height: 10),
                       DropdownButtonFormField<int>(
-                        value: _motivoId,
+                        key: ValueKey(_motivoId),
+                        initialValue: _motivoId,
                         isExpanded: true,
                         decoration: const InputDecoration(labelText: 'Motivo del cambio *'),
                         items: state.motivos

@@ -1262,10 +1262,28 @@ public class SqlVerificacionRepository : IVerificacionRepository
         /*
          * nroInforme es el identificador real y único de esta emisión.
          */
+        if (string.IsNullOrWhiteSpace(request.NombreResponsable))
+        {
+            throw new InvalidOperationException(
+                "Ingrese el nombre del responsable antes de generar el informe.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.NombreDestinatario))
+        {
+            throw new InvalidOperationException(
+                "Ingrese el nombre del destinatario antes de generar el informe.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Recomendacion))
+        {
+            throw new InvalidOperationException(
+                "Ingrese la recomendación técnica antes de generar el informe.");
+        }
+
         var datos =
             await BuildDatosInformeAsync(
                 v,
-                request.NombreResponsable,
+                request,
                 version,
                 nroInforme,
                 fechaEmision);
@@ -1355,7 +1373,7 @@ public class SqlVerificacionRepository : IVerificacionRepository
     private async Task<InformePdfData>
         BuildDatosInformeAsync(
             Verificacion v,
-            string? responsable,
+            GenerarInformeRequestDto request,
             int version,
             string nroInforme,
             DateTime fechaEmision)
@@ -1380,8 +1398,8 @@ public class SqlVerificacionRepository : IVerificacionRepository
             condicionesDecoded,
             tipoPrueba,
             instrumentoBanco,
-            _,
-            _,
+            identificacionBanco,
+            trazabilidadCalibracion,
             capacidadQ3,
             tipoCaudal,
             unidadCaudal,
@@ -1421,6 +1439,16 @@ public class SqlVerificacionRepository : IVerificacionRepository
             await ResolveCodConexionAsync(
                 v.TipoOrigen,
                 v.IdOrigen);
+
+        var motivoObservacion =
+            await ResolveMotivoObservacionAsync(
+                v.TipoOrigen,
+                v.IdOrigen)
+            ?? "-";
+
+        var lugarVerificacion =
+            V(_configuration["CosaaltRules:LugarVerificacionMecanica"])
+            ?? "Domicilio del usuario";
 
         var documentoRuc =
             string.Join(
@@ -1483,6 +1511,9 @@ public class SqlVerificacionRepository : IVerificacionRepository
             MotivoOrigen:
                 $"{v.TipoOrigen} - {v.IdOrigen}",
 
+            MotivoObservacion:
+                motivoObservacion,
+
             MedidorMarca:
                 med?.Marca
                 ?? "No registrado",
@@ -1517,12 +1548,25 @@ public class SqlVerificacionRepository : IVerificacionRepository
                 v.FechaVerificacion
                     .ToString("dd/MM/yyyy HH:mm"),
 
+            LugarVerificacion:
+                V(request.LugarVerificacion)
+                ?? lugarVerificacion,
+
             TipoPrueba:
-                V(tipoPrueba)
+                V(request.TipoEnsayoTexto)
+                ?? V(tipoPrueba)
                 ?? "No registrado",
 
             InstrumentoBanco:
                 V(instrumentoBanco)
+                ?? "No registrado",
+
+            IdentificacionBanco:
+                V(identificacionBanco)
+                ?? "No registrado",
+
+            TrazabilidadCalibracion:
+                V(trazabilidadCalibracion)
                 ?? "No registrado",
 
             TipoCaudal:
@@ -1537,6 +1581,10 @@ public class SqlVerificacionRepository : IVerificacionRepository
             UnidadCaudal:
                 V(unidadCaudal)
                 ?? string.Empty,
+
+            UnidadVolumen:
+                V(unidadVolumen)
+                ?? "m³",
 
             PrimeraLectura:
                 v.Ensayo.LecturaInicial
@@ -1607,9 +1655,37 @@ public class SqlVerificacionRepository : IVerificacionRepository
                 ?? "-",
 
             Responsable:
-                V(responsable)
+                V(request.NombreResponsable)
                 ?? V(nombreMecanico)
                 ?? "-",
+
+            CargoResponsable:
+                V(request.CargoResponsable)
+                ?? "RESPONSABLE LABORATORIO DE MEDIDORES COSAALT R.L.",
+
+            NombreDestinatario:
+                V(request.NombreDestinatario)
+                ?? "-",
+
+            CargoDestinatario:
+                V(request.CargoDestinatario)
+                ?? "JEFE DPTO. SERVICIO AL CLIENTE – ODECO COSAALT R.L.",
+
+            Referencia:
+                V(request.Referencia)
+                ?? string.Empty,
+
+            DescripcionTecnica:
+                V(request.DescripcionTecnica)
+                ?? string.Empty,
+
+            ConclusionAdicional:
+                V(request.ConclusionAdicional)
+                ?? string.Empty,
+
+            Recomendacion:
+                V(request.Recomendacion)
+                ?? string.Empty,
 
             Participantes:
                 v.Participantes

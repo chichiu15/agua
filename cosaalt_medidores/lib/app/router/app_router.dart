@@ -31,6 +31,9 @@ import '../../features/verificacion/presentation/screens/ficha_verificacion_scre
 import '../../features/verificacion/presentation/screens/finalizar_verificacion_screen.dart';
 import '../../features/verificacion/presentation/screens/informe_verificacion_screen.dart';
 import '../../features/verificacion/presentation/screens/mecanico_home_screen.dart';
+import '../../features/verificacion/presentation/screens/informes_mecanico_screen.dart';
+import '../../features/verificacion/presentation/screens/verificaciones_en_curso_screen.dart';
+import '../../features/verificacion/presentation/widgets/mecanico_shell.dart';
 
 abstract final class AppRoutes {
   static const String login = '/login';
@@ -48,6 +51,8 @@ abstract final class AppRoutes {
   static const String adminVerificaciones = '/admin/verificaciones';
   static const String adminInformes = '/admin/informes';
   static const String mecanicoHome = '/mecanico';
+  static const String mecanicoEnCurso = '/mecanico/en-curso';
+  static const String mecanicoInformes = '/mecanico/informes';
   static const String mecanicoFicha = '/mecanico/verificacion/:id';
   static const String mecanicoEnsayo = '/mecanico/verificacion/:id/ensayo';
   static const String mecanicoFinalizar = '/mecanico/verificacion/:id/finalizar';
@@ -134,37 +139,50 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.mecanicoHome,
         builder: (context, state) => MecanicoHomeScreen(initialTab: _tabInicial(state)),
       ),
-      GoRoute(
-        path: AppRoutes.mecanicoFicha,
-        builder: (context, state) {
-          final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) return const MecanicoHomeScreen();
-          return FichaVerificacionScreen(id: id);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.mecanicoEnsayo,
-        builder: (context, state) {
-          final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) return const MecanicoHomeScreen();
-          return EnsayoVerificacionScreen(id: id);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.mecanicoFinalizar,
-        builder: (context, state) {
-          final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) return const MecanicoHomeScreen();
-          return FinalizarVerificacionScreen(id: id);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.mecanicoInforme,
-        builder: (context, state) {
-          final id = int.tryParse(state.pathParameters['id'] ?? '');
-          if (id == null) return const MecanicoHomeScreen();
-          return InformeVerificacionScreen(id: id);
-        },
+      ShellRoute(
+        builder: (context, state, child) => MecanicoDetailShell(child: child),
+        routes: [
+          GoRoute(
+            path: AppRoutes.mecanicoEnCurso,
+            builder: (context, state) => const VerificacionesEnCursoScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.mecanicoInformes,
+            builder: (context, state) => const InformesMecanicoScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.mecanicoFicha,
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '');
+              if (id == null) return const MecanicoHomeScreen();
+              return FichaVerificacionScreen(id: id);
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.mecanicoEnsayo,
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '');
+              if (id == null) return const MecanicoHomeScreen();
+              return EnsayoVerificacionScreen(id: id);
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.mecanicoFinalizar,
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '');
+              if (id == null) return const MecanicoHomeScreen();
+              return FinalizarVerificacionScreen(id: id);
+            },
+          ),
+          GoRoute(
+            path: AppRoutes.mecanicoInforme,
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '');
+              if (id == null) return const MecanicoHomeScreen();
+              return InformeVerificacionScreen(id: id);
+            },
+          ),
+        ],
       ),
 
       GoRoute(

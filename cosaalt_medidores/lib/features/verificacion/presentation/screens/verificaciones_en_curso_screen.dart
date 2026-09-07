@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../app/router/app_router.dart';
 
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../data/repositories/api_verificacion_repository.dart';
 import '../../domain/entities/verificacion_mecanico.dart';
 import '../controllers/verificacion_controller.dart';
-import 'ficha_verificacion_screen.dart';
+import '../widgets/mecanico_shell.dart';
 
 final _enCursoProvider = FutureProvider.autoDispose<List<VerificacionMecanico>>((ref) {
   final id = ref.watch(authControllerProvider).user?.id;
@@ -28,7 +32,7 @@ class VerificacionesEnCursoScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: MecanicoPageAppBar(
         title: const Text('Verificaciones en curso'),
         actions: [
           IconButton(
@@ -46,7 +50,13 @@ class VerificacionesEnCursoScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('$error', textAlign: TextAlign.center),
+                Text(
+                  mensajeVerificacionError(
+                    error,
+                    fallback: 'No se pudieron cargar las verificaciones en curso.',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 12),
                 FilledButton(onPressed: actualizar, child: const Text('Reintentar')),
               ],
@@ -76,11 +86,17 @@ class VerificacionesEnCursoScreen extends ConsumerWidget {
                     isThreeLine: true,
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () async {
-                      ref.read(verificacionControllerProvider.notifier).setVerificacion(v);
-                      await Navigator.of(context).push<void>(MaterialPageRoute(
-                        builder: (_) => FichaVerificacionScreen(id: v.id),
-                      ));
-                      if (context.mounted) await actualizar();
+                      ref
+                          .read(verificacionControllerProvider.notifier)
+                          .setVerificacion(v);
+
+                      await context.push<void>(
+                        '${AppRoutes.mecanicoHome}/verificacion/${v.id}',
+                      );
+
+                      if (context.mounted) {
+                        await actualizar();
+                      }
                     },
                   ),
                 ),

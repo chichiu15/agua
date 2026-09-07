@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
 class CosaaltAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const CosaaltAppBar({required this.onLogout, super.key});
+  const CosaaltAppBar({
+    required this.onLogout,
+    this.automaticallyImplyLeading = true,
+    super.key,
+  });
 
   final VoidCallback onLogout;
+  final bool automaticallyImplyLeading;
 
   @override
   Size get preferredSize => const Size.fromHeight(64);
@@ -13,6 +18,7 @@ class CosaaltAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      automaticallyImplyLeading: automaticallyImplyLeading,
       toolbarHeight: 64,
       titleSpacing: 12,
       title: Row(

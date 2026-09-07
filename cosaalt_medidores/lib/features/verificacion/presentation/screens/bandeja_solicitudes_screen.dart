@@ -169,7 +169,7 @@ class _BandejaSolicitudesScreenState extends ConsumerState<BandejaSolicitudesScr
     final verificacion = ref.read(verificacionControllerProvider).verificacionActual;
     if (verificacion == null) return;
     if (context.mounted) {
-      context.go('${AppRoutes.mecanicoHome}/verificacion/${verificacion.id}');
+      context.push<void>('${AppRoutes.mecanicoHome}/verificacion/${verificacion.id}');
     }
   }
 
