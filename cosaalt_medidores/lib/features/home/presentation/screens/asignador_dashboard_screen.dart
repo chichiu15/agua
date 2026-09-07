@@ -71,7 +71,7 @@ class _AsignadorDashboardScreenState
                       value: solicitudState.isLoading && resumen == null
                           ? '…'
                           : '${resumen?.odecoUrgentes ?? 0}',
-                      label: 'ODECO',
+                      label: 'ODECO pendientes',
                       valueColor: AppColors.odecoRed,
                     ),
                     const SizedBox(width: 10),
@@ -190,6 +190,9 @@ class _AsignadorDashboardScreenState
           switch (index) {
             case 0:
               setState(() => _tabIndex = 0);
+              Future.microtask(
+                () => ref.read(solicitudControllerProvider.notifier).cargarDatos(),
+              );
               return;
             case 1:
               setState(() => _tabIndex = 1);

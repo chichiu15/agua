@@ -4,6 +4,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../recorrido/presentation/controllers/detalle_recorrido_controller.dart';
 import '../../data/repositories/api_sync_repository.dart';
 import '../../data/services/sync_local_service.dart';
+import '../../../ejecucion_cambio/domain/entities/cambio_medidor.dart';
 
 class SyncState {
   const SyncState({
@@ -16,6 +17,8 @@ class SyncState {
     this.progressCurrent = 0,
     this.progressTotal = 0,
     this.statusMessage,
+    this.draftsPendientes = const [],
+    this.erroresPorLocalId = const {},
   });
 
   final int pendientes;
@@ -27,6 +30,8 @@ class SyncState {
   final int progressCurrent;
   final int progressTotal;
   final String? statusMessage;
+  final List<CambioMedidorDraft> draftsPendientes;
+  final Map<String, String> erroresPorLocalId;
 
   double get progress => progressTotal <= 0
       ? 0
@@ -42,6 +47,8 @@ class SyncState {
     int? progressCurrent,
     int? progressTotal,
     String? statusMessage,
+    List<CambioMedidorDraft>? draftsPendientes,
+    Map<String, String>? erroresPorLocalId,
   }) {
     return SyncState(
       pendientes: pendientes ?? this.pendientes,
@@ -53,6 +60,8 @@ class SyncState {
       progressCurrent: progressCurrent ?? this.progressCurrent,
       progressTotal: progressTotal ?? this.progressTotal,
       statusMessage: statusMessage ?? this.statusMessage,
+      draftsPendientes: draftsPendientes ?? this.draftsPendientes,
+      erroresPorLocalId: erroresPorLocalId ?? this.erroresPorLocalId,
     );
   }
 }
@@ -70,10 +79,10 @@ class SyncController extends Notifier<SyncState> {
 
   Future<void> cargarPendientes() async {
     final user = ref.read(authControllerProvider).user;
-    final count = user == null
-        ? 0
-        : await ref.read(syncLocalServiceProvider).contarPendientes(idUsuarioApp: user.id);
-    state = state.copyWith(pendientes: count);
+    final drafts = user == null
+        ? <CambioMedidorDraft>[]
+        : await ref.read(syncLocalServiceProvider).cargarDraftsPendientes(idUsuarioApp: user.id);
+    state = state.copyWith(pendientes: drafts.length, draftsPendientes: drafts);
   }
 
   Future<void> sincronizar() async {
@@ -116,9 +125,13 @@ class SyncController extends Notifier<SyncState> {
         await localService.eliminarDraft(item.localId);
       }
 
-      final pendientes = await localService.contarPendientes(idUsuarioApp: user.id);
+      final draftsRestantes = await localService.cargarDraftsPendientes(idUsuarioApp: user.id);
+      final pendientes = draftsRestantes.length;
       final errores = result.items.where((x) => !x.ok).toList();
       final detalleErrores = errores.take(3).map((x) => '${x.tipoOrigen}-${x.idOrigen}: ${x.error ?? 'requiere revisión'}').join('\n');
+      final erroresPorLocalId = <String, String>{
+        for (final x in errores) x.localId: x.error ?? 'Requiere revisión antes de volver a sincronizar.',
+      };
 
       state = state.copyWith(
         isSyncing: false,
@@ -132,30 +145,36 @@ class SyncController extends Notifier<SyncState> {
         statusMessage: errores.isEmpty
             ? 'Sincronización completada'
             : 'Sincronización terminada con pendientes',
+        draftsPendientes: draftsRestantes,
+        erroresPorLocalId: erroresPorLocalId,
       );
 
       await ref.read(detalleRecorridoControllerProvider.notifier).cargar();
     } on SyncException catch (e) {
       final currentUser = ref.read(authControllerProvider).user;
-      final pending = currentUser == null
-          ? 0
-          : await ref.read(syncLocalServiceProvider).contarPendientes(idUsuarioApp: currentUser.id);
+      final draftsRestantes = currentUser == null
+          ? <CambioMedidorDraft>[]
+          : await ref.read(syncLocalServiceProvider).cargarDraftsPendientes(idUsuarioApp: currentUser.id);
+      final pending = draftsRestantes.length;
       state = state.copyWith(
         isSyncing: false,
         pendientes: pending,
         failedCount: pending,
         errorMessage: e.message,
+        draftsPendientes: draftsRestantes,
       );
     } catch (_) {
       final currentUser = ref.read(authControllerProvider).user;
-      final pending = currentUser == null
-          ? 0
-          : await ref.read(syncLocalServiceProvider).contarPendientes(idUsuarioApp: currentUser.id);
+      final draftsRestantes = currentUser == null
+          ? <CambioMedidorDraft>[]
+          : await ref.read(syncLocalServiceProvider).cargarDraftsPendientes(idUsuarioApp: currentUser.id);
+      final pending = draftsRestantes.length;
       state = state.copyWith(
         isSyncing: false,
         pendientes: pending,
         failedCount: pending,
         errorMessage: 'No se pudo completar la sincronización. Los trabajos siguen guardados en el dispositivo.',
+        draftsPendientes: draftsRestantes,
       );
     }
   }

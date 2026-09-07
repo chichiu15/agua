@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/dashboard_widgets.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/sync_controller.dart';
+import '../../../ejecucion_cambio/domain/entities/cambio_medidor.dart';
 
 class SincronizacionScreen extends ConsumerWidget {
   const SincronizacionScreen({super.key});
@@ -123,6 +125,27 @@ class _SincronizacionViewState extends ConsumerState<SincronizacionView> {
                   ),
           ),
         ),
+
+        if (syncState.draftsPendientes.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          const Text(
+            'Trabajos guardados en el dispositivo',
+            style: TextStyle(
+              color: AppColors.darkBlue,
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...syncState.draftsPendientes.map((draft) {
+            final error = syncState.erroresPorLocalId[draft.localId];
+            return _PendingDraftCard(
+              draft: draft,
+              error: error,
+              onEdit: () => context.go('/trabajo/cambio/${draft.solicitudId}'),
+            );
+          }),
+        ],
         if (syncState.syncedCount > 0 &&
             syncState.lastSyncTime != null &&
             !syncState.isSyncing) ...[
@@ -151,6 +174,104 @@ class _SincronizacionViewState extends ConsumerState<SincronizacionView> {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _PendingDraftCard extends StatelessWidget {
+  const _PendingDraftCard({
+    required this.draft,
+    required this.onEdit,
+    this.error,
+  });
+
+  final CambioMedidorDraft draft;
+  final String? error;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasError = error != null && error!.trim().isNotEmpty;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasError
+              ? AppColors.odecoRed.withValues(alpha: .35)
+              : AppColors.border,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${draft.tipoOrigen} · ${draft.solicitudId}',
+                  style: const TextStyle(
+                    color: AppColors.darkBlue,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: hasError
+                      ? AppColors.odecoRed.withValues(alpha: .10)
+                      : AppColors.lightBlue,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  hasError ? 'REQUIERE REVISIÓN' : 'PENDIENTE',
+                  style: TextStyle(
+                    color: hasError ? AppColors.odecoRed : AppColors.darkBlue,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            draft.nombreSocio,
+            style: const TextStyle(
+              color: AppColors.darkBlue,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Medidor nuevo: ${draft.numeroMedidorInstalado} · ${draft.marcaInstalado}',
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+          if (hasError) ...[
+            const SizedBox(height: 8),
+            Text(
+              error!,
+              style: const TextStyle(
+                color: AppColors.odecoRed,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit_outlined),
+              label: Text(hasError ? 'CORREGIR TRABAJO' : 'EDITAR BORRADOR'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

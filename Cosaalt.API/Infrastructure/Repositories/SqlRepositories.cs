@@ -44,8 +44,13 @@ public class SqlAuthRepository : IAuthRepository
 public class SqlCatalogoRepository : ICatalogoRepository
 {
     private readonly CosaaltInstitutionalReader _institutional;
+    private readonly CosaaltDbContext _context;
 
-    public SqlCatalogoRepository(CosaaltInstitutionalReader institutional) => _institutional = institutional;
+    public SqlCatalogoRepository(CosaaltInstitutionalReader institutional, CosaaltDbContext context)
+    {
+        _institutional = institutional;
+        _context = context;
+    }
 
     public Task<IReadOnlyList<MotivoCambioDto>> ObtenerMotivosAsync(bool incluirInactivos = false) =>
         _institutional.ObtenerMotivosAsync(incluirInactivos);
@@ -71,8 +76,40 @@ public class SqlCatalogoRepository : ICatalogoRepository
     public Task<MarcaMedidorDto?> CambiarEstadoMarcaAsync(int id, bool activo) =>
         _institutional.CambiarEstadoMarcaAsync(id, activo);
 
-    public Task<IReadOnlyList<MedidorDisponibleDto>> ObtenerMedidoresDisponiblesAsync(string? buscar = null, int limite = 100) =>
-        _institutional.ObtenerMedidoresDisponiblesAsync(buscar, limite);
+    public async Task<IReadOnlyList<MedidorDisponibleDto>> ObtenerMedidoresDisponiblesAsync(string? buscar = null, int limite = 100)
+    {
+        limite = Math.Clamp(limite, 1, 500);
+
+        // dbo.Medidor todavía no se actualiza al ejecutar un cambio porque COSAALT
+        // aún debe confirmar el mecanismo institucional autorizado. Por eso un
+        // medidor que ya fue instalado por esta app podría seguir figurando como
+        // PERFECTO + L + reg_soc=0 en dbo. Además de la regla institucional,
+        // excluimos los códigos ya usados en medidores.EjecucionCambio.
+        // Pedimos un lote mayor antes de filtrar para no devolver una lista corta.
+        var candidatos = await _institutional.ObtenerMedidoresDisponiblesAsync(
+            buscar,
+            Math.Min(500, Math.Max(limite, limite * 3)));
+
+        if (candidatos.Count == 0)
+            return candidatos;
+
+        var codigos = candidatos.Select(x => x.CodMedidor).ToArray();
+        var usados = await _context.EjecucionesCambio
+            .AsNoTracking()
+            .Where(e => e.CodMedidorInstalado.HasValue && codigos.Contains(e.CodMedidorInstalado.Value))
+            .Select(e => e.CodMedidorInstalado!.Value)
+            .Distinct()
+            .ToListAsync();
+
+        if (usados.Count == 0)
+            return candidatos.Take(limite).ToList();
+
+        var usadosSet = usados.ToHashSet();
+        return candidatos
+            .Where(x => !usadosSet.Contains(x.CodMedidor))
+            .Take(limite)
+            .ToList();
+    }
 }
 
 public class SqlSolicitudRepository : ISolicitudRepository
@@ -143,8 +180,8 @@ public class SqlSolicitudRepository : ISolicitudRepository
         var hoy = DateTime.Today;
         var completadasHoy = await _context.EjecucionesCambio.AsNoTracking().CountAsync(e => e.FechaHoraEjecucion >= hoy && e.FechaHoraEjecucion < hoy.AddDays(1));
         var resumen = new DashboardResumenDto(
-            items.Count(x => x.TipoOrigen == "ODECO" && x.EsUrgente && x.Estado != "Completada"),
-            0,
+            items.Count(x => x.TipoOrigen == "ODECO" && x.Estado == "Pendiente"),
+            items.Count(x => x.TipoOrigen == "LECTURA" && x.Estado == "Pendiente"),
             completadasHoy);
         return new SolicitudesResponseDto(resumen, items);
     }

@@ -32,6 +32,7 @@ class _CambioMedidorScreenState extends ConsumerState<CambioMedidorScreen> {
   int? _motivoId;
   int? _codMedidorSeleccionado;
   Timer? _searchDebounce;
+  String? _prefilledLocalId;
 
   @override
   void initState() {
@@ -57,6 +58,34 @@ class _CambioMedidorScreenState extends ConsumerState<CambioMedidorScreen> {
       if (item.codMedidor == code) return item;
     }
     return null;
+  }
+
+  void _aplicarDraftPendiente(CambioMedidorState state) {
+    final draft = state.draftPendiente;
+    if (draft == null || _prefilledLocalId == draft.localId) return;
+    _prefilledLocalId = draft.localId;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      MedidorDisponible? medidorActual;
+      for (final item in state.medidoresDisponibles) {
+        if (item.codMedidor == draft.codMedidorInstalado) {
+          medidorActual = item;
+          break;
+        }
+      }
+
+      _lecturaController.text = draft.lecturaRetiro.toString();
+      _observacionesController.text = draft.observaciones ?? '';
+      _buscarMedidorController.text = draft.numeroMedidorInstalado;
+      setState(() {
+        _motivoId = draft.idMotivo;
+        // Solo conservamos la selección anterior si el backend todavía la
+        // devuelve como disponible. Si ya fue utilizada, obligamos a elegir
+        // otro medidor para resolver el conflicto.
+        _codMedidorSeleccionado = medidorActual?.codMedidor;
+      });
+    });
   }
 
   Future<void> _buscar([String? texto]) async {
@@ -108,6 +137,7 @@ class _CambioMedidorScreenState extends ConsumerState<CambioMedidorScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(cambioMedidorControllerProvider);
+    _aplicarDraftPendiente(state);
     final controller = ref.read(cambioMedidorControllerProvider.notifier);
     final solicitud = state.solicitud;
     final seleccionado = _seleccionado(state);
@@ -157,6 +187,38 @@ class _CambioMedidorScreenState extends ConsumerState<CambioMedidorScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
+                      if (state.draftPendiente != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.actionBlue.withValues(alpha: .10),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.actionBlue.withValues(alpha: .35),
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.edit_note, color: AppColors.darkBlue),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _codMedidorSeleccionado == null
+                                      ? 'Revisión de trabajo pendiente. Los datos locales fueron recuperados. El medidor elegido anteriormente ya no está disponible; seleccione otro y vuelva a guardar.'
+                                      : 'Revisión de trabajo pendiente. Los datos locales fueron recuperados; puede corregirlos y volver a guardar antes de sincronizar.',
+                                  style: const TextStyle(
+                                    color: AppColors.darkBlue,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
 
                       const _SectionTitle(
                         icon: Icons.remove_circle_outline,

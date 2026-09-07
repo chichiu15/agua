@@ -24,6 +24,7 @@ class CambioMedidorState {
     this.errorMessage,
     this.successMessage,
     this.archivoLocal,
+    this.draftPendiente,
   });
 
   final Solicitud? solicitud;
@@ -37,6 +38,7 @@ class CambioMedidorState {
   final String? errorMessage;
   final String? successMessage;
   final String? archivoLocal;
+  final CambioMedidorDraft? draftPendiente;
 
   CambioMedidorState copyWith({
     Solicitud? solicitud,
@@ -50,6 +52,7 @@ class CambioMedidorState {
     String? errorMessage,
     String? successMessage,
     String? archivoLocal,
+    CambioMedidorDraft? draftPendiente,
     bool clearFotoRetirado = false,
     bool clearFotoNuevo = false,
   }) {
@@ -65,6 +68,7 @@ class CambioMedidorState {
       errorMessage: errorMessage,
       successMessage: successMessage,
       archivoLocal: archivoLocal ?? this.archivoLocal,
+      draftPendiente: draftPendiente ?? this.draftPendiente,
     );
   }
 }
@@ -99,10 +103,28 @@ class CambioMedidorController extends Notifier<CambioMedidorState> {
         repository.obtenerMedidoresDisponibles(),
       ]);
 
+      final user = ref.read(authControllerProvider).user;
+      final drafts = user == null
+          ? <CambioMedidorDraft>[]
+          : await ref.read(syncLocalServiceProvider).cargarDraftsPendientes(idUsuarioApp: user.id);
+      CambioMedidorDraft? pendiente;
+      for (final draft in drafts.reversed) {
+        if (draft.solicitudId == solicitudId) {
+          pendiente = draft;
+          break;
+        }
+      }
+
       state = CambioMedidorState(
         solicitud: results[0] as Solicitud,
         motivos: results[1] as List<MotivoCambio>,
         medidoresDisponibles: _ordenarMedidores(results[2] as List<MedidorDisponible>),
+        fotoRetirado: pendiente?.fotoMedidorRetirado,
+        fotoNuevo: pendiente?.fotoMedidorNuevo,
+        draftPendiente: pendiente,
+        successMessage: pendiente == null
+            ? null
+            : 'Se cargó el trabajo pendiente guardado en este dispositivo. Revise los datos y vuelva a guardar.',
       );
     } on EjecucionException catch (e) {
       state = CambioMedidorState(errorMessage: e.message);
