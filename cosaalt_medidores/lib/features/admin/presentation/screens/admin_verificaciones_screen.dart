@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -127,14 +128,47 @@ class _VerificationDetail extends ConsumerWidget {
     if (d == null) return const AdminCard(child: AdminEmpty('Selecciona una verificacion para consultar el ensayo y sus informes.', icon: Icons.fact_check_outlined));
     final r = d!.resumen;
     final ensayo = d!.ensayo;
+    final condiciones = _EnsayoCondiciones.fromRaw(ensayo?['condiciones']);
     String val(String key) => '${d!.datosSocio[key] ?? '-'}';
+    String datoEnsayo(String key, {String fallback = '-'}) {
+      final value = ensayo?[key];
+      if (value == null) return fallback;
+      final text = value.toString().trim();
+      return text.isEmpty ? fallback : text;
+    }
+    String conUnidad(String key, String? unidad) {
+      final value = datoEnsayo(key);
+      if (value == '-') return value;
+      final u = unidad?.trim() ?? '';
+      return u.isEmpty ? value : '$value $u';
+    }
     return AdminCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [Expanded(child: Text('VER-${r.idVerificacion}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900))), AdminStatusChip(r.resultado ?? r.estado)]),
       const SizedBox(height: 12),
       _Line('Socio', r.nombreCliente), _Line('CodCon', '${r.codCon}'), _Line('Direccion', val('direccion')), _Line('Medidor', '${val('numeroMedidor')} / ${val('marcaMedidor')}'), _Line('Mecanico', r.nombreMecanico), _Line('Fecha', adminDate(r.fecha, time: true)),
       const Divider(height: 24), const Text('Ensayo', style: TextStyle(fontWeight: FontWeight.w900)), const SizedBox(height: 7),
-      if (ensayo == null) const Text('La verificacion todavia no tiene datos de ensayo registrados.', style: TextStyle(color: Color(0xFF68737D))) else ...[
-        _Line('Condiciones', '${ensayo['condiciones'] ?? '-'}'), _Line('Lectura inicial / final', '${ensayo['lecturaInicial'] ?? '-'} / ${ensayo['lecturaFinal'] ?? '-'}'), _Line('Volumen patron', '${ensayo['volumenPatron'] ?? '-'}'), _Line('Volumen registrado', '${ensayo['volumenRegistrado'] ?? '-'}'), _Line('Caudal', '${ensayo['caudal'] ?? '-'}'), _Line('Error', '${ensayo['error'] ?? '-'} %'), _Line('Fugas', ensayo['fugas'] == true ? 'SI' : ensayo['fugas'] == false ? 'NO' : '-'), _Line('Observaciones', '${ensayo['observaciones'] ?? '-'}'),
+      if (ensayo == null)
+        const Text(
+          'La verificacion todavia no tiene datos de ensayo registrados.',
+          style: TextStyle(color: Color(0xFF68737D)),
+        )
+      else ...[
+        _Line('Condiciones', condiciones.descripcion),
+        _Line('Tipo de prueba', condiciones.tipoPrueba),
+        _Line('Instrumento / banco', condiciones.instrumentoBanco),
+        _Line('Identificacion', condiciones.identificacionBanco),
+        _Line('Trazabilidad / calibracion', condiciones.trazabilidadCalibracion),
+        _Line('Capacidad nominal Q3', condiciones.capacidadNominalQ3),
+        _Line('Tipo de caudal', condiciones.tipoCaudal),
+        _Line('Lectura inicial / final', '${datoEnsayo('lecturaInicial')} / ${datoEnsayo('lecturaFinal')}'),
+        _Line('Volumen patron', conUnidad('volumenPatron', condiciones.unidadVolumen)),
+        _Line('Volumen registrado', conUnidad('volumenRegistrado', condiciones.unidadVolumen)),
+        _Line('Caudal', conUnidad('caudal', condiciones.unidadCaudal)),
+        _Line('Error', datoEnsayo('error') == '-' ? '-' : '${datoEnsayo('error')} %'),
+        _Line('Parametro aplicado', condiciones.parametroNormativoCodigoAplicado),
+        _Line('Limite permitido', condiciones.limiteNormativoAplicado == '-' ? '-' : '${condiciones.limiteNormativoAplicado} %'),
+        _Line('Fugas', ensayo['fugas'] == true ? 'SI' : ensayo['fugas'] == false ? 'NO' : '-'),
+        _Line('Observaciones', datoEnsayo('observaciones')),
       ],
       const Divider(height: 24), Text('Participantes (${d!.participantes.length})', style: const TextStyle(fontWeight: FontWeight.w900)), const SizedBox(height: 5),
       if (d!.participantes.isEmpty) const Text('Sin participantes registrados.', style: TextStyle(color: Color(0xFF68737D))) else ...d!.participantes.map((p) => Text('• ${p['nombre'] ?? '-'} — ${p['rol'] ?? p['cargo'] ?? '-'}', style: const TextStyle(fontSize: 12))),
@@ -166,5 +200,86 @@ class _VerificationDetail extends ConsumerWidget {
     ]));
   }
 }
+
+class _EnsayoCondiciones {
+  const _EnsayoCondiciones({
+    required this.descripcion,
+    required this.tipoPrueba,
+    required this.instrumentoBanco,
+    required this.identificacionBanco,
+    required this.trazabilidadCalibracion,
+    required this.capacidadNominalQ3,
+    required this.tipoCaudal,
+    required this.unidadCaudal,
+    required this.unidadVolumen,
+    required this.parametroNormativoCodigoAplicado,
+    required this.limiteNormativoAplicado,
+  });
+
+  final String descripcion;
+  final String tipoPrueba;
+  final String instrumentoBanco;
+  final String identificacionBanco;
+  final String trazabilidadCalibracion;
+  final String capacidadNominalQ3;
+  final String tipoCaudal;
+  final String? unidadCaudal;
+  final String? unidadVolumen;
+  final String parametroNormativoCodigoAplicado;
+  final String limiteNormativoAplicado;
+
+  static String _text(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value == null) return '-';
+    final text = value.toString().trim();
+    return text.isEmpty ? '-' : text;
+  }
+
+  static String? _optional(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
+  }
+
+  factory _EnsayoCondiciones.fromRaw(dynamic raw) {
+    Map<String, dynamic> json = const <String, dynamic>{};
+    String fallbackDescripcion = '-';
+
+    if (raw is Map) {
+      json = raw.map((key, value) => MapEntry(key.toString(), value));
+    } else if (raw is String) {
+      final text = raw.trim();
+      if (text.isNotEmpty) {
+        fallbackDescripcion = text;
+        try {
+          final decoded = jsonDecode(text);
+          if (decoded is Map) {
+            json = decoded.map((key, value) => MapEntry(key.toString(), value));
+          }
+        } catch (_) {
+          // Compatibilidad con verificaciones antiguas: Condiciones podia ser
+          // texto libre antes de almacenar los campos extendidos como JSON.
+        }
+      }
+    }
+
+    final descripcion = _text(json, 'descripcion');
+    return _EnsayoCondiciones(
+      descripcion: descripcion == '-' ? fallbackDescripcion : descripcion,
+      tipoPrueba: _text(json, 'tipoPrueba'),
+      instrumentoBanco: _text(json, 'instrumentoBanco'),
+      identificacionBanco: _text(json, 'identificacionBanco'),
+      trazabilidadCalibracion: _text(json, 'trazabilidadCalibracion'),
+      capacidadNominalQ3: _text(json, 'capacidadNominalQ3'),
+      tipoCaudal: _text(json, 'tipoCaudal'),
+      unidadCaudal: _optional(json, 'unidadCaudal'),
+      unidadVolumen: _optional(json, 'unidadVolumen'),
+      parametroNormativoCodigoAplicado: _text(json, 'parametroNormativoCodigoAplicado'),
+      limiteNormativoAplicado: _text(json, 'limiteNormativoAplicado'),
+    );
+  }
+}
+
 class _Line extends StatelessWidget { const _Line(this.label, this.value); final String label, value; @override Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [SizedBox(width: 115, child: Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF68737D), fontWeight: FontWeight.w700))), Expanded(child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))) ])); }
 class _DateBox extends StatelessWidget { const _DateBox({required this.label, required this.value, required this.onChanged}); final String label; final DateTime? value; final ValueChanged<DateTime?> onChanged; @override Widget build(BuildContext context) => SizedBox(width: 145, child: InkWell(onTap: () async { final d = await showDatePicker(context: context, initialDate: value ?? DateTime.now(), firstDate: DateTime(2020), lastDate: DateTime.now().add(const Duration(days: 365))); if (d != null) onChanged(d); }, child: InputDecorator(decoration: InputDecoration(labelText: label, border: const OutlineInputBorder(), isDense: true, suffixIcon: value == null ? const Icon(Icons.calendar_month, size: 18) : IconButton(onPressed: () => onChanged(null), icon: const Icon(Icons.close, size: 17))), child: Text(adminDate(value))))); }
