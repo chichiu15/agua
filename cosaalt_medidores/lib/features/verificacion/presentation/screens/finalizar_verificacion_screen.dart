@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/app_router.dart';
 import '../../domain/entities/verificacion_mecanico.dart';
 import '../controllers/verificacion_controller.dart';
+import '../widgets/mecanico_shell.dart';
 import '../widgets/verificacion_ui.dart';
 
 class FinalizarVerificacionScreen extends ConsumerStatefulWidget {
@@ -310,7 +311,7 @@ class _FinalizarVerificacionScreenState
             : '';
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: MecanicoPageAppBar(
         title: const Text(
           'Revisión y finalización',
         ),

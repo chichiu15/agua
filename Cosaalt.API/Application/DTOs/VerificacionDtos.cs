@@ -198,8 +198,17 @@ public record InformeVerificacionDto(
     string? Observaciones);
 
 public record GenerarInformeRequestDto(
-    string? Observaciones,
-    string? NombreResponsable);
+    string? Observaciones = null,
+    string? NombreResponsable = null,
+    string? CargoResponsable = null,
+    string? NombreDestinatario = null,
+    string? CargoDestinatario = null,
+    string? Referencia = null,
+    string? LugarVerificacion = null,
+    string? TipoEnsayoTexto = null,
+    string? DescripcionTecnica = null,
+    string? ConclusionAdicional = null,
+    string? Recomendacion = null);
 
 public record GenerarInformeResponseDto(
     InformeVerificacionDto Informe,

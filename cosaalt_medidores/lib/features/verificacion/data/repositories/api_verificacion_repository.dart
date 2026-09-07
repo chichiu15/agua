@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -12,9 +13,85 @@ import '../../domain/entities/verificacion_mecanico.dart';
 
 class VerificacionApiException implements Exception {
   const VerificacionApiException(this.message);
+
   final String message;
+
   @override
   String toString() => message;
+}
+
+/// M10: transforma cualquier error técnico en un mensaje apto para usuario.
+/// No expone SocketException, ClientException, stack traces ni detalles SQL.
+String mensajeVerificacionError(
+  Object error, {
+  String fallback =
+      'No se pudo completar la operación. Intente nuevamente.',
+}) {
+  if (error is VerificacionApiException) {
+    return _mensajeSeguro(error.message, fallback: fallback);
+  }
+
+  if (error is TimeoutException) {
+    return 'No se pudo conectar con el servidor. Verifique la red o VPN e intente nuevamente.';
+  }
+
+  if (error is SocketException || error is http.ClientException) {
+    return 'No se pudo conectar con el servidor. Verifique la red o VPN e intente nuevamente.';
+  }
+
+  if (error is FileSystemException) {
+    return 'No se pudo guardar o acceder al archivo. Verifique los permisos e intente nuevamente.';
+  }
+
+  if (error is FormatException) {
+    return 'El servidor devolvió una respuesta no válida. Intente nuevamente.';
+  }
+
+  return _mensajeSeguro(error.toString(), fallback: fallback);
+}
+
+String _mensajeSeguro(
+  String? value, {
+  required String fallback,
+}) {
+  final text = value?.trim() ?? '';
+  if (text.isEmpty) return fallback;
+
+  final lower = text.toLowerCase();
+
+  if (lower.contains('socketexception') ||
+      lower.contains('clientexception') ||
+      lower.contains('connection refused') ||
+      lower.contains('failed host lookup') ||
+      lower.contains('connection reset') ||
+      lower.contains('network is unreachable') ||
+      lower.contains('timed out') ||
+      lower.contains('timeoutexception')) {
+    return 'No se pudo conectar con el servidor. Verifique la red o VPN e intente nuevamente.';
+  }
+
+  if (lower.contains('sqlexception') ||
+      lower.contains('microsoft.data') ||
+      lower.contains('system.data') ||
+      lower.contains('stack trace') ||
+      lower.contains('#0 ') ||
+      lower.contains(' at ')) {
+    return fallback;
+  }
+
+  var clean = text;
+  const prefixes = <String>[
+    'Exception: ',
+    'VerificacionApiException: ',
+  ];
+
+  for (final prefix in prefixes) {
+    if (clean.startsWith(prefix)) {
+      clean = clean.substring(prefix.length).trim();
+    }
+  }
+
+  return clean.isEmpty ? fallback : clean;
 }
 
 class ApiVerificacionRepository {
@@ -297,12 +374,39 @@ class ApiVerificacionRepository {
     int idVerificacion, {
     String? observaciones,
     String? nombreResponsable,
+    String? cargoResponsable,
+    String? nombreDestinatario,
+    String? cargoDestinatario,
+    String? referencia,
+    String? lugarVerificacion,
+    String? tipoEnsayoTexto,
+    String? descripcionTecnica,
+    String? conclusionAdicional,
+    String? recomendacion,
   }) async {
     final body = {
       if (observaciones != null && observaciones.trim().isNotEmpty)
         'observaciones': observaciones,
       if (nombreResponsable != null && nombreResponsable.trim().isNotEmpty)
         'nombreResponsable': nombreResponsable,
+      if (cargoResponsable != null && cargoResponsable.trim().isNotEmpty)
+        'cargoResponsable': cargoResponsable,
+      if (nombreDestinatario != null && nombreDestinatario.trim().isNotEmpty)
+        'nombreDestinatario': nombreDestinatario,
+      if (cargoDestinatario != null && cargoDestinatario.trim().isNotEmpty)
+        'cargoDestinatario': cargoDestinatario,
+      if (referencia != null && referencia.trim().isNotEmpty)
+        'referencia': referencia,
+      if (lugarVerificacion != null && lugarVerificacion.trim().isNotEmpty)
+        'lugarVerificacion': lugarVerificacion,
+      if (tipoEnsayoTexto != null && tipoEnsayoTexto.trim().isNotEmpty)
+        'tipoEnsayoTexto': tipoEnsayoTexto,
+      if (descripcionTecnica != null && descripcionTecnica.trim().isNotEmpty)
+        'descripcionTecnica': descripcionTecnica,
+      if (conclusionAdicional != null && conclusionAdicional.trim().isNotEmpty)
+        'conclusionAdicional': conclusionAdicional,
+      if (recomendacion != null && recomendacion.trim().isNotEmpty)
+        'recomendacion': recomendacion,
     };
     final response = await http
         .post(
@@ -461,14 +565,60 @@ class ApiVerificacionRepository {
     return '$y-$m-$d';
   }
 
-  String _leerMensajeError(http.Response response, {required String fallback}) {
+  String _leerMensajeError(
+    http.Response response, {
+    required String fallback,
+  }) {
+    String? mensajeServidor;
+
     try {
       final body = jsonDecode(response.body);
       if (body is Map<String, dynamic>) {
-        final mensaje = body['mensaje'] ?? body['message'] ?? body['title'];
-        if (mensaje is String && mensaje.trim().isNotEmpty) return mensaje;
+        final mensaje =
+            body['mensaje'] ?? body['message'] ?? body['title'];
+        if (mensaje is String && mensaje.trim().isNotEmpty) {
+          mensajeServidor = mensaje.trim();
+        }
       }
-    } catch (_) {}
-    return fallback;
+    } catch (_) {
+      // La respuesta puede no ser JSON. Nunca mostramos el body crudo.
+    }
+
+    if (mensajeServidor != null) {
+      final seguro = _mensajeSeguro(
+        mensajeServidor,
+        fallback: fallback,
+      );
+      if (seguro != fallback || !_pareceTecnico(mensajeServidor)) {
+        return seguro;
+      }
+    }
+
+    switch (response.statusCode) {
+      case 401:
+      case 403:
+        return 'Su sesión no está autorizada. Inicie sesión nuevamente.';
+      case 408:
+      case 504:
+        return 'No se pudo conectar con el servidor. Intente nuevamente.';
+      case 503:
+        return 'La VPN o la base institucional no están disponibles.';
+      case 409:
+        return mensajeServidor == null
+            ? 'La operación no puede completarse porque los datos cambiaron.'
+            : _mensajeSeguro(mensajeServidor, fallback: fallback);
+      default:
+        return fallback;
+    }
+  }
+
+  bool _pareceTecnico(String value) {
+    final lower = value.toLowerCase();
+    return lower.contains('exception') ||
+        lower.contains('stack') ||
+        lower.contains('microsoft.data') ||
+        lower.contains('system.') ||
+        lower.contains('sql') ||
+        lower.contains('#0 ');
   }
 }

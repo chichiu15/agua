@@ -1,0 +1,189 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R 10 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /TimesNewRomanPSMT /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /TimesNewRomanPS-BoldMT /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /TimesNewRomanPS-ItalicMT /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 4152 >>
+stream
+BT /F2 13.5 Tf 152.38 790 Td 0 0 0 rg (INFORME TÉCNICO DE VERIFICACIÓN METROLÓGICA) Tj ET
+BT /F2 10.5 Tf 58 750 Td 0 0 0 rg (DE:) Tj ET
+BT /F1 10.5 Tf 150 750 Td 0 0 0 rg (Tec. Nal. Int. Mamerto Gutiérrez L.) Tj ET
+BT /F2 11.2 Tf 58 732 Td 0 0 0 rg (RESPONSABLE LABORATORIO DE MEDIDORES COSAALT R.L.) Tj ET
+BT /F2 10.5 Tf 58 713.8 Td 0 0 0 rg (A:) Tj ET
+BT /F1 10.5 Tf 150 713.8 Td 0 0 0 rg (Gilberto Torrez N.) Tj ET
+BT /F2 11.2 Tf 58 695.8 Td 0 0 0 rg (JEFE DPTO. SERVICIO AL CLIENTE - ODECO COSAALT R.L.) Tj ET
+BT /F2 10.5 Tf 58 677.6 Td 0 0 0 rg (REF.:) Tj ET
+BT /F3 10.5 Tf 96 677.6 Td 0 0 0 rg (Informe Técnico sobre Verificación del Micromedidor HDM 3 m³/h N° 682733) Tj ET
+BT /F2 10.5 Tf 58 660.6 Td 0 0 0 rg (FECHA:) Tj ET
+BT /F1 10.5 Tf 150 660.6 Td 0 0 0 rg (07 de Septiembre 2026) Tj ET
+BT /F2 11.6 Tf 58 630.6 Td 0 0 0 rg (I. DATOS GENERALES DEL MEDIDOR) Tj ET
+BT /F2 10.5 Tf 58 610.6 Td 0 0 0 rg (Parámetro) Tj ET
+BT /F2 10.5 Tf 223 610.6 Td 0 0 0 rg (Detalle) Tj ET
+BT /F2 10.5 Tf 58 592.6 Td 0 0 0 rg (Usuario:) Tj ET
+BT /F1 10.5 Tf 223 592.6 Td 0 0 0 rg (CASTRO BALDIVIEZO JOSE G.) Tj ET
+BT /F2 10.5 Tf 58 576.6 Td 0 0 0 rg (Código:) Tj ET
+BT /F1 10.5 Tf 223 576.6 Td 0 0 0 rg (No registrado) Tj ET
+BT /F2 10.5 Tf 58 560.6 Td 0 0 0 rg (Registro de Usuario:) Tj ET
+BT /F1 10.5 Tf 223 560.6 Td 0 0 0 rg (12558) Tj ET
+BT /F2 10.5 Tf 58 544.6 Td 0 0 0 rg (Marca:) Tj ET
+BT /F1 10.5 Tf 223 544.6 Td 0 0 0 rg (HDM) Tj ET
+BT /F2 10.5 Tf 58 528.6 Td 0 0 0 rg (Número de Serie:) Tj ET
+BT /F1 10.5 Tf 223 528.6 Td 0 0 0 rg (682733) Tj ET
+BT /F2 10.5 Tf 58 512.6 Td 0 0 0 rg (Capacidad Nominal \(Q3\):) Tj ET
+BT /F1 10.5 Tf 223 512.6 Td 0 0 0 rg (3 m³/h) Tj ET
+BT /F2 10.5 Tf 58 496.6 Td 0 0 0 rg (Lectura Inicial:) Tj ET
+BT /F1 10.5 Tf 223 496.6 Td 0 0 0 rg (100,00 m³) Tj ET
+BT /F2 10.5 Tf 58 480.6 Td 0 0 0 rg (Fecha de Verificación:) Tj ET
+BT /F1 10.5 Tf 223 480.6 Td 0 0 0 rg (06 de Septiembre 2026) Tj ET
+BT /F2 10.5 Tf 58 464.6 Td 0 0 0 rg (Lugar de Verificación:) Tj ET
+BT /F1 10.5 Tf 223 464.6 Td 0 0 0 rg (Domicilio del usuario - QA E2E - Plaza Los) Tj ET
+BT /F1 10.5 Tf 223 448.6 Td 0 0 0 rg (Laureles - Punto 11) Tj ET
+BT /F2 10.5 Tf 58 432.6 Td 0 0 0 rg (Tipo de ensayo:) Tj ET
+BT /F1 10.5 Tf 223 432.6 Td 0 0 0 rg (Verificación metrológica in situ con banco) Tj ET
+BT /F1 10.5 Tf 223 416.6 Td 0 0 0 rg (portátil de referencia) Tj ET
+BT /F2 11.6 Tf 58 388.6 Td 0 0 0 rg (II. OBJETIVO DE LA PRUEBA) Tj ET
+BT /F1 10.5 Tf 58 368.6 Td 0 0 0 rg (Determinar el estado de calibración y exactitud metrológica del micromedidor verificado,) Tj ET
+BT /F1 10.5 Tf 58 354.4 Td 0 0 0 rg (conforme a los criterios establecidos en la Norma Boliviana NB ISO 4064 para medidores) Tj ET
+BT /F1 10.5 Tf 58 340.2 Td 0 0 0 rg (de agua, con el fin de comprobar si el instrumento se encuentra dentro de los límites de) Tj ET
+BT /F1 10.5 Tf 58 326 Td 0 0 0 rg (error aplicables para su correcta utilización en la medición del servicio de agua) Tj ET
+BT /F1 10.5 Tf 58 311.8 Td 0 0 0 rg (potable.) Tj ET
+BT /F2 11.6 Tf 58 282.6 Td 0 0 0 rg (III. PERSONAL PARTICIPANTE) Tj ET
+BT /F1 10.5 Tf 58 262.6 Td 0 0 0 rg (La prueba fue realizada en presencia de:) Tj ET
+BT /F1 10.5 Tf 76 245.4 Td 0 0 0 rg (.) Tj ET
+BT /F2 10.5 Tf 92 245.4 Td 0 0 0 rg (Personal de COSAALT R.L.:) Tj ET
+BT /F1 9 Tf 100 228.4 Td 0 0 0 rg (o) Tj ET
+BT /F1 10.5 Tf 118 228.4 Td 0 0 0 rg (Juan Pérez - Técnico - Técnico verificador) Tj ET
+BT /F1 9 Tf 100 212.4 Td 0 0 0 rg (o) Tj ET
+BT /F1 10.5 Tf 118 212.4 Td 0 0 0 rg (Técnico Verificador \(mecanico\).) Tj ET
+BT /F1 10.5 Tf 58 196.4 Td 0 0 0 rg (El procedimiento se desarrolló por solicitud registrada con origen LECTURA -) Tj ET
+BT /F1 10.5 Tf 58 182.2 Td 0 0 0 rg (QA-LECTURA-01.) Tj ET
+BT /F2 11.6 Tf 58 156 Td 0 0 0 rg (IV. DESCRIPCIÓN DE LA PRUEBA REALIZADA) Tj ET
+BT /F2 10.5 Tf 74 136 Td 0 0 0 rg (1.) Tj ET
+BT /F1 10.5 Tf 100 136 Td 0 0 0 rg (Se utilizó Banco de prueba COSAALT, identificado como BP-01, con trazabilidad) Tj ET
+BT /F1 10.5 Tf 100 121.8 Td 0 0 0 rg (CAL-2026-01, bajo condiciones registradas para la verificación y con la) Tj ET
+BT /F1 10.5 Tf 100 107.6 Td 0 0 0 rg (trazabilidad disponible en el sistema.) Tj ET
+
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 4935 >>
+stream
+BT /F1 10.5 Tf 76 790 Td 0 0 0 rg (La verificación fue realizada mediante banco portátil de prueba, efectuando el) Tj ET
+BT /F1 10.5 Tf 76 775.8 Td 0 0 0 rg (control de las lecturas inicial y final del micromedidor y comparando el) Tj ET
+BT /F1 10.5 Tf 76 761.6 Td 0 0 0 rg (volumen registrado con el volumen patrón establecido para el ensayo.) Tj ET
+BT /F2 10.5 Tf 86 744.4 Td 0 0 0 rg (Condiciones del Ensayo:) Tj ET
+BT /F1 9 Tf 98 730.2 Td 0 0 0 rg (o) Tj ET
+BT /F1 10.5 Tf 116 730.2 Td 0 0 0 rg (Tipo de prueba: Verificación metrológica in situ con banco portátil de) Tj ET
+BT /F1 10.5 Tf 116 714.2 Td 0 0 0 rg (referencia.) Tj ET
+BT /F1 9 Tf 98 698.2 Td 0 0 0 rg (o) Tj ET
+BT /F1 10.5 Tf 116 698.2 Td 0 0 0 rg (Volumen patrón aplicado: 10,0000 m³.) Tj ET
+BT /F1 9 Tf 98 682.2 Td 0 0 0 rg (o) Tj ET
+BT /F1 10.5 Tf 116 682.2 Td 0 0 0 rg (Caudal de ensayo: Q3 permanente - 3 m³/h.) Tj ET
+BT /F1 9 Tf 98 666.2 Td 0 0 0 rg (o) Tj ET
+BT /F1 10.5 Tf 116 666.2 Td 0 0 0 rg (Condiciones registradas: Ensayo realizado en condiciones estables del) Tj ET
+BT /F1 10.5 Tf 116 650.2 Td 0 0 0 rg (banco de prueba..) Tj ET
+BT /F1 9 Tf 98 634.2 Td 0 0 0 rg (o) Tj ET
+BT /F1 10.5 Tf 116 634.2 Td 0 0 0 rg (Identificación / trazabilidad: BP-01 - CAL-2026-01.) Tj ET
+BT /F2 10.5 Tf 74 618.2 Td 0 0 0 rg (2.) Tj ET
+BT /F1 10.5 Tf 100 618.2 Td 0 0 0 rg (Caudal de ensayo: Q3 permanente, 3 m³/h.) Tj ET
+BT /F2 10.5 Tf 58 601 Td 0 0 0 rg (Resultados obtenidos:) Tj ET
+BT /F2 10.5 Tf 62 586.8 Td 0 0 0 rg (Descripción) Tj ET
+BT /F2 10.5 Tf 318 586.8 Td 0 0 0 rg (Valor) Tj ET
+BT /F1 10.5 Tf 62 568.8 Td 0 0 0 rg (Primera Lectura del medidor) Tj ET
+BT /F1 10.5 Tf 318 568.8 Td 0 0 0 rg (100,00 m³) Tj ET
+BT /F1 10.5 Tf 62 550.8 Td 0 0 0 rg (Segunda Lectura del medidor) Tj ET
+BT /F1 10.5 Tf 318 550.8 Td 0 0 0 rg (110,04 m³) Tj ET
+BT /F2 10.5 Tf 62 532.8 Td 0 0 0 rg (Volumen registrado por el medidor \(Vm\)) Tj ET
+BT /F2 10.5 Tf 318 532.8 Td 0 0 0 rg (10,0400 m³) Tj ET
+BT /F2 10.5 Tf 62 514.8 Td 0 0 0 rg (Volumen patrón real \(Vr\)) Tj ET
+BT /F2 10.5 Tf 318 514.8 Td 0 0 0 rg (10,0000 m³) Tj ET
+BT /F2 10.5 Tf 62 496.8 Td 0 0 0 rg (Error relativo \(%\)) Tj ET
+BT /F2 10.5 Tf 318 496.8 Td 0 0 0 rg (0,40 %) Tj ET
+BT /F2 10.5 Tf 58 473.8 Td 0 0 0 rg (Cálculo del error relativo:) Tj ET
+BT /F1 10.5 Tf 102.57 459.6 Td 0 0 0 rg (Error \(%\) = \(Vm - Vr\) / Vr x 100 = \(10,0400 - 10,0000\) / 10,0000 x 100 = 0,40 %) Tj ET
+BT /F2 11.6 Tf 58 429.6 Td 0 0 0 rg (V. INTERPRETACIÓN DE RESULTADOS SEGÚN NORMA NB ISO 4064) Tj ET
+BT /F1 10.5 Tf 58 409.6 Td 0 0 0 rg (El error relativo obtenido del micromedidor \(0,40 %\) se encuentra dentro del límite) Tj ET
+BT /F1 10.5 Tf 58 395.4 Td 0 0 0 rg (máximo permitido aplicado \(5,00 %\), correspondiente al parámetro normativo) Tj ET
+BT /F1 10.5 Tf 58 381.2 Td 0 0 0 rg (QA-CAUDAL-BAJO. Por lo tanto, el instrumento CUMPLE con el criterio metrológico) Tj ET
+BT /F1 10.5 Tf 58 367 Td 0 0 0 rg (evaluado.) Tj ET
+BT /F2 11.6 Tf 58 339.8 Td 0 0 0 rg (VI. CONCLUSIONES TÉCNICAS) Tj ET
+BT /F2 10.5 Tf 74 319.8 Td 0 0 0 rg (1.) Tj ET
+BT /F1 10.5 Tf 100 319.8 Td 0 0 0 rg (El micromedidor HDM N.° 682733 \(3 m³/h\) presenta un error relativo de 0,40 %,) Tj ET
+BT /F1 10.5 Tf 100 305.6 Td 0 0 0 rg (encontrándose dentro de los límites de error aplicables; por tanto, se considera) Tj ET
+BT /F1 10.5 Tf 100 291.4 Td 0 0 0 rg (metrológicamente conforme para las condiciones del ensayo realizado.) Tj ET
+BT /F2 10.5 Tf 74 274.2 Td 0 0 0 rg (2.) Tj ET
+BT /F1 10.5 Tf 100 274.2 Td 0 0 0 rg (Volumen registrado por el medidor \(Vm\): 10,0400 m³; volumen patrón real \(Vr\):) Tj ET
+BT /F1 10.5 Tf 100 260 Td 0 0 0 rg (10,0000 m³; error relativo: 0,40 %.) Tj ET
+BT /F2 10.5 Tf 74 242.8 Td 0 0 0 rg (3.) Tj ET
+BT /F1 10.5 Tf 100 242.8 Td 0 0 0 rg (Al momento de la inspección y/o revisión NO se evidenciaron fugas registradas.) Tj ET
+BT /F2 10.5 Tf 74 225.6 Td 0 0 0 rg (4.) Tj ET
+BT /F1 10.5 Tf 100 225.6 Td 0 0 0 rg (La lectura del medidor se considera confiable para el alcance y condiciones del) Tj ET
+BT /F1 10.5 Tf 100 211.4 Td 0 0 0 rg (ensayo realizado.) Tj ET
+BT /F2 10.5 Tf 74 194.2 Td 0 0 0 rg (5.) Tj ET
+BT /F1 10.5 Tf 100 194.2 Td 0 0 0 rg (El ensayo fue realizado bajo supervisión técnica, con registro de) Tj ET
+BT /F1 10.5 Tf 100 180 Td 0 0 0 rg (instrumento/banco \(Banco de prueba COSAALT\) y trazabilidad \(CAL-2026-01\).) Tj ET
+BT /F2 10.5 Tf 74 162.8 Td 0 0 0 rg (6.) Tj ET
+BT /F1 10.5 Tf 100 162.8 Td 0 0 0 rg (Se concluye que, para las condiciones del ensayo y el criterio normativo) Tj ET
+BT /F1 10.5 Tf 100 148.6 Td 0 0 0 rg (aplicado, el volumen registrado por el medidor guarda correspondencia) Tj ET
+BT /F1 10.5 Tf 100 134.4 Td 0 0 0 rg (metrológica aceptable con el volumen patrón utilizado.) Tj ET
+BT /F1 10.5 Tf 58 117.2 Td 0 0 0 rg (Los valores obtenidos durante el ensayo fueron registrados y evaluados conforme a las) Tj ET
+BT /F1 10.5 Tf 58 103 Td 0 0 0 rg (condiciones de prueba establecidas.) Tj ET
+
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 11 0 R >>
+endobj
+11 0 obj
+<< /Length 781 >>
+stream
+BT /F2 11.6 Tf 58 786 Td 0 0 0 rg (VII. RECOMENDACIÓN) Tj ET
+BT /F1 10.5 Tf 58 766 Td 0 0 0 rg (Se recomienda mantener el micromedidor en operación, considerando que el resultado) Tj ET
+BT /F1 10.5 Tf 58 751.8 Td 0 0 0 rg (obtenido se encuentra dentro del límite de error permitido para las condiciones del) Tj ET
+BT /F1 10.5 Tf 58 737.6 Td 0 0 0 rg (ensayo realizado.) Tj ET
+BT /F1 10.5 Tf 58 720.4 Td 0 0 0 rg (Es cuanto se informa para fines consiguientes.) Tj ET
+BT /F1 10.5 Tf 58 703.2 Td 0 0 0 rg (Atentamente,) Tj ET
+BT /F1 10.5 Tf 218.54 632 Td 0 0 0 rg (________________________________) Tj ET
+BT /F1 10.5 Tf 211.14 614 Td 0 0 0 rg (Tec. Nal. Int. Mamerto Gutiérrez L.) Tj ET
+BT /F2 10.3 Tf 171.33 597 Td 0 0 0 rg (RESPONSABLE LABORATORIO DE MEDIDORES COSAALT R.L.) Tj ET
+
+endstream
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000134 00000 n 
+0000000239 00000 n 
+0000000349 00000 n 
+0000000461 00000 n 
+0000000607 00000 n 
+0000004811 00000 n 
+0000004957 00000 n 
+0000009944 00000 n 
+0000010092 00000 n 
+trailer
+<< /Size 12 /Root 1 0 R >>
+startxref
+10925
+%%EOF

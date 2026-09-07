@@ -262,8 +262,7 @@ class _Paso2ReordenarScreenState extends ConsumerState<Paso2ReordenarScreen> {
                     buildDefaultDragHandles: false,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
                     itemCount: _puntos.length,
-                    onReorder: (oldIndex, newIndex) {
-                      if (oldIndex < newIndex) newIndex -= 1;
+                    onReorderItem: (oldIndex, newIndex) {
                       final item = _puntos.removeAt(oldIndex);
                       _puntos.insert(newIndex, item);
                       _guardarOrden();

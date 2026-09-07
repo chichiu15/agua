@@ -9,6 +9,7 @@ namespace Cosaalt.API.Controllers;
 
 [ApiController]
 [Route("api/reportes")]
+[TypeFilter(typeof(VerificacionExceptionFilter))]
 public class ReportesController : ControllerBase
 {
     private readonly AdminService _service;
@@ -151,24 +152,16 @@ public class ReportesController : ControllerBase
         // El PDF individual solo existe cuando hay un informe real almacenado en SQL.
         var context = HttpContext.RequestServices.GetService(typeof(CosaaltDbContext)) as CosaaltDbContext;
         if (context is null)
-            return NotFound(new { message = "El PDF individual esta disponible cuando el informe ha sido generado y almacenado en el sistema." });
+            return NotFound(new { codigo = "PDF_NO_DISPONIBLE", mensaje = "El PDF individual está disponible cuando el informe ha sido generado y almacenado en el sistema." });
 
-        Cosaalt.API.Domain.Entities.InformeVerificacion? informe;
-        try
-        {
-            informe = await context.InformesVerificacion
-                .AsNoTracking()
-                .FirstOrDefaultAsync(i => i.Id == idInforme);
-        }
-        catch (Microsoft.Data.SqlClient.SqlException)
-        {
-            return NotFound(new { message = "El informe tecnico aun no esta disponible para descarga." });
-        }
+        var informe = await context.InformesVerificacion
+            .AsNoTracking()
+            .FirstOrDefaultAsync(i => i.Id == idInforme);
 
         if (informe is null)
-            return NotFound(new { message = "No se encontro el informe solicitado." });
+            return NotFound(new { codigo = "INFORME_NO_ENCONTRADO", mensaje = "No se encontró el informe solicitado." });
         if (string.IsNullOrWhiteSpace(informe.RutaPdf))
-            return NotFound(new { message = "El informe tecnico aun no tiene un PDF generado." });
+            return NotFound(new { codigo = "PDF_NO_GENERADO", mensaje = "El informe técnico aún no tiene un PDF generado." });
 
         var ruta = informe.RutaPdf.Trim();
         string? physicalPath = null;
@@ -186,11 +179,11 @@ public class ReportesController : ControllerBase
         }
 
         if (!System.IO.File.Exists(physicalPath))
-            return NotFound(new { message = "El PDF fue registrado, pero el archivo no esta disponible en el servidor." });
+            return NotFound(new { codigo = "ARCHIVO_PDF_NO_DISPONIBLE", mensaje = "El PDF fue registrado, pero el archivo no está disponible en el servidor." });
 
         var bytes = await System.IO.File.ReadAllBytesAsync(physicalPath);
         var nombreVersionado =
-    $"{informe.NroInforme}_v{informe.VersionInforme}";
+            $"{informe.NroInforme}_v{informe.VersionInforme}";
 
         var safe = string.Join(
             "_",

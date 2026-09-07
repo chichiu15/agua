@@ -695,13 +695,13 @@ class _HistorialCard extends StatelessWidget {
   }
 
   void _abrirDetalle(BuildContext context) {
-    context.go(
+    context.push<void>(
       '${AppRoutes.mecanicoHome}/verificacion/${item.idVerificacion}',
     );
   }
 
   void _abrirInforme(BuildContext context) {
-    context.go(
+    context.push<void>(
       '${AppRoutes.mecanicoHome}/verificacion/${item.idVerificacion}/informe',
     );
   }
