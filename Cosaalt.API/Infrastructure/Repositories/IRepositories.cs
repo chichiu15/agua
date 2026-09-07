@@ -73,7 +73,13 @@ public interface IVerificacionRepository
     Task<IReadOnlyList<VerificacionDto>> ObtenerVerificacionesAsync(int idMecanico);
     Task<VerificacionDto?> ObtenerVerificacionAsync(int id);
     Task<DatosSocioMedidorDto?> ObtenerDatosSocioMedidorAsync(int idVerificacion);
-    Task<VerificacionDto?> GuardarEnsayoAsync(int idVerificacion, decimal? volumenRegistrado, decimal? error, GuardarEnsayoRequestDto request);
+    Task<VerificacionDto?> GuardarEnsayoAsync(int idVerificacion, decimal? volumenRegistrado, decimal? error, int? idParametroNormativo, string? resultado, GuardarEnsayoRequestDto request);
+    Task<VerificacionDto?> GuardarParticipantesAsync(int idVerificacion, IReadOnlyList<ParticipanteVerificacionDto> participantes);
+    Task<VerificacionDashboardDto> ObtenerDashboardAsync(int idMecanico);
+    Task<VerificacionHistorialResponseDto> ObtenerHistorialAsync(int idMecanico, VerificacionHistorialFiltro filtro);
+    Task<VerificacionDto?> FinalizarAsync(int idVerificacion);
+    Task<IReadOnlyList<InformeVerificacionDto>> ObtenerInformesAsync(int idVerificacion);
+    Task<GenerarInformeResponseDto> GenerarInformeAsync(int idVerificacion, GenerarInformeRequestDto request);
 }
 public interface IAdminRepository
 {

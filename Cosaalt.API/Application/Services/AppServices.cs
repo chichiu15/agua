@@ -229,59 +229,308 @@ public class SincronizacionService
 public class VerificacionService
 {
     private readonly IVerificacionRepository _repository;
+    private readonly IParametroNormativoRepository _parametros;
 
-    public VerificacionService(IVerificacionRepository repository) => _repository = repository;
+    public VerificacionService(
+        IVerificacionRepository repository,
+        IParametroNormativoRepository parametros)
+    {
+        _repository = repository;
+        _parametros = parametros;
+    }
 
-    public Task<IReadOnlyList<SolicitudVerificacionDto>> ObtenerSolicitudesAsync() =>
+    public Task<IReadOnlyList<SolicitudVerificacionDto>>
+        ObtenerSolicitudesAsync() =>
         _repository.ObtenerSolicitudesAsync();
 
-    public Task<TomarVerificacionResponseDto> TomarAsync(TomarVerificacionRequestDto request) =>
+    public Task<TomarVerificacionResponseDto> TomarAsync(
+        TomarVerificacionRequestDto request) =>
         _repository.TomarAsync(request);
 
-    public Task<IReadOnlyList<VerificacionDto>> ObtenerVerificacionesAsync(int idMecanico) =>
-        _repository.ObtenerVerificacionesAsync(idMecanico);
+    public Task<IReadOnlyList<VerificacionDto>>
+        ObtenerVerificacionesAsync(
+            int idMecanico) =>
+        _repository.ObtenerVerificacionesAsync(
+            idMecanico);
 
-    public Task<VerificacionDto?> ObtenerVerificacionAsync(int id) =>
+    public Task<VerificacionDto?>
+        ObtenerVerificacionAsync(int id) =>
         _repository.ObtenerVerificacionAsync(id);
 
-    public Task<DatosSocioMedidorDto?> ObtenerDatosSocioMedidorAsync(int idVerificacion) =>
-        _repository.ObtenerDatosSocioMedidorAsync(idVerificacion);
+    public Task<DatosSocioMedidorDto?>
+        ObtenerDatosSocioMedidorAsync(
+            int idVerificacion) =>
+        _repository.ObtenerDatosSocioMedidorAsync(
+            idVerificacion);
 
-    public async Task<EnsayoGuardadoResponseDto> GuardarEnsayoAsync(
-        int idVerificacion,
-        GuardarEnsayoRequestDto request)
+    public Task<VerificacionDashboardDto>
+        ObtenerDashboardAsync(
+            int idMecanico) =>
+        _repository.ObtenerDashboardAsync(
+            idMecanico);
+
+    public Task<VerificacionHistorialResponseDto>
+        ObtenerHistorialAsync(
+            int idMecanico,
+            VerificacionHistorialFiltro filtro) =>
+        _repository.ObtenerHistorialAsync(
+            idMecanico,
+            filtro);
+
+    public Task<VerificacionDto?>
+        FinalizarAsync(
+            int idVerificacion) =>
+        _repository.FinalizarAsync(
+            idVerificacion);
+
+    public Task<VerificacionDto?>
+        GuardarParticipantesAsync(
+            int idVerificacion,
+            IReadOnlyList<ParticipanteVerificacionDto>
+                participantes) =>
+        _repository.GuardarParticipantesAsync(
+            idVerificacion,
+            participantes);
+
+    public Task<IReadOnlyList<InformeVerificacionDto>>
+        ObtenerInformesAsync(
+            int idVerificacion) =>
+        _repository.ObtenerInformesAsync(
+            idVerificacion);
+
+    public Task<GenerarInformeResponseDto>
+        GenerarInformeAsync(
+            int idVerificacion,
+            GenerarInformeRequestDto request) =>
+        _repository.GenerarInformeAsync(
+            idVerificacion,
+            request);
+
+    public async Task<EnsayoGuardadoResponseDto>
+        GuardarEnsayoAsync(
+            int idVerificacion,
+            GuardarEnsayoRequestDto request)
     {
-        var volumenRegistrado = CalcularVolumen(request);
-        var error = CalcularError(request, volumenRegistrado);
+        var volumenRegistrado =
+            CalcularVolumen(request);
 
-        var actualizada = await _repository.GuardarEnsayoAsync(
-            idVerificacion, volumenRegistrado, error, request);
+        var calculo =
+            await CalcularConParametroAsync(
+                request,
+                volumenRegistrado);
+
+        /*
+         * M6:
+         *
+         * Guardamos también un snapshot del
+         * parámetro aplicado y su límite.
+         *
+         * No agregamos columnas a SQL.
+         * El repositorio lo serializa en
+         * Condiciones mediante
+         * EnsayoCamposProvisionales.
+         */
+        var requestConSnapshot =
+            request with
+            {
+                ParametroNormativoCodigoAplicado =
+                    calculo.Dto
+                        .ParametroNormativo,
+
+                LimiteNormativoAplicado =
+                    calculo.Dto
+                        .LimitePermitido
+            };
+
+        var actualizada =
+            await _repository.GuardarEnsayoAsync(
+                idVerificacion,
+                volumenRegistrado,
+                calculo.Dto.ErrorConSigno,
+                calculo.IdParametroNormativo,
+                calculo.Dto.Resultado,
+                requestConSnapshot);
 
         return new EnsayoGuardadoResponseDto(
-            IdVerificacion: idVerificacion,
-            IdEnsayo: actualizada?.Ensayo?.Id,
-            VolumenRegistrado: volumenRegistrado,
-            Error: error,
-            Mensaje: "Ensayo guardado correctamente.");
+            IdVerificacion:
+                idVerificacion,
+            IdEnsayo:
+                actualizada?.Ensayo?.Id,
+            VolumenRegistrado:
+                volumenRegistrado,
+            Error:
+                calculo.Dto.ErrorConSigno,
+            Mensaje:
+                "Ensayo guardado correctamente.",
+            Calculo:
+                calculo.Dto);
     }
 
-    private static decimal? CalcularVolumen(GuardarEnsayoRequestDto request)
+    public async Task<CalculoEnsayoDto>
+        CalcularAsync(
+            GuardarEnsayoRequestDto request,
+            decimal? volumenRegistrado = null)
     {
-        if (request.LecturaInicial is null || request.LecturaFinal is null)
-            return null;
-        return request.LecturaFinal.Value - request.LecturaInicial.Value;
+        var calculo =
+            await CalcularConParametroAsync(
+                request,
+                volumenRegistrado);
+
+        return calculo.Dto;
     }
 
-    private static decimal? CalcularError(GuardarEnsayoRequestDto request, decimal? volumenRegistrado)
+    private static int? IdParametro(
+        ParametroNormativoDto? parametro) =>
+        parametro?.Id;
+
+    private async Task<(
+        int? IdParametroNormativo,
+        CalculoEnsayoDto Dto)>
+        CalcularConParametroAsync(
+            GuardarEnsayoRequestDto request,
+            decimal? volumenRegistrado = null)
     {
+        volumenRegistrado ??=
+            CalcularVolumen(request);
+
+        /*
+         * M5/M6:
+         * no calculamos resultados técnicamente
+         * inválidos.
+         */
         if (volumenRegistrado is null
             || request.VolumenPatron is null
-            || request.VolumenPatron.Value == 0)
-            return null;
+            || request.VolumenPatron.Value <= 0)
+        {
+            return (
+                null,
+                new CalculoEnsayoDto(
+                    VolumenRegistrado:
+                        volumenRegistrado,
+                    VolumenPatron:
+                        request.VolumenPatron,
+                    Diferencia: null,
+                    ErrorConSigno: null,
+                    ErrorAbsoluto: null,
+                    LimitePermitido: null,
+                    ParametroNormativo: null,
+                    Resultado: null));
+        }
 
-        // |volumen medido - volumen patrón| / volumen patrón * 100
-        var diff = Math.Abs(volumenRegistrado.Value - request.VolumenPatron.Value);
-        return diff / request.VolumenPatron.Value * 100m;
+        var diferencia =
+            volumenRegistrado.Value -
+            request.VolumenPatron.Value;
+
+        /*
+         * Fórmula oficial del reparto M6:
+         *
+         * Error (%) =
+         * ((Vm - Vr) / Vr) × 100
+         */
+        var errorConSigno =
+            diferencia /
+            request.VolumenPatron.Value *
+            100m;
+
+        var errorAbsoluto =
+            Math.Abs(errorConSigno);
+
+        ParametroNormativoDto? parametro = null;
+
+        /*
+         * Solamente buscamos norma cuando
+         * existe un caudal válido.
+         */
+        if (request.Caudal.HasValue
+            && request.Caudal.Value > 0)
+        {
+            parametro =
+                await _parametros
+                    .ObtenerVigenteAsync(
+                        request.Caudal.Value,
+                        DateTime.Now);
+        }
+
+        decimal? limite = null;
+        string resultado;
+
+        if (parametro is null)
+        {
+            /*
+             * M6:
+             * ausencia de parámetro no significa
+             * NO CUMPLE.
+             */
+            resultado = "INDETERMINADO";
+        }
+        else
+        {
+            limite =
+                parametro.ErrorMaxPermitido;
+
+            resultado =
+                errorAbsoluto <= limite.Value
+                    ? "CUMPLE"
+                    : "NO CUMPLE";
+        }
+
+        /*
+         * IMPORTANTE:
+         *
+         * request.Fugas NO participa en
+         * esta decisión.
+         *
+         * La fuga queda registrada de forma
+         * independiente.
+         */
+        var dto =
+            new CalculoEnsayoDto(
+                VolumenRegistrado:
+                    volumenRegistrado,
+                VolumenPatron:
+                    request.VolumenPatron,
+                Diferencia:
+                    diferencia,
+                ErrorConSigno:
+                    errorConSigno,
+                ErrorAbsoluto:
+                    errorAbsoluto,
+                LimitePermitido:
+                    limite,
+                ParametroNormativo:
+                    parametro?.Codigo,
+                Resultado:
+                    resultado);
+
+        return (
+            IdParametro(parametro),
+            dto);
+    }
+
+    private static decimal? CalcularVolumen(
+        GuardarEnsayoRequestDto request)
+    {
+        if (request.LecturaInicial is null
+            || request.LecturaFinal is null)
+        {
+            return null;
+        }
+
+        /*
+         * Una segunda lectura menor a la
+         * primera no produce un Vm válido.
+         *
+         * Flutter ya lo valida en M5,
+         * pero también protegemos backend.
+         */
+        if (request.LecturaFinal.Value
+            < request.LecturaInicial.Value)
+        {
+            return null;
+        }
+
+        return request.LecturaFinal.Value
+             - request.LecturaInicial.Value;
     }
 }
 

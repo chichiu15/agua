@@ -189,7 +189,14 @@ public class ReportesController : ControllerBase
             return NotFound(new { message = "El PDF fue registrado, pero el archivo no esta disponible en el servidor." });
 
         var bytes = await System.IO.File.ReadAllBytesAsync(physicalPath);
-        var safe = string.Join("_", informe.NroInforme.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        var nombreVersionado =
+    $"{informe.NroInforme}_v{informe.VersionInforme}";
+
+        var safe = string.Join(
+            "_",
+            nombreVersionado.Split(
+                Path.GetInvalidFileNameChars(),
+                StringSplitOptions.RemoveEmptyEntries));
         if (string.IsNullOrWhiteSpace(safe)) safe = $"informe_{idInforme}";
         return File(bytes, "application/pdf", $"{safe}.pdf");
     }

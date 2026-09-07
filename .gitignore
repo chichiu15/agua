@@ -7,3 +7,7 @@ Migrations/
 # Credenciales de conexión: nunca se commitean (usar env var o secrets)
 appsettings.json
 appsettings.Development.json
+# Zips de intercambio con ChatGPT
+*.zip
+# PDFs de informes generados en runtime
+wwwroot/informes/

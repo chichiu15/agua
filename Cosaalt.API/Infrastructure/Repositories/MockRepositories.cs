@@ -349,6 +349,9 @@ public class MockUsuarioRepository : IUsuarioRepository
 
 public class MockVerificacionRepository : IVerificacionRepository
 {
+    private readonly List<VerificacionDto> _verificaciones = [];
+    private int _next = 1;
+
     public Task<IReadOnlyList<SolicitudVerificacionDto>> ObtenerSolicitudesAsync() =>
         Task.FromResult<IReadOnlyList<SolicitudVerificacionDto>>(Array.Empty<SolicitudVerificacionDto>());
 
@@ -359,7 +362,7 @@ public class MockVerificacionRepository : IVerificacionRepository
         Task.FromResult<IReadOnlyList<VerificacionDto>>(Array.Empty<VerificacionDto>());
 
     public Task<VerificacionDto?> ObtenerVerificacionAsync(int id) =>
-        Task.FromResult<VerificacionDto?>(null);
+        Task.FromResult(_verificaciones.FirstOrDefault(v => v.Id == id));
 
     public Task<DatosSocioMedidorDto?> ObtenerDatosSocioMedidorAsync(int idVerificacion) =>
         Task.FromResult<DatosSocioMedidorDto?>(null);
@@ -368,8 +371,66 @@ public class MockVerificacionRepository : IVerificacionRepository
         int idVerificacion,
         decimal? volumenRegistrado,
         decimal? error,
-        GuardarEnsayoRequestDto request) =>
-        Task.FromResult<VerificacionDto?>(null);
+        int? idParametroNormativo,
+        string? resultado,
+        GuardarEnsayoRequestDto request)
+    {
+        var dto = new VerificacionDto(
+            Id: idVerificacion,
+            TipoOrigen: "ODECO",
+            IdOrigen: $"Verificacion {idVerificacion}",
+            CodCon: 100,
+            IdUsuarioMecanico: 5,
+            IdMedidor: null,
+            FechaVerificacion: DateTime.Now,
+            Estado: "EnCurso",
+            Resultado: resultado,
+            NombreCliente: "Socio demo",
+            NombreMecanico: "Mecánico Demo",
+            Ensayo: new EnsayoVerificacionDto(
+                Id: null,
+                Condiciones: request.Condiciones,
+                LecturaInicial: request.LecturaInicial,
+                LecturaFinal: request.LecturaFinal,
+                VolumenPatron: request.VolumenPatron,
+                Caudal: request.Caudal,
+                VolumenRegistrado: volumenRegistrado,
+                Error: error,
+                Fugas: request.Fugas,
+                Observaciones: request.Observaciones),
+            Participantes: request.Participantes?.Select(p => new ParticipanteVerificacionDto(_next++, p.Nombre, p.Cargo, p.Rol)).ToList() ?? []);
+        _verificaciones.RemoveAll(v => v.Id == idVerificacion);
+        _verificaciones.Add(dto);
+        return Task.FromResult<VerificacionDto?>(dto);
+    }
+
+    public Task<VerificacionDashboardDto> ObtenerDashboardAsync(int idMecanico) =>
+        Task.FromResult(new VerificacionDashboardDto(0, 0, 0, 0, 0, 0, 0));
+
+    public Task<VerificacionDto?> GuardarParticipantesAsync(int idVerificacion, IReadOnlyList<ParticipanteVerificacionDto> participantes)
+    {
+        var v = _verificaciones.FirstOrDefault(x => x.Id == idVerificacion);
+        if (v is null) return Task.FromResult<VerificacionDto?>(null);
+        var actualizada = v with
+        {
+            Participantes = participantes?.Select(p => new ParticipanteVerificacionDto(_next++, p.Nombre, p.Cargo, p.Rol)).ToList() ?? []
+        };
+        _verificaciones.RemoveAll(x => x.Id == idVerificacion);
+        _verificaciones.Add(actualizada);
+        return Task.FromResult<VerificacionDto?>(actualizada);
+    }
+
+    public Task<VerificacionHistorialResponseDto> ObtenerHistorialAsync(int idMecanico, VerificacionHistorialFiltro filtro) =>
+        Task.FromResult(new VerificacionHistorialResponseDto(0, filtro.Page, filtro.PageSize, []));
+
+    public Task<VerificacionDto?> FinalizarAsync(int idVerificacion) =>
+        Task.FromResult(_verificaciones.FirstOrDefault(v => v.Id == idVerificacion));
+
+    public Task<IReadOnlyList<InformeVerificacionDto>> ObtenerInformesAsync(int idVerificacion) =>
+        Task.FromResult<IReadOnlyList<InformeVerificacionDto>>([]);
+
+    public Task<GenerarInformeResponseDto> GenerarInformeAsync(int idVerificacion, GenerarInformeRequestDto request) =>
+        throw new InvalidOperationException("El modulo de verificaciones mecanicas usa SQL real. Cambia RepositoryMode a Sql para probarlo.");
 }
 
 public class MockParametroNormativoRepository : IParametroNormativoRepository
