@@ -19,7 +19,12 @@ public record EnsayoVerificacionDto(
     string? TipoCaudal = null,
     string? UnidadCaudal = null,
     string? UnidadVolumen = null,
-    string? TipoFuga = null);
+    string? TipoFuga = null,
+
+    // M6/M8:
+    // snapshot histórico de la regla normativa aplicada.
+    string? ParametroNormativoCodigoAplicado = null,
+    decimal? LimiteNormativoAplicado = null);
 
 public record ParticipanteVerificacionDto(
     int? Id,
@@ -156,12 +161,24 @@ public record VerificacionHistorialItemDto(
     string? Resultado,
     decimal? Error,
     bool? Fugas,
+
+    // Compatibilidad histórica: CodCon conserva el RegSoc que ya usaba
+    // este endpoint. Para M9 se exponen además ambos conceptos separados.
     int CodCon,
+    int RegSoc,
+    int? CodConexion,
+
     string? NombreCliente,
     string? NumeroMedidor,
     string? MarcaMedidor,
+
+    // Última emisión disponible para esta verificación.
     int? IdInforme,
     string? NroInforme,
+    int? VersionInforme,
+    DateTime? FechaEmisionInforme,
+    bool? InformeFirmado,
+    string EstadoInforme,
     bool TieneInforme);
 
 public record VerificacionHistorialResponseDto(

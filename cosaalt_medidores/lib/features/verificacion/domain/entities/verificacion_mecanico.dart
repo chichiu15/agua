@@ -20,15 +20,18 @@ class MecanicoDashboard {
   final int indeterminados;
   final int total;
 
-  factory MecanicoDashboard.fromJson(Map<String, dynamic> json) => MecanicoDashboard(
-    pendientes: _i(json['pendientes']),
-    enCurso: _i(json['enCurso']),
-    completadas: _i(json['completadas']),
-    cumple: _i(json['cumple']),
-    noCumple: _i(json['noCumple']),
-    indeterminados: _i(json['indeterminados']),
-    total: _i(json['total']),
-  );
+  factory MecanicoDashboard.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      MecanicoDashboard(
+        pendientes: _i(json['pendientes']),
+        enCurso: _i(json['enCurso']),
+        completadas: _i(json['completadas']),
+        cumple: _i(json['cumple']),
+        noCumple: _i(json['noCumple']),
+        indeterminados: _i(json['indeterminados']),
+        total: _i(json['total']),
+      );
 }
 
 @immutable
@@ -61,20 +64,23 @@ class SolicitudVerificacion {
   final String estado;
   final bool tomada;
 
-  factory SolicitudVerificacion.fromJson(Map<String, dynamic> json) => SolicitudVerificacion(
-    id: _s(json['id']),
-    tipoOrigen: _s(json['tipoOrigen']),
-    codCon: _i(json['codCon']),
-    nombreCliente: _s(json['nombreCliente']),
-    direccion: _s(json['direccion']),
-    categoria: _ns(json['categoria']),
-    numeroMedidor: _ns(json['numeroMedidor']),
-    marcaMedidor: _ns(json['marcaMedidor']),
-    motivoObservacion: _ns(json['motivoObservacion']),
-    fechaSolicitud: _dt(json['fechaSolicitud']),
-    estado: _s(json['estado']),
-    tomada: _b(json['tomada']),
-  );
+  factory SolicitudVerificacion.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      SolicitudVerificacion(
+        id: _s(json['id']),
+        tipoOrigen: _s(json['tipoOrigen']),
+        codCon: _i(json['codCon']),
+        nombreCliente: _s(json['nombreCliente']),
+        direccion: _s(json['direccion']),
+        categoria: _ns(json['categoria']),
+        numeroMedidor: _ns(json['numeroMedidor']),
+        marcaMedidor: _ns(json['marcaMedidor']),
+        motivoObservacion: _ns(json['motivoObservacion']),
+        fechaSolicitud: _dt(json['fechaSolicitud']),
+        estado: _s(json['estado']),
+        tomada: _b(json['tomada']),
+      );
 }
 
 @immutable
@@ -91,18 +97,25 @@ class ParticipanteVerificacion {
   final String? cargo;
   final String? rol;
 
-  factory ParticipanteVerificacion.fromJson(Map<String, dynamic> json) => ParticipanteVerificacion(
-    id: int.tryParse('${json['id'] ?? ''}'),
-    nombre: _s(json['nombre']),
-    cargo: _ns(json['cargo']),
-    rol: _ns(json['rol']),
-  );
+  factory ParticipanteVerificacion.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      ParticipanteVerificacion(
+        id: int.tryParse(
+          '${json['id'] ?? ''}',
+        ),
+        nombre: _s(json['nombre']),
+        cargo: _ns(json['cargo']),
+        rol: _ns(json['rol']),
+      );
 
   Map<String, dynamic> toJson() => {
-    'nombre': nombre,
-    if (cargo != null && cargo!.isNotEmpty) 'cargo': cargo,
-    if (rol != null && rol!.isNotEmpty) 'rol': rol,
-  };
+        'nombre': nombre,
+        if (cargo != null && cargo!.isNotEmpty)
+          'cargo': cargo,
+        if (rol != null && rol!.isNotEmpty)
+          'rol': rol,
+      };
 }
 
 @immutable
@@ -127,6 +140,11 @@ class EnsayoVerificacion {
     this.unidadCaudal,
     this.unidadVolumen,
     this.tipoFuga,
+
+    // M6/M8:
+    // snapshot histórico de la regla normativa aplicada.
+    this.parametroNormativoCodigoAplicado,
+    this.limiteNormativoAplicado,
   });
 
   final int? id;
@@ -139,6 +157,7 @@ class EnsayoVerificacion {
   final double? error;
   final bool? fugas;
   final String? observaciones;
+
   final String? tipoPrueba;
   final String? instrumentoBanco;
   final String? identificacionBanco;
@@ -149,27 +168,80 @@ class EnsayoVerificacion {
   final String? unidadVolumen;
   final String? tipoFuga;
 
-  factory EnsayoVerificacion.fromJson(Map<String, dynamic> json) => EnsayoVerificacion(
-    id: int.tryParse('${json['id'] ?? ''}'),
-    condiciones: _ns(json['condiciones']),
-    lecturaInicial: _d(json['lecturaInicial']),
-    lecturaFinal: _d(json['lecturaFinal']),
-    volumenPatron: _d(json['volumenPatron']),
-    caudal: _d(json['caudal']),
-    volumenRegistrado: _d(json['volumenRegistrado']),
-    error: _d(json['error']),
-    fugas: _nb(json['fugas']),
-    observaciones: _ns(json['observaciones']),
-    tipoPrueba: _ns(json['tipoPrueba']),
-    instrumentoBanco: _ns(json['instrumentoBanco']),
-    identificacionBanco: _ns(json['identificacionBanco']),
-    trazabilidadCalibracion: _ns(json['trazabilidadCalibracion']),
-    capacidadNominalQ3: _ns(json['capacidadNominalQ3']),
-    tipoCaudal: _ns(json['tipoCaudal']),
-    unidadCaudal: _ns(json['unidadCaudal']),
-    unidadVolumen: _ns(json['unidadVolumen']),
-    tipoFuga: _ns(json['tipoFuga']),
-  );
+  // M6/M8
+  final String? parametroNormativoCodigoAplicado;
+  final double? limiteNormativoAplicado;
+
+  factory EnsayoVerificacion.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      EnsayoVerificacion(
+        id: int.tryParse(
+          '${json['id'] ?? ''}',
+        ),
+        condiciones: _ns(
+          json['condiciones'],
+        ),
+        lecturaInicial: _d(
+          json['lecturaInicial'],
+        ),
+        lecturaFinal: _d(
+          json['lecturaFinal'],
+        ),
+        volumenPatron: _d(
+          json['volumenPatron'],
+        ),
+        caudal: _d(
+          json['caudal'],
+        ),
+        volumenRegistrado: _d(
+          json['volumenRegistrado'],
+        ),
+        error: _d(
+          json['error'],
+        ),
+        fugas: _nb(
+          json['fugas'],
+        ),
+        observaciones: _ns(
+          json['observaciones'],
+        ),
+        tipoPrueba: _ns(
+          json['tipoPrueba'],
+        ),
+        instrumentoBanco: _ns(
+          json['instrumentoBanco'],
+        ),
+        identificacionBanco: _ns(
+          json['identificacionBanco'],
+        ),
+        trazabilidadCalibracion: _ns(
+          json['trazabilidadCalibracion'],
+        ),
+        capacidadNominalQ3: _ns(
+          json['capacidadNominalQ3'],
+        ),
+        tipoCaudal: _ns(
+          json['tipoCaudal'],
+        ),
+        unidadCaudal: _ns(
+          json['unidadCaudal'],
+        ),
+        unidadVolumen: _ns(
+          json['unidadVolumen'],
+        ),
+        tipoFuga: _ns(
+          json['tipoFuga'],
+        ),
+
+        parametroNormativoCodigoAplicado: _ns(
+          json['parametroNormativoCodigoAplicado'],
+        ),
+
+        limiteNormativoAplicado: _d(
+          json['limiteNormativoAplicado'],
+        ),
+      );
 }
 
 @immutable
@@ -218,27 +290,74 @@ class DatosSocioMedidor {
   final String? tipoEnsayo;
   final String? motivoObservacion;
 
-  factory DatosSocioMedidor.fromJson(Map<String, dynamic> json) => DatosSocioMedidor(
-    codCon: _i(json['codCon']),
-    nombreCliente: _s(json['nombreCliente']),
-    direccion: _s(json['direccion']),
-    categoria: _ns(json['categoria']),
-    numeroDocumento: _ns(json['numeroDocumento']),
-    tipDocumento: _ns(json['tipDocumento']),
-    ruc: _ns(json['ruc']),
-    numeroMedidor: _ns(json['numeroMedidor']),
-    marcaMedidor: _ns(json['marcaMedidor']),
-    fechaConexion: _dtn(json['fechaConexion']),
-    capacidadQ3: _ns(json['capacidadQ3']),
-    tipoMedidor: _ns(json['tipoMedidor']),
-    claseMedidor: _ns(json['claseMedidor']),
-    diametroMedidor: _ns(json['diametroMedidor']),
-    regSoc: json['regSoc'] == null ? null : _i(json['regSoc']),
-    codConexion: json['codConexion'] == null ? null : _i(json['codConexion']),
-    lugarVerificacion: _ns(json['lugarVerificacion']),
-    tipoEnsayo: _ns(json['tipoEnsayo']),
-    motivoObservacion: _ns(json['motivoObservacion']),
-  );
+  factory DatosSocioMedidor.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      DatosSocioMedidor(
+        codCon: _i(
+          json['codCon'],
+        ),
+        nombreCliente: _s(
+          json['nombreCliente'],
+        ),
+        direccion: _s(
+          json['direccion'],
+        ),
+        categoria: _ns(
+          json['categoria'],
+        ),
+        numeroDocumento: _ns(
+          json['numeroDocumento'],
+        ),
+        tipDocumento: _ns(
+          json['tipDocumento'],
+        ),
+        ruc: _ns(
+          json['ruc'],
+        ),
+        numeroMedidor: _ns(
+          json['numeroMedidor'],
+        ),
+        marcaMedidor: _ns(
+          json['marcaMedidor'],
+        ),
+        fechaConexion: _dtn(
+          json['fechaConexion'],
+        ),
+        capacidadQ3: _ns(
+          json['capacidadQ3'],
+        ),
+        tipoMedidor: _ns(
+          json['tipoMedidor'],
+        ),
+        claseMedidor: _ns(
+          json['claseMedidor'],
+        ),
+        diametroMedidor: _ns(
+          json['diametroMedidor'],
+        ),
+        regSoc:
+            json['regSoc'] == null
+                ? null
+                : _i(
+                    json['regSoc'],
+                  ),
+        codConexion:
+            json['codConexion'] == null
+                ? null
+                : _i(
+                    json['codConexion'],
+                  ),
+        lugarVerificacion: _ns(
+          json['lugarVerificacion'],
+        ),
+        tipoEnsayo: _ns(
+          json['tipoEnsayo'],
+        ),
+        motivoObservacion: _ns(
+          json['motivoObservacion'],
+        ),
+      );
 }
 
 @immutable
@@ -273,25 +392,59 @@ class VerificacionMecanico {
   final EnsayoVerificacion? ensayo;
   final List<ParticipanteVerificacion> participantes;
 
-  bool get finalizada => estado == 'Completada';
+  bool get finalizada =>
+      estado == 'Completada';
 
-  factory VerificacionMecanico.fromJson(Map<String, dynamic> json) => VerificacionMecanico(
-    id: _i(json['id']),
-    tipoOrigen: _s(json['tipoOrigen']),
-    idOrigen: _s(json['idOrigen']),
-    codCon: _i(json['codCon']),
-    idUsuarioMecanico: _i(json['idUsuarioMecanico']),
-    idMedidor: _ns(json['idMedidor']),
-    fechaVerificacion: _dt(json['fechaVerificacion']),
-    estado: _s(json['estado']),
-    resultado: _ns(json['resultado']),
-    nombreCliente: _ns(json['nombreCliente']),
-    nombreMecanico: _ns(json['nombreMecanico']),
-    ensayo: json['ensayo'] is Map<String, dynamic>
-        ? EnsayoVerificacion.fromJson(json['ensayo'] as Map<String, dynamic>)
-        : null,
-    participantes: _list(json['participantes'], ParticipanteVerificacion.fromJson),
-  );
+  factory VerificacionMecanico.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      VerificacionMecanico(
+        id: _i(
+          json['id'],
+        ),
+        tipoOrigen: _s(
+          json['tipoOrigen'],
+        ),
+        idOrigen: _s(
+          json['idOrigen'],
+        ),
+        codCon: _i(
+          json['codCon'],
+        ),
+        idUsuarioMecanico: _i(
+          json['idUsuarioMecanico'],
+        ),
+        idMedidor: _ns(
+          json['idMedidor'],
+        ),
+        fechaVerificacion: _dt(
+          json['fechaVerificacion'],
+        ),
+        estado: _s(
+          json['estado'],
+        ),
+        resultado: _ns(
+          json['resultado'],
+        ),
+        nombreCliente: _ns(
+          json['nombreCliente'],
+        ),
+        nombreMecanico: _ns(
+          json['nombreMecanico'],
+        ),
+        ensayo:
+            json['ensayo']
+                    is Map<String, dynamic>
+                ? EnsayoVerificacion.fromJson(
+                    json['ensayo']
+                        as Map<String, dynamic>,
+                  )
+                : null,
+        participantes: _list(
+          json['participantes'],
+          ParticipanteVerificacion.fromJson,
+        ),
+      );
 }
 
 @immutable
@@ -316,16 +469,35 @@ class CalculoEnsayo {
   final String? parametroNormativo;
   final String? resultado;
 
-  factory CalculoEnsayo.fromJson(Map<String, dynamic> json) => CalculoEnsayo(
-    volumenRegistrado: _d(json['volumenRegistrado']),
-    volumenPatron: _d(json['volumenPatron']),
-    diferencia: _d(json['diferencia']),
-    errorConSigno: _d(json['errorConSigno']),
-    errorAbsoluto: _d(json['errorAbsoluto']),
-    limitePermitido: _d(json['limitePermitido']),
-    parametroNormativo: _ns(json['parametroNormativo']),
-    resultado: _ns(json['resultado']),
-  );
+  factory CalculoEnsayo.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      CalculoEnsayo(
+        volumenRegistrado: _d(
+          json['volumenRegistrado'],
+        ),
+        volumenPatron: _d(
+          json['volumenPatron'],
+        ),
+        diferencia: _d(
+          json['diferencia'],
+        ),
+        errorConSigno: _d(
+          json['errorConSigno'],
+        ),
+        errorAbsoluto: _d(
+          json['errorAbsoluto'],
+        ),
+        limitePermitido: _d(
+          json['limitePermitido'],
+        ),
+        parametroNormativo: _ns(
+          json['parametroNormativo'],
+        ),
+        resultado: _ns(
+          json['resultado'],
+        ),
+      );
 }
 
 @immutable
@@ -346,16 +518,34 @@ class EnsayoGuardadoResultado {
   final String mensaje;
   final CalculoEnsayo? calculo;
 
-  factory EnsayoGuardadoResultado.fromJson(Map<String, dynamic> json) => EnsayoGuardadoResultado(
-    idVerificacion: _i(json['idVerificacion']),
-    idEnsayo: int.tryParse('${json['idEnsayo'] ?? ''}'),
-    volumenRegistrado: _d(json['volumenRegistrado']),
-    error: _d(json['error']),
-    mensaje: _s(json['mensaje']),
-    calculo: json['calculo'] is Map<String, dynamic>
-        ? CalculoEnsayo.fromJson(json['calculo'] as Map<String, dynamic>)
-        : null,
-  );
+  factory EnsayoGuardadoResultado.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      EnsayoGuardadoResultado(
+        idVerificacion: _i(
+          json['idVerificacion'],
+        ),
+        idEnsayo: int.tryParse(
+          '${json['idEnsayo'] ?? ''}',
+        ),
+        volumenRegistrado: _d(
+          json['volumenRegistrado'],
+        ),
+        error: _d(
+          json['error'],
+        ),
+        mensaje: _s(
+          json['mensaje'],
+        ),
+        calculo:
+            json['calculo']
+                    is Map<String, dynamic>
+                ? CalculoEnsayo.fromJson(
+                    json['calculo']
+                        as Map<String, dynamic>,
+                  )
+                : null,
+      );
 }
 
 @immutable
@@ -380,16 +570,35 @@ class InformeVerificacion {
   final int versionInforme;
   final String? observaciones;
 
-  factory InformeVerificacion.fromJson(Map<String, dynamic> json) => InformeVerificacion(
-    id: _i(json['id']),
-    idVerificacion: _i(json['idVerificacion']),
-    nroInforme: _s(json['nroInforme']),
-    fechaEmision: _dt(json['fechaEmision']),
-    rutaPdf: _ns(json['rutaPdf']),
-    firmado: _b(json['firmado']),
-    versionInforme: _i(json['versionInforme']),
-    observaciones: _ns(json['observaciones']),
-  );
+  factory InformeVerificacion.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      InformeVerificacion(
+        id: _i(
+          json['id'],
+        ),
+        idVerificacion: _i(
+          json['idVerificacion'],
+        ),
+        nroInforme: _s(
+          json['nroInforme'],
+        ),
+        fechaEmision: _dt(
+          json['fechaEmision'],
+        ),
+        rutaPdf: _ns(
+          json['rutaPdf'],
+        ),
+        firmado: _b(
+          json['firmado'],
+        ),
+        versionInforme: _i(
+          json['versionInforme'],
+        ),
+        observaciones: _ns(
+          json['observaciones'],
+        ),
+      );
 }
 
 @immutable
@@ -402,11 +611,17 @@ class HistorialVerificacionItem {
     this.error,
     this.fugas,
     required this.codCon,
+    required this.regSoc,
+    this.codConexion,
     this.nombreCliente,
     this.numeroMedidor,
     this.marcaMedidor,
     this.idInforme,
     this.nroInforme,
+    this.versionInforme,
+    this.fechaEmisionInforme,
+    this.informeFirmado,
+    required this.estadoInforme,
     required this.tieneInforme,
   });
 
@@ -416,29 +631,100 @@ class HistorialVerificacionItem {
   final String? resultado;
   final double? error;
   final bool? fugas;
+
+  // Compatibilidad histórica del endpoint.
   final int codCon;
+
+  // M9: datos separados correctamente.
+  final int regSoc;
+  final int? codConexion;
+
   final String? nombreCliente;
   final String? numeroMedidor;
   final String? marcaMedidor;
+
+  // Última versión de informe emitida.
   final int? idInforme;
   final String? nroInforme;
+  final int? versionInforme;
+  final DateTime? fechaEmisionInforme;
+  final bool? informeFirmado;
+  final String estadoInforme;
   final bool tieneInforme;
 
-  factory HistorialVerificacionItem.fromJson(Map<String, dynamic> json) => HistorialVerificacionItem(
-    idVerificacion: _i(json['idVerificacion']),
-    fecha: _dt(json['fecha']),
-    estado: _s(json['estado']),
-    resultado: _ns(json['resultado']),
-    error: _d(json['error']),
-    fugas: _nb(json['fugas']),
-    codCon: _i(json['codCon']),
-    nombreCliente: _ns(json['nombreCliente']),
-    numeroMedidor: _ns(json['numeroMedidor']),
-    marcaMedidor: _ns(json['marcaMedidor']),
-    idInforme: int.tryParse('${json['idInforme'] ?? ''}'),
-    nroInforme: _ns(json['nroInforme']),
-    tieneInforme: _b(json['tieneInforme']),
-  );
+  bool get enCurso => estado.toLowerCase() == 'encurso';
+  bool get completada => estado.toLowerCase() == 'completada';
+
+  factory HistorialVerificacionItem.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      HistorialVerificacionItem(
+        idVerificacion: _i(
+          json['idVerificacion'],
+        ),
+        fecha: _dt(
+          json['fecha'],
+        ),
+        estado: _s(
+          json['estado'],
+        ),
+        resultado: _ns(
+          json['resultado'],
+        ),
+        error: _d(
+          json['error'],
+        ),
+        fugas: _nb(
+          json['fugas'],
+        ),
+        codCon: _i(
+          json['codCon'],
+        ),
+        regSoc: int.tryParse(
+              '${json['regSoc'] ?? ''}',
+            ) ??
+            _i(json['codCon']),
+        codConexion: int.tryParse(
+          '${json['codConexion'] ?? ''}',
+        ),
+        nombreCliente: _ns(
+          json['nombreCliente'],
+        ),
+        numeroMedidor: _ns(
+          json['numeroMedidor'],
+        ),
+        marcaMedidor: _ns(
+          json['marcaMedidor'],
+        ),
+        idInforme: int.tryParse(
+          '${json['idInforme'] ?? ''}',
+        ),
+        nroInforme: _ns(
+          json['nroInforme'],
+        ),
+        versionInforme: int.tryParse(
+          '${json['versionInforme'] ?? ''}',
+        ),
+        fechaEmisionInforme: json['fechaEmisionInforme'] == null
+            ? null
+            : DateTime.tryParse(
+                '${json['fechaEmisionInforme']}',
+              ),
+        informeFirmado: _nb(
+          json['informeFirmado'],
+        ),
+        estadoInforme: _ns(
+              json['estadoInforme'],
+            ) ??
+            (_b(json['tieneInforme'])
+                ? (_b(json['informeFirmado'])
+                    ? 'Firmado'
+                    : 'Pendiente firma')
+                : 'No emitido'),
+        tieneInforme: _b(
+          json['tieneInforme'],
+        ),
+      );
 }
 
 @immutable
@@ -455,31 +741,94 @@ class HistorialVerificacionResponse {
   final int pageSize;
   final List<HistorialVerificacionItem> items;
 
-  factory HistorialVerificacionResponse.fromJson(Map<String, dynamic> json) => HistorialVerificacionResponse(
-    total: _i(json['total']),
-    page: _i(json['page']),
-    pageSize: _i(json['pageSize']),
-    items: _list(json['items'], HistorialVerificacionItem.fromJson),
-  );
+  factory HistorialVerificacionResponse.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      HistorialVerificacionResponse(
+        total: _i(
+          json['total'],
+        ),
+        page: _i(
+          json['page'],
+        ),
+        pageSize: _i(
+          json['pageSize'],
+        ),
+        items: _list(
+          json['items'],
+          HistorialVerificacionItem.fromJson,
+        ),
+      );
 }
 
-String _s(dynamic v) => v?.toString().trim() ?? '';
+String _s(dynamic v) =>
+    v?.toString().trim() ?? '';
+
 String? _ns(dynamic v) {
-  final s = v?.toString().trim();
-  return s == null || s.isEmpty ? null : s;
+  final s =
+      v?.toString().trim();
+
+  return s == null ||
+          s.isEmpty
+      ? null
+      : s;
 }
 
-int _i(dynamic v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
-double? _d(dynamic v) => v is num ? v.toDouble() : double.tryParse('$v');
-bool _b(dynamic v) => v == true;
+int _i(dynamic v) =>
+    v is num
+        ? v.toInt()
+        : int.tryParse('$v') ?? 0;
+
+double? _d(dynamic v) =>
+    v is num
+        ? v.toDouble()
+        : double.tryParse('$v');
+
+bool _b(dynamic v) =>
+    v == true;
+
 bool? _nb(dynamic v) =>
-    v == null ? null : (v is bool ? v : (v.toString().toLowerCase() == 'true'));
+    v == null
+        ? null
+        : (
+            v is bool
+                ? v
+                : v
+                    .toString()
+                    .toLowerCase() ==
+                    'true'
+          );
 
-DateTime _dt(dynamic v) => _dtn(v) ?? DateTime.fromMillisecondsSinceEpoch(0);
-DateTime? _dtn(dynamic v) => v is String ? DateTime.tryParse(v) : null;
+DateTime _dt(dynamic v) =>
+    _dtn(v) ??
+    DateTime.fromMillisecondsSinceEpoch(
+      0,
+    );
 
-List<T> _list<T>(dynamic v, T Function(Map<String, dynamic>) fromJson) {
-  final raw = v as List?;
-  if (raw == null) return [];
-  return raw.whereType<Map<String, dynamic>>().map(fromJson).toList();
+DateTime? _dtn(dynamic v) =>
+    v is String
+        ? DateTime.tryParse(
+            v,
+          )
+        : null;
+
+List<T> _list<T>(
+  dynamic v,
+  T Function(
+    Map<String, dynamic>,
+  ) fromJson,
+) {
+  final raw =
+      v as List?;
+
+  if (raw == null) {
+    return [];
+  }
+
+  return raw
+      .whereType<Map<String, dynamic>>()
+      .map(
+        fromJson,
+      )
+      .toList();
 }

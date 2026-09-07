@@ -12,10 +12,7 @@ import '../controllers/verificacion_controller.dart';
 import '../widgets/verificacion_ui.dart';
 
 class EnsayoVerificacionScreen extends ConsumerStatefulWidget {
-  const EnsayoVerificacionScreen({
-    required this.id,
-    super.key,
-  });
+  const EnsayoVerificacionScreen({required this.id, super.key});
 
   final int id;
 
@@ -26,11 +23,7 @@ class EnsayoVerificacionScreen extends ConsumerStatefulWidget {
 
 class _EnsayoVerificacionScreenState
     extends ConsumerState<EnsayoVerificacionScreen> {
-  static const List<String> _tiposPrueba = [
-    'In situ',
-    'Laboratorio',
-    'Otro',
-  ];
+  static const List<String> _tiposPrueba = ['In situ', 'Laboratorio', 'Otro'];
 
   static const List<String> _tiposCaudal = [
     'Q1 mínimo',
@@ -39,10 +32,7 @@ class _EnsayoVerificacionScreenState
     'Otro',
   ];
 
-  static const List<String> _tiposFuga = [
-    'Visible',
-    'No visible',
-  ];
+  static const List<String> _tiposFuga = ['Visible', 'No visible'];
 
   final _condicionesCtrl = TextEditingController();
   final _lecturaInicialCtrl = TextEditingController();
@@ -69,20 +59,18 @@ class _EnsayoVerificacionScreenState
 
   Timer? _debounce;
 
-  final TextInputFormatter _decimalFormatter =
-      TextInputFormatter.withFunction(
-    (oldValue, newValue) {
-      if (newValue.text.isEmpty) {
-        return newValue;
-      }
+  final TextInputFormatter _decimalFormatter = TextInputFormatter.withFunction((
+    oldValue,
+    newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
 
-      final valido = RegExp(
-        r'^\d*([.,]\d*)?$',
-      ).hasMatch(newValue.text);
+    final valido = RegExp(r'^\d*([.,]\d*)?$').hasMatch(newValue.text);
 
-      return valido ? newValue : oldValue;
-    },
-  );
+    return valido ? newValue : oldValue;
+  });
 
   @override
   void initState() {
@@ -101,9 +89,7 @@ class _EnsayoVerificacionScreenState
 
     Future.microtask(() async {
       await ref
-          .read(
-            verificacionControllerProvider.notifier,
-          )
+          .read(verificacionControllerProvider.notifier)
           .cargarVerificacion(widget.id);
 
       if (mounted) {
@@ -113,11 +99,9 @@ class _EnsayoVerificacionScreenState
   }
 
   void _cargarEnsayoExistente() {
-    final state =
-        ref.read(verificacionControllerProvider);
+    final state = ref.read(verificacionControllerProvider);
 
-    final ensayo =
-        state.verificacionActual?.ensayo;
+    final ensayo = state.verificacionActual?.ensayo;
 
     /*
      * Si todavía no existe ensayo, intentamos
@@ -125,8 +109,7 @@ class _EnsayoVerificacionScreenState
      * obtenida en M3.
      */
     if (ensayo == null) {
-      final q3 =
-          state.datosSocio?.capacidadQ3?.trim();
+      final q3 = state.datosSocio?.capacidadQ3?.trim();
 
       if (q3 != null && q3.isNotEmpty) {
         setState(() {
@@ -138,76 +121,47 @@ class _EnsayoVerificacionScreenState
     }
 
     setState(() {
-      _condicionesCtrl.text =
-          ensayo.condiciones ?? '';
+      _condicionesCtrl.text = ensayo.condiciones ?? '';
 
-      _lecturaInicialCtrl.text =
-          ensayo.lecturaInicial?.toString() ?? '';
+      _lecturaInicialCtrl.text = ensayo.lecturaInicial?.toString() ?? '';
 
-      _lecturaFinalCtrl.text =
-          ensayo.lecturaFinal?.toString() ?? '';
+      _lecturaFinalCtrl.text = ensayo.lecturaFinal?.toString() ?? '';
 
-      _volumenPatronCtrl.text =
-          ensayo.volumenPatron?.toString() ?? '';
+      _volumenPatronCtrl.text = ensayo.volumenPatron?.toString() ?? '';
 
-      _caudalCtrl.text =
-          ensayo.caudal?.toString() ?? '';
+      _caudalCtrl.text = ensayo.caudal?.toString() ?? '';
 
-      _tipoPruebaCtrl.text =
-          _normalizarOpcion(
-        ensayo.tipoPrueba,
-        _tiposPrueba,
-      );
+      _tipoPruebaCtrl.text = _normalizarOpcion(ensayo.tipoPrueba, _tiposPrueba);
 
-      _instrumentoCtrl.text =
-          ensayo.instrumentoBanco ?? '';
+      _instrumentoCtrl.text = ensayo.instrumentoBanco ?? '';
 
-      _identificacionCtrl.text =
-          ensayo.identificacionBanco ?? '';
+      _identificacionCtrl.text = ensayo.identificacionBanco ?? '';
 
-      _trazabilidadCtrl.text =
-          ensayo.trazabilidadCalibracion ?? '';
+      _trazabilidadCtrl.text = ensayo.trazabilidadCalibracion ?? '';
 
-      _capacidadQ3Ctrl.text =
-          ensayo.capacidadNominalQ3 ?? '';
+      _capacidadQ3Ctrl.text = ensayo.capacidadNominalQ3 ?? '';
 
-      _tipoCaudalCtrl.text =
-          _normalizarOpcion(
-        ensayo.tipoCaudal,
-        _tiposCaudal,
-      );
+      _tipoCaudalCtrl.text = _normalizarOpcion(ensayo.tipoCaudal, _tiposCaudal);
 
-      _unidadCaudalCtrl.text =
-          ensayo.unidadCaudal?.trim().isNotEmpty ==
-                  true
-              ? ensayo.unidadCaudal!
-              : 'm³/h';
+      _unidadCaudalCtrl.text = ensayo.unidadCaudal?.trim().isNotEmpty == true
+          ? ensayo.unidadCaudal!
+          : 'm³/h';
 
-      _unidadVolumenCtrl.text =
-          ensayo.unidadVolumen?.trim().isNotEmpty ==
-                  true
-              ? ensayo.unidadVolumen!
-              : 'm³';
+      _unidadVolumenCtrl.text = ensayo.unidadVolumen?.trim().isNotEmpty == true
+          ? ensayo.unidadVolumen!
+          : 'm³';
 
       _fugas = ensayo.fugas == true;
 
-      _tipoFugaCtrl.text =
-          _normalizarOpcion(
-        ensayo.tipoFuga,
-        _tiposFuga,
-      );
+      _tipoFugaCtrl.text = _normalizarOpcion(ensayo.tipoFuga, _tiposFuga);
 
-      _observacionesCtrl.text =
-          ensayo.observaciones ?? '';
+      _observacionesCtrl.text = ensayo.observaciones ?? '';
     });
 
     _agendarCalculo();
   }
 
-  String _normalizarOpcion(
-    String? value,
-    List<String> opciones,
-  ) {
+  String _normalizarOpcion(String? value, List<String> opciones) {
     final limpio = value?.trim();
 
     if (limpio == null || limpio.isEmpty) {
@@ -215,8 +169,7 @@ class _EnsayoVerificacionScreenState
     }
 
     for (final opcion in opciones) {
-      if (opcion.toLowerCase() ==
-          limpio.toLowerCase()) {
+      if (opcion.toLowerCase() == limpio.toLowerCase()) {
         return opcion;
       }
     }
@@ -260,21 +213,15 @@ class _EnsayoVerificacionScreenState
   }
 
   double? _numero(String text) {
-    return double.tryParse(
-      text.trim().replaceAll(',', '.'),
-    );
+    return double.tryParse(text.trim().replaceAll(',', '.'));
   }
 
   double? _volumenRegistradoLocal() {
-    final inicial =
-        _numero(_lecturaInicialCtrl.text);
+    final inicial = _numero(_lecturaInicialCtrl.text);
 
-    final finalLectura =
-        _numero(_lecturaFinalCtrl.text);
+    final finalLectura = _numero(_lecturaFinalCtrl.text);
 
-    if (inicial == null ||
-        finalLectura == null ||
-        finalLectura < inicial) {
+    if (inicial == null || finalLectura == null || finalLectura < inicial) {
       return null;
     }
 
@@ -292,24 +239,17 @@ class _EnsayoVerificacionScreenState
 
     _debounce?.cancel();
 
-    _debounce = Timer(
-      const Duration(milliseconds: 450),
-      _calcular,
-    );
+    _debounce = Timer(const Duration(milliseconds: 450), _calcular);
   }
 
   Future<void> _calcular() async {
-    final lecturaInicial =
-        _numero(_lecturaInicialCtrl.text);
+    final lecturaInicial = _numero(_lecturaInicialCtrl.text);
 
-    final lecturaFinal =
-        _numero(_lecturaFinalCtrl.text);
+    final lecturaFinal = _numero(_lecturaFinalCtrl.text);
 
-    final volumenPatron =
-        _numero(_volumenPatronCtrl.text);
+    final volumenPatron = _numero(_volumenPatronCtrl.text);
 
-    final caudal =
-        _numero(_caudalCtrl.text);
+    final caudal = _numero(_caudalCtrl.text);
 
     /*
      * No enviamos cálculos incompletos al backend.
@@ -334,12 +274,8 @@ class _EnsayoVerificacionScreenState
     }
 
     final calculo = await ref
-        .read(
-          verificacionControllerProvider.notifier,
-        )
-        .calcularEnsayo(
-          _request(),
-        );
+        .read(verificacionControllerProvider.notifier)
+        .calcularEnsayo(_request());
 
     if (!mounted) return;
 
@@ -351,143 +287,92 @@ class _EnsayoVerificacionScreenState
   Map<String, dynamic> _request() {
     return {
       if (_condicionesCtrl.text.trim().isNotEmpty)
-        'condiciones':
-            _condicionesCtrl.text.trim(),
+        'condiciones': _condicionesCtrl.text.trim(),
 
-      'lecturaInicial':
-          _numero(_lecturaInicialCtrl.text),
+      'lecturaInicial': _numero(_lecturaInicialCtrl.text),
 
-      'lecturaFinal':
-          _numero(_lecturaFinalCtrl.text),
+      'lecturaFinal': _numero(_lecturaFinalCtrl.text),
 
-      'volumenPatron':
-          _numero(_volumenPatronCtrl.text),
+      'volumenPatron': _numero(_volumenPatronCtrl.text),
 
-      'caudal':
-          _numero(_caudalCtrl.text),
+      'caudal': _numero(_caudalCtrl.text),
 
       'fugas': _fugas,
 
-      if (_observacionesCtrl.text
-          .trim()
-          .isNotEmpty)
-        'observaciones':
-            _observacionesCtrl.text.trim(),
+      if (_observacionesCtrl.text.trim().isNotEmpty)
+        'observaciones': _observacionesCtrl.text.trim(),
 
       'participantes': _participantes(),
 
-      if (_tipoPruebaCtrl.text
-          .trim()
-          .isNotEmpty)
-        'tipoPrueba':
-            _tipoPruebaCtrl.text.trim(),
+      if (_tipoPruebaCtrl.text.trim().isNotEmpty)
+        'tipoPrueba': _tipoPruebaCtrl.text.trim(),
 
-      if (_instrumentoCtrl.text
-          .trim()
-          .isNotEmpty)
-        'instrumentoBanco':
-            _instrumentoCtrl.text.trim(),
+      if (_instrumentoCtrl.text.trim().isNotEmpty)
+        'instrumentoBanco': _instrumentoCtrl.text.trim(),
 
-      if (_identificacionCtrl.text
-          .trim()
-          .isNotEmpty)
-        'identificacionBanco':
-            _identificacionCtrl.text.trim(),
+      if (_identificacionCtrl.text.trim().isNotEmpty)
+        'identificacionBanco': _identificacionCtrl.text.trim(),
 
-      if (_trazabilidadCtrl.text
-          .trim()
-          .isNotEmpty)
-        'trazabilidadCalibracion':
-            _trazabilidadCtrl.text.trim(),
+      if (_trazabilidadCtrl.text.trim().isNotEmpty)
+        'trazabilidadCalibracion': _trazabilidadCtrl.text.trim(),
 
-      if (_capacidadQ3Ctrl.text
-          .trim()
-          .isNotEmpty)
-        'capacidadNominalQ3':
-            _capacidadQ3Ctrl.text.trim(),
+      if (_capacidadQ3Ctrl.text.trim().isNotEmpty)
+        'capacidadNominalQ3': _capacidadQ3Ctrl.text.trim(),
 
-      if (_tipoCaudalCtrl.text
-          .trim()
-          .isNotEmpty)
-        'tipoCaudal':
-            _tipoCaudalCtrl.text.trim(),
+      if (_tipoCaudalCtrl.text.trim().isNotEmpty)
+        'tipoCaudal': _tipoCaudalCtrl.text.trim(),
 
-      if (_unidadCaudalCtrl.text
-          .trim()
-          .isNotEmpty)
-        'unidadCaudal':
-            _unidadCaudalCtrl.text.trim(),
+      if (_unidadCaudalCtrl.text.trim().isNotEmpty)
+        'unidadCaudal': _unidadCaudalCtrl.text.trim(),
 
-      if (_unidadVolumenCtrl.text
-          .trim()
-          .isNotEmpty)
-        'unidadVolumen':
-            _unidadVolumenCtrl.text.trim(),
+      if (_unidadVolumenCtrl.text.trim().isNotEmpty)
+        'unidadVolumen': _unidadVolumenCtrl.text.trim(),
 
-      if (_fugas &&
-          _tipoFugaCtrl.text
-              .trim()
-              .isNotEmpty)
-        'tipoFuga':
-            _tipoFugaCtrl.text.trim(),
+      if (_fugas && _tipoFugaCtrl.text.trim().isNotEmpty)
+        'tipoFuga': _tipoFugaCtrl.text.trim(),
     };
   }
 
-  List<Map<String, dynamic>>
-      _participantes() {
-    return (ref
-                .read(
-                  verificacionControllerProvider,
-                )
-                .participantesBorrador ??
-            const <ParticipanteVerificacion>[])
+  List<Map<String, dynamic>> _participantes() {
+    final state = ref.read(verificacionControllerProvider);
+
+    final participantes =
+        state.participantesBorrador ??
+        state.verificacionActual?.participantes ??
+        const <ParticipanteVerificacion>[];
+
+    return participantes
         .map(
           (p) => {
-            'nombre': p.nombre,
-            if (p.cargo != null &&
-                p.cargo!.isNotEmpty)
-              'cargo': p.cargo,
-            if (p.rol != null &&
-                p.rol!.isNotEmpty)
-              'rol': p.rol,
+            'nombre': p.nombre.trim(),
+            if (p.cargo != null && p.cargo!.trim().isNotEmpty)
+              'cargo': p.cargo!.trim(),
+            if (p.rol != null && p.rol!.trim().isNotEmpty) 'rol': p.rol!.trim(),
           },
         )
         .toList();
   }
 
-  String? _validar({
-    required bool exigirCompletos,
-  }) {
-    final lecturaInicial =
-        _numero(_lecturaInicialCtrl.text);
+  String? _validar({required bool exigirCompletos}) {
+    final lecturaInicial = _numero(_lecturaInicialCtrl.text);
 
-    final lecturaFinal =
-        _numero(_lecturaFinalCtrl.text);
+    final lecturaFinal = _numero(_lecturaFinalCtrl.text);
 
-    final volumenPatron =
-        _numero(_volumenPatronCtrl.text);
+    final volumenPatron = _numero(_volumenPatronCtrl.text);
 
-    final caudal =
-        _numero(_caudalCtrl.text);
+    final caudal = _numero(_caudalCtrl.text);
 
-    final q3 =
-        _numero(_capacidadQ3Ctrl.text);
+    final q3 = _numero(_capacidadQ3Ctrl.text);
 
     /*
      * Primero validamos cualquier campo numérico
      * que haya sido ingresado.
      */
-    if (_lecturaInicialCtrl.text
-            .trim()
-            .isNotEmpty &&
-        lecturaInicial == null) {
+    if (_lecturaInicialCtrl.text.trim().isNotEmpty && lecturaInicial == null) {
       return 'La primera lectura debe ser numérica.';
     }
 
-    if (_lecturaFinalCtrl.text
-            .trim()
-            .isNotEmpty &&
-        lecturaFinal == null) {
+    if (_lecturaFinalCtrl.text.trim().isNotEmpty && lecturaFinal == null) {
       return 'La segunda lectura debe ser numérica.';
     }
 
@@ -497,11 +382,8 @@ class _EnsayoVerificacionScreenState
       return 'La segunda lectura debe ser mayor o igual que la primera.';
     }
 
-    if (_volumenPatronCtrl.text
-        .trim()
-        .isNotEmpty) {
-      if (volumenPatron == null ||
-          volumenPatron <= 0) {
+    if (_volumenPatronCtrl.text.trim().isNotEmpty) {
+      if (volumenPatron == null || volumenPatron <= 0) {
         return 'El volumen patrón debe ser mayor que cero.';
       }
     }
@@ -512,9 +394,7 @@ class _EnsayoVerificacionScreenState
       }
     }
 
-    if (_capacidadQ3Ctrl.text
-        .trim()
-        .isNotEmpty) {
+    if (_capacidadQ3Ctrl.text.trim().isNotEmpty) {
       if (q3 == null || q3 <= 0) {
         return 'La capacidad nominal Q3 debe ser un valor mayor que cero.';
       }
@@ -531,33 +411,23 @@ class _EnsayoVerificacionScreenState
       return null;
     }
 
-    if (_condicionesCtrl.text
-        .trim()
-        .isEmpty) {
+    if (_condicionesCtrl.text.trim().isEmpty) {
       return 'Ingrese las condiciones del ensayo.';
     }
 
-    if (_tipoPruebaCtrl.text
-        .trim()
-        .isEmpty) {
+    if (_tipoPruebaCtrl.text.trim().isEmpty) {
       return 'Seleccione el tipo de prueba.';
     }
 
-    if (_instrumentoCtrl.text
-        .trim()
-        .isEmpty) {
+    if (_instrumentoCtrl.text.trim().isEmpty) {
       return 'Ingrese el instrumento o banco utilizado.';
     }
 
-    if (_identificacionCtrl.text
-        .trim()
-        .isEmpty) {
+    if (_identificacionCtrl.text.trim().isEmpty) {
       return 'Ingrese la identificación del banco.';
     }
 
-    if (_trazabilidadCtrl.text
-        .trim()
-        .isEmpty) {
+    if (_trazabilidadCtrl.text.trim().isEmpty) {
       return 'Ingrese la trazabilidad o calibración.';
     }
 
@@ -565,9 +435,7 @@ class _EnsayoVerificacionScreenState
       return 'Ingrese la capacidad nominal Q3.';
     }
 
-    if (_tipoCaudalCtrl.text
-        .trim()
-        .isEmpty) {
+    if (_tipoCaudalCtrl.text.trim().isEmpty) {
       return 'Seleccione el tipo de caudal.';
     }
 
@@ -575,9 +443,7 @@ class _EnsayoVerificacionScreenState
       return 'Ingrese un caudal del ensayo mayor que cero.';
     }
 
-    if (_unidadCaudalCtrl.text
-        .trim()
-        .isEmpty) {
+    if (_unidadCaudalCtrl.text.trim().isEmpty) {
       return 'Ingrese la unidad del caudal.';
     }
 
@@ -593,63 +459,44 @@ class _EnsayoVerificacionScreenState
       return 'La segunda lectura debe ser mayor o igual que la primera.';
     }
 
-    if (volumenPatron == null ||
-        volumenPatron <= 0) {
+    if (volumenPatron == null || volumenPatron <= 0) {
       return 'Ingrese un volumen patrón mayor que cero.';
     }
 
-    if (_unidadVolumenCtrl.text
-        .trim()
-        .isEmpty) {
+    if (_unidadVolumenCtrl.text.trim().isEmpty) {
       return 'Ingrese la unidad del volumen.';
     }
 
-    if (_fugas &&
-        _tipoFugaCtrl.text
-            .trim()
-            .isEmpty) {
+    if (_fugas && _tipoFugaCtrl.text.trim().isEmpty) {
       return 'Seleccione el tipo de fuga.';
     }
 
     return null;
   }
 
-  Future<bool> _guardar({
-    bool exigirCompletos = false,
-  }) async {
-    final validacion = _validar(
-      exigirCompletos: exigirCompletos,
-    );
+  Future<bool> _guardar({bool exigirCompletos = false}) async {
+    final validacion = _validar(exigirCompletos: exigirCompletos);
 
     if (validacion != null) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          SnackBar(
-            content: Text(validacion),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(validacion)));
       }
 
       return false;
     }
 
     final result = await ref
-        .read(
-          verificacionControllerProvider.notifier,
-        )
-        .guardarEnsayo(
-          widget.id,
-          _request(),
-        );
+        .read(verificacionControllerProvider.notifier)
+        .guardarEnsayo(widget.id, _request());
 
     if (!mounted) {
       return result != null;
     }
 
     if (result == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'No se pudo guardar el ensayo. Revise los datos e inténtelo nuevamente.',
@@ -661,12 +508,10 @@ class _EnsayoVerificacionScreenState
     }
 
     setState(() {
-      _calculo =
-          result.calculo ?? _calculo;
+      _calculo = result.calculo ?? _calculo;
     });
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           exigirCompletos
@@ -693,453 +538,325 @@ class _EnsayoVerificacionScreenState
      *
      * Ahora se espera la respuesta del backend.
      */
-    final guardado = await _guardar(
-      exigirCompletos: true,
-    );
+    final guardado = await _guardar(exigirCompletos: true);
 
     if (!mounted || !guardado) {
       return;
     }
 
-    context.go(
-      '${AppRoutes.mecanicoHome}/verificacion/${widget.id}/finalizar',
-    );
+    context.go('${AppRoutes.mecanicoHome}/verificacion/${widget.id}/finalizar');
   }
 
   @override
   Widget build(BuildContext context) {
-    final state =
-        ref.watch(verificacionControllerProvider);
+    final state = ref.watch(verificacionControllerProvider);
 
-    final verificacion =
-        state.verificacionActual;
+    final verificacion = state.verificacionActual;
 
-    final volumenRegistrado =
-        _volumenRegistradoLocal();
+    final volumenRegistrado = _volumenRegistradoLocal();
 
-    final unidadVolumen =
-        _unidadVolumenCtrl.text.trim().isEmpty
-            ? 'unidad'
-            : _unidadVolumenCtrl.text.trim();
+    final unidadVolumen = _unidadVolumenCtrl.text.trim().isEmpty
+        ? 'unidad'
+        : _unidadVolumenCtrl.text.trim();
 
-    final unidadCaudal =
-        _unidadCaudalCtrl.text.trim().isEmpty
-            ? 'unidad'
-            : _unidadCaudalCtrl.text.trim();
+    final unidadCaudal = _unidadCaudalCtrl.text.trim().isEmpty
+        ? 'unidad'
+        : _unidadCaudalCtrl.text.trim();
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text('Ensayo de Verificación'),
+        title: const Text('Ensayo de Verificación'),
         leading: IconButton(
-          icon:
-              const Icon(Icons.arrow_back),
-          onPressed: () => context.go(
-            '${AppRoutes.mecanicoHome}/verificacion/${widget.id}',
-          ),
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () =>
+              context.go('${AppRoutes.mecanicoHome}/verificacion/${widget.id}'),
         ),
       ),
-      body: state.isLoading &&
-              verificacion == null
-          ? const Center(
-              child:
-                  CircularProgressIndicator(),
-            )
+      body: state.isLoading && verificacion == null
+          ? const Center(child: CircularProgressIndicator())
           : (verificacion?.finalizada ?? false)
-              ? _FinalizadaView(
-                  id: widget.id,
-                  resultado:
-                      verificacion?.resultado,
-                  ensayo:
-                      verificacion?.ensayo,
-                )
-              : ListView(
-                  padding:
-                      const EdgeInsets.all(16),
-                  children: [
-                    VerMessageBar(
-                      error: state.errorMessage,
-                      success:
-                          state.successMessage,
-                    ),
+          ? _FinalizadaView(
+              id: widget.id,
+              resultado: verificacion?.resultado,
+              ensayo: verificacion?.ensayo,
+            )
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                VerMessageBar(
+                  error: state.errorMessage,
+                  success: state.successMessage,
+                ),
 
-                    /*
+                /*
                      * DATOS GENERALES DEL ENSAYO
                      */
-                    VerSection(
-                      title:
-                          'Datos del ensayo',
-                      child: Column(
-                        children: [
-                          _selector(
-                            controller:
-                                _tipoPruebaCtrl,
-                            label:
-                                'Tipo de prueba *',
-                            opciones:
-                                _tiposPrueba,
-                            onChanged: (_) =>
-                                _agendarCalculo(),
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          _campo(
-                            _instrumentoCtrl,
-                            'Instrumento o banco utilizado *',
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          _campo(
-                            _identificacionCtrl,
-                            'Identificación del banco *',
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          _campo(
-                            _trazabilidadCtrl,
-                            'Trazabilidad / calibración *',
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          _campo(
-                            _capacidadQ3Ctrl,
-                            'Capacidad nominal Q3 *',
-                            numerico: true,
-                          ),
-                        ],
+                VerSection(
+                  title: 'Datos del ensayo',
+                  child: Column(
+                    children: [
+                      _selector(
+                        controller: _tipoPruebaCtrl,
+                        label: 'Tipo de prueba *',
+                        opciones: _tiposPrueba,
+                        onChanged: (_) => _agendarCalculo(),
                       ),
-                    ),
 
-                    /*
+                      const SizedBox(height: 10),
+
+                      _campo(
+                        _instrumentoCtrl,
+                        'Instrumento o banco utilizado *',
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      _campo(_identificacionCtrl, 'Identificación del banco *'),
+
+                      const SizedBox(height: 10),
+
+                      _campo(_trazabilidadCtrl, 'Trazabilidad / calibración *'),
+
+                      const SizedBox(height: 10),
+
+                      _campo(
+                        _capacidadQ3Ctrl,
+                        'Capacidad nominal Q3 *',
+                        numerico: true,
+                      ),
+                    ],
+                  ),
+                ),
+
+                /*
                      * CAUDAL
                      */
-                    VerSection(
-                      title: 'Caudal',
-                      child: Column(
-                        children: [
-                          _selector(
-                            controller:
-                                _tipoCaudalCtrl,
-                            label:
-                                'Tipo de caudal *',
-                            opciones:
-                                _tiposCaudal,
-                            onChanged: (_) =>
-                                _agendarCalculo(),
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          _campo(
-                            _caudalCtrl,
-                            'Caudal del ensayo *',
-                            numerico: true,
-                            suffixText:
-                                unidadCaudal,
-                            onChange:
-                                _agendarCalculo,
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          _campo(
-                            _unidadCaudalCtrl,
-                            'Unidad del caudal *',
-                            onChange:
-                                _agendarCalculo,
-                          ),
-                        ],
+                VerSection(
+                  title: 'Caudal',
+                  child: Column(
+                    children: [
+                      _selector(
+                        controller: _tipoCaudalCtrl,
+                        label: 'Tipo de caudal *',
+                        opciones: _tiposCaudal,
+                        onChanged: (_) => _agendarCalculo(),
                       ),
-                    ),
 
-                    /*
+                      const SizedBox(height: 10),
+
+                      _campo(
+                        _caudalCtrl,
+                        'Caudal del ensayo *',
+                        numerico: true,
+                        suffixText: unidadCaudal,
+                        onChange: _agendarCalculo,
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      _campo(
+                        _unidadCaudalCtrl,
+                        'Unidad del caudal *',
+                        onChange: _agendarCalculo,
+                      ),
+                    ],
+                  ),
+                ),
+
+                /*
                      * LECTURAS Y VOLÚMENES
                      */
-                    VerSection(
-                      title:
-                          'Lecturas y volúmenes',
-                      child: Column(
-                        children: [
-                          _campo(
-                            _lecturaInicialCtrl,
-                            'Primera lectura *',
-                            onChange:
-                                _agendarCalculo,
-                            numerico: true,
-                            suffixText:
-                                unidadVolumen,
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          _campo(
-                            _lecturaFinalCtrl,
-                            'Segunda lectura *',
-                            onChange:
-                                _agendarCalculo,
-                            numerico: true,
-                            suffixText:
-                                unidadVolumen,
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          _campoSoloLectura(
-                            label:
-                                'Volumen registrado',
-                            value:
-                                volumenRegistrado ==
-                                        null
-                                    ? 'Se calcula con las lecturas'
-                                    : verDecimal(
-                                        volumenRegistrado,
-                                      ),
-                            suffixText:
-                                unidadVolumen,
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          _campo(
-                            _volumenPatronCtrl,
-                            'Volumen patrón *',
-                            onChange:
-                                _agendarCalculo,
-                            numerico: true,
-                            suffixText:
-                                unidadVolumen,
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          _campo(
-                            _unidadVolumenCtrl,
-                            'Unidad del volumen *',
-                            onChange:
-                                _agendarCalculo,
-                          ),
-                        ],
+                VerSection(
+                  title: 'Lecturas y volúmenes',
+                  child: Column(
+                    children: [
+                      _campo(
+                        _lecturaInicialCtrl,
+                        'Primera lectura *',
+                        onChange: _agendarCalculo,
+                        numerico: true,
+                        suffixText: unidadVolumen,
                       ),
-                    ),
 
-                    /*
+                      const SizedBox(height: 10),
+
+                      _campo(
+                        _lecturaFinalCtrl,
+                        'Segunda lectura *',
+                        onChange: _agendarCalculo,
+                        numerico: true,
+                        suffixText: unidadVolumen,
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      _campoSoloLectura(
+                        label: 'Volumen registrado',
+                        value: volumenRegistrado == null
+                            ? 'Se calcula con las lecturas'
+                            : verDecimal(volumenRegistrado),
+                        suffixText: unidadVolumen,
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      _campo(
+                        _volumenPatronCtrl,
+                        'Volumen patrón *',
+                        onChange: _agendarCalculo,
+                        numerico: true,
+                        suffixText: unidadVolumen,
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      _campo(
+                        _unidadVolumenCtrl,
+                        'Unidad del volumen *',
+                        onChange: _agendarCalculo,
+                      ),
+                    ],
+                  ),
+                ),
+
+                /*
                      * FUGAS
                      */
-                    VerSection(
-                      title: 'Fugas',
-                      child: Column(
-                        children: [
-                          SwitchListTile(
-                            contentPadding:
-                                EdgeInsets.zero,
-                            title: const Text(
-                              '¿Se registran fugas?',
-                              style: TextStyle(
-                                fontWeight:
-                                    FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: Text(
-                              _fugas
-                                  ? 'Sí'
-                                  : 'No',
-                            ),
-                            value: _fugas,
-                            activeThumbColor:
-                                AppColors.odecoRed,
-                            onChanged: (value) {
-                              setState(() {
-                                _fugas = value;
+                VerSection(
+                  title: 'Fugas',
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text(
+                          '¿Se registran fugas?',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(_fugas ? 'Sí' : 'No'),
+                        value: _fugas,
+                        activeThumbColor: AppColors.odecoRed,
+                        onChanged: (value) {
+                          setState(() {
+                            _fugas = value;
 
-                                if (!value) {
-                                  _tipoFugaCtrl
-                                      .clear();
-                                }
-                              });
+                            if (!value) {
+                              _tipoFugaCtrl.clear();
+                            }
+                          });
 
-                              _agendarCalculo();
-                            },
-                          ),
-
-                          if (_fugas) ...[
-                            const SizedBox(
-                              height: 8,
-                            ),
-                            _selector(
-                              controller:
-                                  _tipoFugaCtrl,
-                              label:
-                                  'Tipo de fuga *',
-                              opciones:
-                                  _tiposFuga,
-                            ),
-                          ],
-                        ],
+                          _agendarCalculo();
+                        },
                       ),
-                    ),
 
-                    /*
+                      if (_fugas) ...[
+                        const SizedBox(height: 8),
+                        _selector(
+                          controller: _tipoFugaCtrl,
+                          label: 'Tipo de fuga *',
+                          opciones: _tiposFuga,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                /*
                      * CONDICIONES Y OBSERVACIONES
                      */
-                    VerSection(
-                      title:
-                          'Condiciones y observaciones',
-                      child: Column(
-                        children: [
-                          TextField(
-                            controller:
-                                _condicionesCtrl,
-                            maxLines: 3,
-                            textCapitalization:
-                                TextCapitalization
-                                    .sentences,
-                            decoration:
-                                const InputDecoration(
-                              labelText:
-                                  'Condiciones del ensayo *',
-                              border:
-                                  OutlineInputBorder(),
-                              alignLabelWithHint:
-                                  true,
-                            ),
-                          ),
-
-                          const SizedBox(
-                            height: 10,
-                          ),
-
-                          TextField(
-                            controller:
-                                _observacionesCtrl,
-                            maxLines: 3,
-                            textCapitalization:
-                                TextCapitalization
-                                    .sentences,
-                            decoration:
-                                const InputDecoration(
-                              labelText:
-                                  'Observaciones',
-                              border:
-                                  OutlineInputBorder(),
-                              alignLabelWithHint:
-                                  true,
-                            ),
-                          ),
-                        ],
+                VerSection(
+                  title: 'Condiciones y observaciones',
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _condicionesCtrl,
+                        maxLines: 3,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          labelText: 'Condiciones del ensayo *',
+                          border: OutlineInputBorder(),
+                          alignLabelWithHint: true,
+                        ),
                       ),
-                    ),
 
-                    /*
+                      const SizedBox(height: 10),
+
+                      TextField(
+                        controller: _observacionesCtrl,
+                        maxLines: 3,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          labelText: 'Observaciones',
+                          border: OutlineInputBorder(),
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                /*
                      * PREVISUALIZACIÓN DEL CÁLCULO.
                      *
                      * El cálculo completo pertenece a M6,
                      * pero tu proyecto ya lo realizaba,
                      * por lo que no lo eliminamos.
                      */
-                    VerSection(
-                      title:
-                          'Resultado del cálculo',
-                      child: _calculo == null
-                          ? const Text(
-                              'Complete las lecturas, el volumen patrón y el caudal para calcular el error.',
-                              style: TextStyle(
-                                color: Color(
-                                  0xFF667085,
-                                ),
-                              ),
-                            )
-                          : _CalculoPanel(
-                              calculo:
-                                  _calculo!,
-                              unidadVolumen:
-                                  unidadVolumen,
-                            ),
-                    ),
+                VerSection(
+                  title: 'Resultado del cálculo',
+                  child: _calculo == null
+                      ? const Text(
+                          'Complete las lecturas, el volumen patrón y el caudal para calcular el error.',
+                          style: TextStyle(color: Color(0xFF667085)),
+                        )
+                      : _CalculoPanel(
+                          calculo: _calculo!,
+                          unidadVolumen: unidadVolumen,
+                        ),
+                ),
 
-                    const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-                    /*
+                /*
                      * GUARDAR BORRADOR
                      */
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: state.isAccion
-                            ? null
-                            : () async {
-                                await _guardar();
-                              },
-                        icon: state.isAccion
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child:
-                                    CircularProgressIndicator(
-                                  strokeWidth:
-                                      2,
-                                ),
-                              )
-                            : const Icon(
-                                Icons
-                                    .save_outlined,
-                              ),
-                        label: Text(
-                          state.isAccion
-                              ? 'Guardando...'
-                              : 'Guardar ensayo',
-                        ),
-                      ),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: state.isAccion
+                        ? null
+                        : () async {
+                            await _guardar();
+                          },
+                    icon: state.isAccion
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_outlined),
+                    label: Text(
+                      state.isAccion ? 'Guardando...' : 'Guardar ensayo',
                     ),
+                  ),
+                ),
 
-                    const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-                    /*
+                /*
                      * GUARDAR Y CONTINUAR
                      */
-                    SizedBox(
-                      width: double.infinity,
-                      child:
-                          OutlinedButton.icon(
-                        onPressed:
-                            state.isAccion
-                                ? null
-                                : _guardarYContinuar,
-                        icon: const Icon(
-                          Icons.task_alt,
-                        ),
-                        label: const Text(
-                          'Guardar y continuar a finalizar',
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-                  ],
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: state.isAccion ? null : _guardarYContinuar,
+                    icon: const Icon(Icons.task_alt),
+                    label: const Text('Guardar y continuar a finalizar'),
+                  ),
                 ),
+
+                const SizedBox(height: 16),
+              ],
+            ),
     );
   }
 
@@ -1153,14 +870,9 @@ class _EnsayoVerificacionScreenState
     return TextField(
       controller: controller,
       keyboardType: numerico
-          ? const TextInputType
-              .numberWithOptions(
-              decimal: true,
-            )
+          ? const TextInputType.numberWithOptions(decimal: true)
           : TextInputType.text,
-      inputFormatters: numerico
-          ? [_decimalFormatter]
-          : null,
+      inputFormatters: numerico ? [_decimalFormatter] : null,
       textCapitalization: numerico
           ? TextCapitalization.none
           : TextCapitalization.sentences,
@@ -1169,8 +881,7 @@ class _EnsayoVerificacionScreenState
         labelText: label,
         suffixText: suffixText,
         isDense: true,
-        border:
-            const OutlineInputBorder(),
+        border: const OutlineInputBorder(),
       ),
     );
   }
@@ -1183,10 +894,7 @@ class _EnsayoVerificacionScreenState
   }) {
     final actual = controller.text.trim();
 
-    final value =
-        opciones.contains(actual)
-            ? actual
-            : null;
+    final value = opciones.contains(actual) ? actual : null;
 
     return DropdownButtonFormField<String>(
       value: value,
@@ -1194,22 +902,17 @@ class _EnsayoVerificacionScreenState
       decoration: InputDecoration(
         labelText: label,
         isDense: true,
-        border:
-            const OutlineInputBorder(),
+        border: const OutlineInputBorder(),
       ),
       items: opciones
           .map(
             (opcion) =>
-                DropdownMenuItem<String>(
-              value: opcion,
-              child: Text(opcion),
-            ),
+                DropdownMenuItem<String>(value: opcion, child: Text(opcion)),
           )
           .toList(),
       onChanged: (nuevo) {
         setState(() {
-          controller.text =
-              nuevo ?? '';
+          controller.text = nuevo ?? '';
         });
 
         onChanged?.call(nuevo);
@@ -1227,85 +930,60 @@ class _EnsayoVerificacionScreenState
         labelText: label,
         suffixText: suffixText,
         filled: true,
-        fillColor:
-            const Color(0xFFF5F7F8),
-        border:
-            const OutlineInputBorder(),
+        fillColor: const Color(0xFFF5F7F8),
+        border: const OutlineInputBorder(),
       ),
-      child: Text(
-        value,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
     );
   }
 }
 
 class _CalculoPanel extends StatelessWidget {
-  const _CalculoPanel({
-    required this.calculo,
-    required this.unidadVolumen,
-  });
+  const _CalculoPanel({required this.calculo, required this.unidadVolumen});
 
   final CalculoEnsayo calculo;
   final String unidadVolumen;
 
   @override
   Widget build(BuildContext context) {
-    final resultado =
-        calculo.resultado;
+    final resultado = calculo.resultado;
 
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         VerDataRow(
-          label:
-              'Volumen registrado',
-          value:
-              '${verDecimal(calculo.volumenRegistrado)} $unidadVolumen',
+          label: 'Volumen registrado',
+          value: '${verDecimal(calculo.volumenRegistrado)} $unidadVolumen',
         ),
 
         VerDataRow(
           label: 'Volumen patrón',
-          value:
-              '${verDecimal(calculo.volumenPatron)} $unidadVolumen',
+          value: '${verDecimal(calculo.volumenPatron)} $unidadVolumen',
         ),
 
         VerDataRow(
           label: 'Diferencia',
-          value:
-              '${verDecimal(calculo.diferencia)} $unidadVolumen',
+          value: '${verDecimal(calculo.diferencia)} $unidadVolumen',
         ),
 
         VerDataRow(
-          label:
-              'Error con signo',
-          value:
-              '${verDecimal(calculo.errorConSigno, decimals: 2)} %',
+          label: 'Error con signo',
+          value: '${verDecimal(calculo.errorConSigno, decimals: 2)} %',
         ),
 
         VerDataRow(
-          label:
-              'Error absoluto',
-          value:
-              '${verDecimal(calculo.errorAbsoluto, decimals: 2)} %',
+          label: 'Error absoluto',
+          value: '${verDecimal(calculo.errorAbsoluto, decimals: 2)} %',
         ),
 
         VerDataRow(
-          label:
-              'Límite permitido',
-          value:
-              '${verDecimal(calculo.limitePermitido, decimals: 2)} %',
+          label: 'Límite permitido',
+          value: '${verDecimal(calculo.limitePermitido, decimals: 2)} %',
         ),
 
         VerDataRow(
-          label:
-              'Parámetro normativo',
-          value:
-              calculo.parametroNormativo ??
-                  'No disponible',
+          label: 'Parámetro normativo',
+          value: calculo.parametroNormativo ?? 'No disponible',
         ),
 
         const SizedBox(height: 6),
@@ -1314,17 +992,12 @@ class _CalculoPanel extends StatelessWidget {
           children: [
             const Text(
               'Resultado: ',
-              style: TextStyle(
-                fontWeight:
-                    FontWeight.w700,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w700),
             ),
             if (resultado != null)
               VerStatusChip(resultado)
             else
-              VerStatusChip(
-                'Sin calcular',
-              ),
+              VerStatusChip('Sin calcular'),
           ],
         ),
       ],
@@ -1332,13 +1005,8 @@ class _CalculoPanel extends StatelessWidget {
   }
 }
 
-class _FinalizadaView
-    extends StatelessWidget {
-  const _FinalizadaView({
-    required this.id,
-    this.resultado,
-    this.ensayo,
-  });
+class _FinalizadaView extends StatelessWidget {
+  const _FinalizadaView({required this.id, this.resultado, this.ensayo});
 
   final int id;
   final String? resultado;
@@ -1350,25 +1018,17 @@ class _FinalizadaView
       padding: const EdgeInsets.all(16),
       children: [
         VerSection(
-          title:
-              'Verificación finalizada',
+          title: 'Verificación finalizada',
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   const Text(
                     'Resultado: ',
-                    style: TextStyle(
-                      fontWeight:
-                          FontWeight.w700,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
-                  VerStatusChip(
-                    resultado ??
-                        'INDETERMINADO',
-                  ),
+                  VerStatusChip(resultado ?? 'INDETERMINADO'),
                 ],
               ),
 
@@ -1376,54 +1036,36 @@ class _FinalizadaView
 
               const Text(
                 'El ensayo ya está cerrado y no admite modificaciones.',
-                style: TextStyle(
-                  color:
-                      Color(0xFF667085),
-                ),
+                style: TextStyle(color: Color(0xFF667085)),
               ),
 
               const SizedBox(height: 14),
 
               VerDataRow(
                 label: 'Error',
-                value:
-                    '${verDecimal(ensayo?.error, decimals: 2)} %',
+                value: '${verDecimal(ensayo?.error, decimals: 2)} %',
               ),
 
               VerDataRow(
-                label:
-                    'Volumen registrado',
-                value: verDecimal(
-                  ensayo
-                      ?.volumenRegistrado,
-                ),
+                label: 'Volumen registrado',
+                value: verDecimal(ensayo?.volumenRegistrado),
               ),
 
               VerDataRow(
                 label: 'Fugas',
-                value:
-                    ensayo?.fugas == true
-                        ? 'Sí'
-                        : 'No',
+                value: ensayo?.fugas == true ? 'Sí' : 'No',
               ),
 
               const SizedBox(height: 8),
 
               SizedBox(
                 width: double.infinity,
-                child:
-                    FilledButton.icon(
-                  onPressed: () =>
-                      context.go(
+                child: FilledButton.icon(
+                  onPressed: () => context.go(
                     '${AppRoutes.mecanicoHome}/verificacion/$id/informe',
                   ),
-                  icon: const Icon(
-                    Icons
-                        .description_outlined,
-                  ),
-                  label: const Text(
-                    'Ir al informe',
-                  ),
+                  icon: const Icon(Icons.description_outlined),
+                  label: const Text('Ir al informe'),
                 ),
               ),
             ],

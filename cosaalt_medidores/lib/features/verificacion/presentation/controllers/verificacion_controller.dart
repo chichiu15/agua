@@ -76,6 +76,8 @@ final verificacionControllerProvider =
     );
 
 class VerificacionController extends Notifier<VerificacionState> {
+  int _historialRequestId = 0;
+
   @override
   VerificacionState build() => const VerificacionState();
 
@@ -301,12 +303,23 @@ class VerificacionController extends Notifier<VerificacionState> {
     String? resultado,
     String? buscar,
     int page = 1,
-    int pageSize = 50,
+    int pageSize = 20,
   }) async {
     final id = _idMecanico;
-    if (id == null) return 'No se identifico al mecanico logueado.';
+    if (id == null) {
+      return 'No se identifico al mecanico logueado.';
+    }
+
+    // M9: evita que una búsqueda anterior, más lenta, reemplace
+    // los resultados de una búsqueda más reciente.
+    final requestId = ++_historialRequestId;
+
     try {
-      state = state.copyWith(isLoading: true, limpiarMensajes: true);
+      state = state.copyWith(
+        isLoading: true,
+        limpiarMensajes: true,
+      );
+
       final historial = await _repo.obtenerHistorial(
         id,
         desde: desde,
@@ -317,10 +330,25 @@ class VerificacionController extends Notifier<VerificacionState> {
         page: page,
         pageSize: pageSize,
       );
-      state = state.copyWith(historial: historial, isLoading: false);
+
+      if (requestId != _historialRequestId) {
+        return null;
+      }
+
+      state = state.copyWith(
+        historial: historial,
+        isLoading: false,
+      );
       return null;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      if (requestId != _historialRequestId) {
+        return null;
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
       return e.toString();
     }
   }

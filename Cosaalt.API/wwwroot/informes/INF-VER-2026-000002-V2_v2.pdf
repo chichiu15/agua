@@ -1,0 +1,108 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 3855 >>
+stream
+0 0.42 0.25 rg 0 832 595 10 re f
+BT /F2 16 Tf 36 800 Td 0 0.42 0.25 rg (COSAALT R.L.) Tj ET
+BT /F1 8.5 Tf 36 780 Td 0.35 0.39 0.42 rg (Sistema de Gestión, Cambio y Verificación de Medidores) Tj ET
+BT /F2 14 Tf 36 750 Td 0.1 0.14 0.17 rg (INFORME TÉCNICO DE VERIFICACIÓN DE MEDIDOR) Tj ET
+BT /F1 9 Tf 36 728 Td 0.35 0.39 0.42 rg (INF-VER-2026-000002-V2  -  Versión 2  -  06/09/2026 23:24) Tj ET
+BT /F2 8.6 Tf 36 704 Td 0 0.42 0.25 rg (1. DATOS DEL TÉCNICO Y EL SOCIO) Tj ET
+BT /F1 8 Tf 42 689 Td 0.12 0.15 0.17 rg (Mecánico: mecanico) Tj ET
+BT /F1 8 Tf 42 675.8 Td 0.12 0.15 0.17 rg (Registro socio: 12558) Tj ET
+BT /F1 8 Tf 42 662.6 Td 0.12 0.15 0.17 rg (Código/Conexión: No registrado) Tj ET
+BT /F1 8 Tf 42 649.4 Td 0.12 0.15 0.17 rg (Socio: CASTRO BALDIVIEZO JOSE G.) Tj ET
+BT /F1 8 Tf 42 636.2 Td 0.12 0.15 0.17 rg (Dirección: QA E2E - Plaza Los Laureles - Punto 11) Tj ET
+BT /F1 8 Tf 42 623 Td 0.12 0.15 0.17 rg (Documento/RUC: 0 / 4:12558) Tj ET
+BT /F1 8 Tf 42 609.8 Td 0.12 0.15 0.17 rg (Origen: LECTURA - QA-LECTURA-01) Tj ET
+BT /F2 8.6 Tf 36 588.6 Td 0 0.42 0.25 rg (2. DATOS DEL MEDIDOR) Tj ET
+BT /F1 8 Tf 42 573.6 Td 0.12 0.15 0.17 rg (Marca: HDM) Tj ET
+BT /F1 8 Tf 42 560.4 Td 0.12 0.15 0.17 rg (Serie: 682733) Tj ET
+BT /F1 8 Tf 42 547.2 Td 0.12 0.15 0.17 rg (Capacidad nominal Q3: 3) Tj ET
+BT /F1 8 Tf 42 534 Td 0.12 0.15 0.17 rg (Tipo: Velocimetro Mag.) Tj ET
+BT /F1 8 Tf 42 520.8 Td 0.12 0.15 0.17 rg (Clase: "B") Tj ET
+BT /F1 8 Tf 42 507.6 Td 0.12 0.15 0.17 rg (Diámetro: 1/2") Tj ET
+BT /F1 8 Tf 42 494.4 Td 0.12 0.15 0.17 rg (Fecha de conexión/registro: 29/04/2026) Tj ET
+BT /F2 8.6 Tf 36 473.2 Td 0 0.42 0.25 rg (3. VERIFICACIÓN) Tj ET
+BT /F1 8 Tf 42 458.2 Td 0.12 0.15 0.17 rg (Fecha/hora de verificación: 06/09/2026 19:01) Tj ET
+BT /F1 8 Tf 42 445 Td 0.12 0.15 0.17 rg (Tipo de ensayo: Laboratorio) Tj ET
+BT /F1 8 Tf 42 431.8 Td 0.12 0.15 0.17 rg (Instrumento o banco: Banco de prueba COSAALT) Tj ET
+BT /F1 8 Tf 42 418.6 Td 0.12 0.15 0.17 rg (Tipo de caudal: Q3 permanente) Tj ET
+BT /F1 8 Tf 42 405.4 Td 0.12 0.15 0.17 rg (Caudal: 3 m³/h) Tj ET
+BT /F2 8.6 Tf 36 384.2 Td 0 0.42 0.25 rg (4. PARTICIPANTES) Tj ET
+BT /F1 8 Tf 42 369.2 Td 0.12 0.15 0.17 rg (Juan Pérez - Técnico - Técnico verificador) Tj ET
+BT /F2 8.6 Tf 36 348 Td 0 0.42 0.25 rg (5. LECTURAS Y VOLÚMENES) Tj ET
+BT /F1 8 Tf 42 333 Td 0.12 0.15 0.17 rg (Primera lectura: 100,00) Tj ET
+BT /F1 8 Tf 42 319.8 Td 0.12 0.15 0.17 rg (Segunda lectura: 110,04) Tj ET
+BT /F1 8 Tf 42 306.6 Td 0.12 0.15 0.17 rg (Volumen registrado: 10,0400) Tj ET
+BT /F1 8 Tf 42 293.4 Td 0.12 0.15 0.17 rg (Volumen patrón: 10,0000) Tj ET
+BT /F1 8 Tf 42 280.2 Td 0.12 0.15 0.17 rg (Diferencia: 0,0400) Tj ET
+BT /F2 8.6 Tf 36 259 Td 0 0.42 0.25 rg (6. ERROR Y RESULTADO) Tj ET
+BT /F1 8 Tf 42 244 Td 0.12 0.15 0.17 rg (Error con signo: 0,40 %) Tj ET
+BT /F1 8 Tf 42 230.8 Td 0.12 0.15 0.17 rg (Error absoluto: 0,40 %) Tj ET
+BT /F1 8 Tf 42 217.6 Td 0.12 0.15 0.17 rg (Parámetro normativo utilizado: QA-CAUDAL-BAJO) Tj ET
+BT /F1 8 Tf 42 204.4 Td 0.12 0.15 0.17 rg (Límite permitido: 5,00 %) Tj ET
+BT /F1 8 Tf 42 191.2 Td 0.12 0.15 0.17 rg (RESULTADO: CUMPLE) Tj ET
+BT /F2 8.6 Tf 36 170 Td 0 0.42 0.25 rg (7. FUGAS) Tj ET
+BT /F1 8 Tf 42 155 Td 0.12 0.15 0.17 rg (Registra fuga: No) Tj ET
+BT /F1 8 Tf 42 141.8 Td 0.12 0.15 0.17 rg (Tipo de fuga: No aplica) Tj ET
+BT /F2 8.6 Tf 36 120.6 Td 0 0.42 0.25 rg (8. CONDICIONES Y OBSERVACIONES) Tj ET
+BT /F1 8 Tf 42 105.6 Td 0.12 0.15 0.17 rg (Condiciones: Ensayo realizado en condiciones estables del banco de prueba.) Tj ET
+BT /F1 8 Tf 42 92.4 Td 0.12 0.15 0.17 rg (Observaciones: Prueba QA para validación del flujo M5, M6 y M7.) Tj ET
+BT /F1 8 Tf 495 20 Td 0.4 0.43 0.46 rg (Página 1 de 2) Tj ET
+BT /F1 8 Tf 36 20 Td 0.4 0.43 0.46 rg (COSAALT R.L.) Tj ET
+BT /F1 7 Tf 36 12 Td 0.4 0.43 0.46 rg (Documento de verificación técnica - INF-VER-2026-000002-V2 v2) Tj ET
+
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 8 0 R >>
+endobj
+8 0 obj
+<< /Length 707 >>
+stream
+0 0.42 0.25 rg 0 832 595 10 re f
+BT /F2 13 Tf 36 800 Td 0 0.42 0.25 rg (COSAALT R.L.) Tj ET
+BT /F1 8.5 Tf 36 781 Td 0.35 0.39 0.42 rg (INF-VER-2026-000002-V2 - continuación) Tj ET
+BT /F2 8.6 Tf 36 755 Td 0 0.42 0.25 rg (9. RESPONSABLE) Tj ET
+BT /F1 8 Tf 42 740 Td 0.12 0.15 0.17 rg (Responsable: Luis Choque) Tj ET
+BT /F1 8 Tf 42 726.8 Td 0.12 0.15 0.17 rg (Firma del responsable:) Tj ET
+BT /F1 8 Tf 42 713.6 Td 0.12 0.15 0.17 rg (________________________________________) Tj ET
+BT /F1 8 Tf 495 20 Td 0.4 0.43 0.46 rg (Página 2 de 2) Tj ET
+BT /F1 8 Tf 36 20 Td 0.4 0.43 0.46 rg (COSAALT R.L.) Tj ET
+BT /F1 7 Tf 36 12 Td 0.4 0.43 0.46 rg (Documento de verificación técnica - INF-VER-2026-000002-V2 v2) Tj ET
+
+endstream
+endobj
+xref
+0 9
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000127 00000 n 
+0000000224 00000 n 
+0000000326 00000 n 
+0000000462 00000 n 
+0000004369 00000 n 
+0000004505 00000 n 
+trailer
+<< /Size 9 /Root 1 0 R >>
+startxref
+5263
+%%EOF

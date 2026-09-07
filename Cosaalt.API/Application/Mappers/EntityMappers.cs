@@ -289,7 +289,7 @@ public static class VerificacionMapper
                 .ToList());
 
     private static EnsayoVerificacionDto MapEnsayo(
-        EnsayoVerificacion e)
+    EnsayoVerificacion e)
     {
         var (
             descripcion,
@@ -302,8 +302,8 @@ public static class VerificacionMapper
             unidadCaudal,
             unidadVolumen,
             tipoFuga,
-            _,
-            _) =
+            parametroNormativoCodigoAplicado,
+            limiteNormativoAplicado) =
             EnsayoCamposProvisionales.Decode(
                 e.Condiciones);
 
@@ -320,7 +320,8 @@ public static class VerificacionMapper
             Fugas: e.Fugas,
             Observaciones:
                 e.Observaciones,
-            TipoPrueba: tipoPrueba,
+            TipoPrueba:
+                tipoPrueba,
             InstrumentoBanco:
                 instrumentoBanco,
             IdentificacionBanco:
@@ -329,11 +330,19 @@ public static class VerificacionMapper
                 trazabilidadCalibracion,
             CapacidadNominalQ3:
                 capacidadNominalQ3,
-            TipoCaudal: tipoCaudal,
+            TipoCaudal:
+                tipoCaudal,
             UnidadCaudal:
                 unidadCaudal,
             UnidadVolumen:
                 unidadVolumen,
-            TipoFuga: tipoFuga);
+            TipoFuga:
+                tipoFuga,
+
+            // M6/M8
+            ParametroNormativoCodigoAplicado:
+                parametroNormativoCodigoAplicado,
+            LimiteNormativoAplicado:
+                limiteNormativoAplicado);
     }
 }
